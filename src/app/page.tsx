@@ -217,7 +217,7 @@ export default function App(){
   // ── Loading ──
   if(loading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:24}}><div style={{fontSize:120}}>💰</div><div style={{fontSize:52,fontWeight:800,color:'var(--orange)',letterSpacing:-1}}>Ca$ter</div><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>Loading your finances...</div></div>
 
-  return<div style={{minHeight:'100dvh',paddingBottom:100,background:'#000'}}>
+  return<div style={{minHeight:'100dvh',paddingBottom:120,background:'#000'}}>
     <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handlePhoto}/>
 
     {/* ── Header ── */}
@@ -238,8 +238,16 @@ export default function App(){
       <div className="fu s3"><div className="sh">Cash Flow · {savingsRate}% saved</div><div className="gc" style={{padding:'16px 18px 14px'}}><div style={{display:'flex',gap:16,fontSize:12,color:'var(--t3)',marginBottom:14}}><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--orange)'}}/>Income</span><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--purple)'}}/>Expenses</span></div><div style={{display:'flex',alignItems:'flex-end',gap:8,height:110}}>{snaps.map((d,i)=>{const mx=Math.max(...snaps.flatMap(s=>[s.total_income,s.total_expenses]),1);return<div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:6}}><div style={{display:'flex',gap:3,alignItems:'flex-end',height:88,width:'100%'}}><div style={{flex:1,borderRadius:5,height:`${(Number(d.total_income)/mx)*100}%`,background:'var(--orange)',opacity:0.85,transition:'height 0.8s'}}/><div style={{flex:1,borderRadius:5,height:`${(Number(d.total_expenses)/mx)*100}%`,background:'var(--purple)',opacity:0.5,transition:'height 0.8s'}}/></div><span style={{fontSize:11,color:'var(--t3)'}}>{new Date(d.month+'T00:00').toLocaleDateString('en-AU',{month:'short'})}</span></div>})}</div></div></div>
 
       {/* Recent Transactions + Add */}
-      <div className="fu s4"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}><div className="sh" style={{margin:0}}>Transactions</div><div style={{display:'flex',gap:6}}><button onClick={exportCSV} style={{padding:'8px 14px',borderRadius:10,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:13,fontWeight:600,cursor:'pointer'}}>📥 CSV</button><button onClick={()=>setShowForm(showForm==='tx'?null:'tx')} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>{showForm==='tx'?'Cancel':'+ Add'}</button></div></div>
-        <div style={{display:'flex',gap:8,marginTop:4}}><input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} placeholder="From" style={{flex:1,padding:'10px 12px',borderRadius:10,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:13,outline:'none',fontFamily:'inherit'}}/><input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} placeholder="To" style={{flex:1,padding:'10px 12px',borderRadius:10,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:13,outline:'none',fontFamily:'inherit'}}/>{(dateFrom||dateTo)&&<button onClick={()=>{setDateFrom('');setDateTo('')}} style={{padding:'10px 12px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:13,fontWeight:600,cursor:'pointer'}}>Clear</button>}</div>
+      <div className="fu s4"><div className="sh" style={{margin:0}}>Transactions</div>
+        <div style={{display:'flex',gap:8,marginTop:8,marginBottom:8}}>
+          <button onClick={exportCSV} style={{padding:'10px 16px',borderRadius:12,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:14,fontWeight:600,cursor:'pointer',flex:1}}>📥 Export CSV</button>
+          <button onClick={()=>setShowForm(showForm==='tx'?null:'tx')} style={{padding:'10px 16px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer',flex:1}}>{showForm==='tx'?'Cancel':'+ Add'}</button>
+        </div>
+        <div style={{display:'flex',gap:8,marginBottom:8}}>
+          <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} placeholder="From" style={{flex:1,padding:'12px 14px',borderRadius:12,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:14,outline:'none',fontFamily:'inherit'}}/>
+          <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} placeholder="To" style={{flex:1,padding:'12px 14px',borderRadius:12,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:14,outline:'none',fontFamily:'inherit'}}/>
+          {(dateFrom||dateTo)&&<button onClick={()=>{setDateFrom('');setDateTo('')}} style={{padding:'12px 14px',borderRadius:12,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:14,fontWeight:600,cursor:'pointer'}}>✕</button>}
+        </div>
         {showForm==='tx'&&<div className="gc" style={{padding:18,marginTop:10,marginBottom:4}}>
           <Input placeholder="What was it?" value={fd.description||''} onChange={e=>setFd({...fd,description:e.target.value})}/>
           <div style={{display:'flex',gap:8}}><Input placeholder="Amount (-ve for expense)" type="number" value={fd.amount??''} onChange={e=>setFd({...fd,amount:e.target.value})} style={{flex:1,marginBottom:8}}/><Input type="date" value={fd.date||new Date().toISOString().split('T')[0]} onChange={e=>setFd({...fd,date:e.target.value})} style={{width:140,marginBottom:8}}/></div>
@@ -672,11 +680,11 @@ export default function App(){
 
     {/* ── Tab Bar ── */}
     <nav className="tbar">{[
-      {id:'home',icon:'📊',l:'Home'},
-      {id:'budget',icon:'🎯',l:'Budget'},
-      {id:'debts',icon:'💳',l:'Debts'},
-      {id:'fella',icon:'🤖',l:'Fella'},
-      {id:'more',icon:'⚙️',l:'More'}
+      {id:'home',icon:'🏠',l:'Home'},
+      {id:'budget',icon:'📈',l:'Budget'},
+      {id:'debts',icon:'🏦',l:'Debts'},
+      {id:'fella',icon:'💬',l:'Fella'},
+      {id:'more',icon:'☰',l:'More'}
     ].map(t=><button key={t.id} onClick={()=>t.id==='more'?setMore(true):setTab(t.id)} className={`tab ${(tab===t.id||(t.id==='more'&&['subs','goals','kids','reports','settings','guide'].includes(tab)))?'tab-on':'tab-off'}`} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,background:'none',border:'none',cursor:'pointer',padding:'4px 0',minWidth:56}}>
       <div className="tab-bg"><span className="tab-icon">{t.icon}</span></div>
       <span className="tab-label">{t.l}</span>
