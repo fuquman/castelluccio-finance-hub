@@ -63,34 +63,40 @@ export default function App(){
 
   // Auth: check session and listen for changes
   useEffect(()=>{
-    // Clear any error/expired hashes from URL before processing
-    if(window.location.hash&&(window.location.hash.includes('error=')||window.location.hash.includes('error_code='))){
+    // Step 1: Clean any error hashes (expired magic links etc)
+    const hash=window.location.hash||''
+    if(hash.includes('error=')){
       window.history.replaceState(null,'',window.location.pathname)
-    }
-    // Listen for auth changes (catches magic link callback)
-    let subscription: any
-    try{
-      const result=supabase.auth.onAuthStateChange((event,session)=>{
-        if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION'){
-          setUser(session?.user ? {id:session.user.id,email:session.user.email} : null)
-        }
-        if(event==='SIGNED_OUT'){setUser(null)}
-        setAuthLoading(false)
-      })
-      subscription=result.data.subscription
-    }catch(e){
-      console.error('Auth listener error:',e)
       setAuthLoading(false)
+      return
     }
-    // Check for existing session
+    // Step 2: If hash has access_token, manually process magic link
+    if(hash.includes('access_token')){
+      const params=new URLSearchParams(hash.substring(1))
+      const accessToken=params.get('access_token')
+      const refreshToken=params.get('refresh_token')
+      if(accessToken&&refreshToken){
+        supabase.auth.setSession({access_token:accessToken,refresh_token:refreshToken}).then(({data:{session}})=>{
+          setUser(session?.user?{id:session.user.id,email:session.user.email}:null)
+          window.history.replaceState(null,'',window.location.pathname)
+          setAuthLoading(false)
+        }).catch(()=>{setAuthLoading(false)})
+        return
+      }
+    }
+    // Step 3: Normal session check
+    const{data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
+      if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION'){
+        setUser(session?.user?{id:session.user.id,email:session.user.email}:null)
+      }
+      if(event==='SIGNED_OUT'){setUser(null)}
+      setAuthLoading(false)
+    })
     const checkSession=async()=>{
       try{
-        if(window.location.hash&&window.location.hash.includes('access_token')){return}
         const{data:{session}}=await supabase.auth.getSession()
-        setUser(session?.user ? {id:session.user.id,email:session.user.email} : null)
-      }catch(e){
-        console.error('Session check error:',e)
-      }
+        setUser(session?.user?{id:session.user.id,email:session.user.email}:null)
+      }catch(e){}
       setAuthLoading(false)
     }
     checkSession()
