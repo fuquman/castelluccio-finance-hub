@@ -55,6 +55,11 @@ export default function App(){
   const[sending,setSe]=useState(false)
   const[listening,setLi]=useState(false)
   const[billMenu,setBillMenu]=useState<string|null>(null)
+  const[settingsTab,setSettingsTab]=useState('accounts')
+  const[editItem,setEditItem]=useState<any>(null)
+  const[showForm,setShowForm]=useState(false)
+  const[formData,setFormData]=useState<any>({})
+  const[saving,setSaving]=useState(false)
   const chatEnd=useRef<HTMLDivElement>(null)
 
   // Load all data from Supabase
@@ -112,6 +117,40 @@ export default function App(){
   const incChange=lastSnap&&prevSnap?Number(lastSnap.total_income)-Number(prevSnap.total_income):0
   const savingsRate=lastSnap?Math.round(((Number(lastSnap.total_income)-Number(lastSnap.total_expenses))/Number(lastSnap.total_income))*100):0
 
+
+  // CRUD helpers
+  const reload=async()=>{
+    const[a,t,c,r,d,g,i,al,eb,sn]=await Promise.all([
+      supabase.from('bank_accounts').select('*').order('bank'),
+      supabase.from('transactions').select('*').order('date',{ascending:false}).limit(50),
+      supabase.from('budget_categories').select('*').order('name'),
+      supabase.from('recurring_payments').select('*').order('name'),
+      supabase.from('debts').select('*').eq('is_active',true).order('current_balance',{ascending:false}),
+      supabase.from('savings_goals').select('*').eq('is_active',true).order('priority'),
+      supabase.from('income_sources').select('*').eq('is_active',true),
+      supabase.from('finance_alerts').select('*').eq('is_dismissed',false).order('created_at',{ascending:false}),
+      supabase.from('email_bills').select('*').order('due_date'),
+      supabase.from('monthly_snapshots').select('*').order('month'),
+    ])
+    setA(a.data||[]);setT(t.data||[]);setC(c.data||[]);setR(r.data||[]);setD(d.data||[])
+    setG(g.data||[]);setI(i.data||[]);setAl(al.data||[]);setE(eb.data||[]);setS(sn.data||[])
+  }
+  const saveItem=async(table:string,data:any,id?:string)=>{
+    setSaving(true)
+    try{
+      if(id){await supabase.from(table).update(data).eq('id',id)}
+      else{await supabase.from(table).insert(data)}
+      await reload()
+      setShowForm(false);setEditItem(null);setFormData({})
+    }catch(e){console.error(e)}
+    setSaving(false)
+  }
+  const deleteItem=async(table:string,id:string)=>{
+    if(!confirm('Delete this item?'))return
+    await supabase.from(table).delete().eq('id',id)
+    await reload()
+  }
+
   if(loading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}><div style={{fontSize:48}}>💰</div><div style={{fontSize:24,fontWeight:700,color:'var(--orange)'}}>Finance Hub</div></div>
 
   return<div style={{minHeight:'100dvh',paddingBottom:100,background:'#000'}}>
@@ -159,7 +198,7 @@ export default function App(){
 
     {tab==='fella'&&<div style={{display:'flex',flexDirection:'column',height:'calc(100dvh - 110px)',padding:'0 20px'}}><div className="fu" style={{display:'flex',alignItems:'center',gap:14,marginBottom:20}}><Ico bg="var(--orange)" ch="🤖" size={56}/><div><div style={{fontSize:28,fontWeight:800}}>Fella</div><div style={{fontSize:13,color:'var(--t3)'}}>Voice + Text · Your money brain</div></div></div><div style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:10,paddingBottom:8}}>{chat.map((m,i)=><div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start'}}><div className={m.role==='user'?'cb-u':'cb-a'}>{m.text}</div></div>)}{sending&&<div style={{display:'flex'}}><div className="cb-a" style={{color:'var(--t3)'}}>Thinking...</div></div>}{chat.length===1&&!sending&&<div style={{display:'flex',flexDirection:'column',gap:10,marginTop:16}}><div style={{fontSize:13,color:'var(--t3)',fontWeight:600,marginBottom:2}}>Try asking...</div>{[{icon:'🏖️',q:"Can we afford a week in Byron Bay for the wedding in October? What do we need to save each week?"},{icon:'💸',q:"Where are we wasting money? Find any subscriptions or spending we should cut"},{icon:'📊',q:"We just spent $350 on the kids' school camp. How does that affect our budget this month?"}].map((ex,i)=><button key={i} onClick={()=>setCI(ex.q)} style={{display:'flex',alignItems:'flex-start',gap:14,padding:'16px 18px',background:'var(--card)',border:'none',borderRadius:14,cursor:'pointer',textAlign:'left'}}><span style={{fontSize:32,flexShrink:0,marginTop:1}}>{ex.icon}</span><span style={{fontSize:17,color:'var(--t2)',lineHeight:1.45}}>{ex.q}</span></button>)}</div>}<div ref={chatEnd}/></div><div style={{display:'flex',gap:10,padding:'12px 0'}}><button onClick={voice} style={{width:54,height:54,borderRadius:27,border:'none',background:listening?'var(--red-s)':'var(--card)',color:listening?'var(--red)':'var(--t3)',cursor:'pointer',fontSize:26,display:'flex',alignItems:'center',justifyContent:'center'}}>{listening?'⏹':'🎙'}</button><input value={chatIn} onChange={e=>setCI(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask Fella..." style={{flex:1,padding:'0 18px',height:54,borderRadius:27,border:'none',background:'var(--card)',color:'var(--t1)',fontSize:18,outline:'none',fontFamily:'inherit'}}/><button onClick={send} disabled={sending} style={{width:54,height:54,borderRadius:27,border:'none',background:'var(--orange)',color:'#000',cursor:'pointer',fontSize:24,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>↑</button></div></div>}
 
-    {more&&<div className="overlay" onClick={()=>setMore(false)}><div className="more-menu" onClick={e=>e.stopPropagation()}><div className="more-handle"/>{[{icon:'📈',label:'Trends',color:'var(--orange)',id:'trends'},{icon:'🔄',label:'Subscriptions',color:'var(--purple)',id:'subs'},{icon:'🏖️',label:'Savings Goals',color:'var(--green)',id:'goals'},{icon:'📬',label:'Bills & Invoices',color:'var(--blue)',id:'bills'},{icon:'⚙️',label:'Setup Guide',color:'var(--gray2)',id:'setup'}].map(item=><div key={item.id} className="more-item" onClick={()=>{setTab(item.id);setMore(false)}}><Ico bg={item.color} ch={item.icon} size={56}/><span style={{fontSize:22,fontWeight:500}}>{item.label}</span></div>)}<div className="more-item" onClick={()=>setMore(false)} style={{justifyContent:'center',padding:'20px 24px'}}><span style={{fontSize:20,color:'var(--t3)'}}>Cancel</span></div></div></div>}
+    {more&&<div className="overlay" onClick={()=>setMore(false)}><div className="more-menu" onClick={e=>e.stopPropagation()}><div className="more-handle"/>{[{icon:'📈',label:'Trends',color:'var(--orange)',id:'trends'},{icon:'🔄',label:'Subscriptions',color:'var(--purple)',id:'subs'},{icon:'🏖️',label:'Savings Goals',color:'var(--green)',id:'goals'},{icon:'📬',label:'Bills & Invoices',color:'var(--blue)',id:'bills'},{icon:'⚙️',label:'Settings',color:'var(--gray2)',id:'settings'},{icon:'📖',label:'Setup Guide',color:'var(--teal)',id:'setup'}].map(item=><div key={item.id} className="more-item" onClick={()=>{setTab(item.id);setMore(false)}}><Ico bg={item.color} ch={item.icon} size={56}/><span style={{fontSize:22,fontWeight:500}}>{item.label}</span></div>)}<div className="more-item" onClick={()=>setMore(false)} style={{justifyContent:'center',padding:'20px 24px'}}><span style={{fontSize:20,color:'var(--t3)'}}>Cancel</span></div></div></div>}
 
     {tab==='setup'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:20}}>
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Setup Guide</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>Get the most out of your Finance Hub</div></div>
@@ -185,6 +224,153 @@ export default function App(){
       </div></div>
     </div>}
 
-    <nav className="tbar">{[{id:'home',icon:'📊',l:'Home'},{id:'budget',icon:'🎯',l:'Budget'},{id:'debts',icon:'💳',l:'Debts'},{id:'fella',icon:'🤖',l:'Fella'},{id:'more',icon:'⚙️',l:'More'}].map(t=><button key={t.id} onClick={()=>t.id==='more'?setMore(true):setTab(t.id)} className={`tab ${(tab===t.id||(t.id==='more'&&['subs','goals','bills','trends','setup'].includes(tab)))?'tab-on':'tab-off'}`}><span className="tab-icon">{t.icon}</span><span className="tab-label">{t.l}</span></button>)}</nav>
+    {tab==='settings'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16,paddingBottom:20}}>
+      <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Settings</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>Manage your accounts, budgets & connections</div></div>
+
+      {/* Settings sub-tabs */}
+      <div className="fu s1" style={{display:'flex',gap:6,overflowX:'auto',paddingBottom:4}}>
+        {[{id:'accounts',l:'Accounts',i:'🏦'},{id:'budgets',l:'Budgets',i:'🎯'},{id:'debts_s',l:'Debts',i:'💳'},{id:'goals_s',l:'Goals',i:'🏖️'},{id:'income_s',l:'Income',i:'💰'},{id:'recurring_s',l:'Recurring',i:'🔄'},{id:'connections',l:'Connections',i:'🔗'}].map(st=>
+          <button key={st.id} onClick={()=>{setSettingsTab(st.id);setShowForm(false);setEditItem(null)}} style={{padding:'10px 16px',borderRadius:12,border:'none',background:settingsTab===st.id?'var(--orange)':'var(--card)',color:settingsTab===st.id?'#000':'var(--t2)',fontSize:15,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{st.i} {st.l}</button>
+        )}
+      </div>
+
+      {/* ACCOUNTS */}
+      {settingsTab==='accounts'&&<div className="fu s2">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Bank Accounts</div><button onClick={()=>{setFormData({name:'',bank:'',account_type:'transaction',balance:0});setEditItem(null);setShowForm(true)}} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
+        {showForm&&<div className="gc" style={{padding:20,marginBottom:12}}>
+          <div style={{fontSize:17,fontWeight:600,marginBottom:16}}>{editItem?'Edit Account':'New Account'}</div>
+          <input placeholder="Account name" value={formData.name||''} onChange={e=>setFormData({...formData,name:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Bank (e.g. ME Bank)" value={formData.bank||''} onChange={e=>setFormData({...formData,bank:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <select value={formData.account_type||'transaction'} onChange={e=>setFormData({...formData,account_type:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}>
+            <option value="transaction">Transaction</option><option value="savings">Savings</option><option value="credit">Credit Card</option><option value="loan">Loan</option><option value="mortgage">Mortgage</option>
+          </select>
+          <input placeholder="Balance" type="number" value={formData.balance||''} onChange={e=>setFormData({...formData,balance:parseFloat(e.target.value)||0})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:16,outline:'none',fontFamily:'inherit'}}/>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={()=>saveItem('bank_accounts',formData,editItem?.id)} disabled={saving} style={{flex:1,padding:'14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:600,cursor:'pointer'}}>{saving?'Saving...':'Save'}</button>
+            <button onClick={()=>{setShowForm(false);setEditItem(null)}} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t3)',fontSize:16,cursor:'pointer'}}>Cancel</button>
+          </div>
+        </div>}
+        <div className="gc">{accounts.map((a,i)=><div key={a.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>{setFormData({name:a.name,bank:a.bank,account_type:a.account_type,balance:Number(a.balance)});setEditItem(a);setShowForm(true)}}><Ico bg="var(--blue)" ch="🏦"/><div className="rb"><div className="rt">{a.name}</div><div className="rs">{a.bank} · {a.account_type}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(a.balance)>=0?'var(--green)':'var(--red)'}}>{$$(Number(a.balance))}</span></div>)}</div>
+      </div>}
+
+      {/* BUDGETS */}
+      {settingsTab==='budgets'&&<div className="fu s2">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Budget Categories</div><button onClick={()=>{setFormData({name:'',icon:'📁',color:'#ff9f0a',monthly_limit:0});setEditItem(null);setShowForm(true)}} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
+        {showForm&&<div className="gc" style={{padding:20,marginBottom:12}}>
+          <div style={{fontSize:17,fontWeight:600,marginBottom:16}}>{editItem?'Edit Budget':'New Budget'}</div>
+          <input placeholder="Category name" value={formData.name||''} onChange={e=>setFormData({...formData,name:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Icon emoji" value={formData.icon||''} onChange={e=>setFormData({...formData,icon:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Monthly limit" type="number" value={formData.monthly_limit||''} onChange={e=>setFormData({...formData,monthly_limit:parseFloat(e.target.value)||0})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:16,outline:'none',fontFamily:'inherit'}}/>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={()=>saveItem('budget_categories',formData,editItem?.id)} disabled={saving} style={{flex:1,padding:'14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:600,cursor:'pointer'}}>{saving?'Saving...':'Save'}</button>
+            <button onClick={()=>{setShowForm(false);setEditItem(null)}} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t3)',fontSize:16,cursor:'pointer'}}>Cancel</button>
+            {editItem&&<button onClick={()=>deleteItem('budget_categories',editItem.id)} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:16,cursor:'pointer'}}>Delete</button>}
+          </div>
+        </div>}
+        <div className="gc">{cats.map((c,i)=><div key={c.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>{setFormData({name:c.name,icon:c.icon,color:c.color,monthly_limit:Number(c.monthly_limit)});setEditItem(c);setShowForm(true)}}><Ico bg={c.color} ch={c.icon}/><div className="rb"><div className="rt">{c.name}</div><div className="rs">{$(Number(c.monthly_limit))}/mo</div></div></div>)}</div>
+      </div>}
+
+      {/* DEBTS */}
+      {settingsTab==='debts_s'&&<div className="fu s2">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Debts</div><button onClick={()=>{setFormData({name:'',type:'other',original_amount:0,current_balance:0,interest_rate:0,monthly_payment:0,lender:''});setEditItem(null);setShowForm(true)}} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
+        {showForm&&<div className="gc" style={{padding:20,marginBottom:12}}>
+          <div style={{fontSize:17,fontWeight:600,marginBottom:16}}>{editItem?'Edit Debt':'New Debt'}</div>
+          <input placeholder="Name" value={formData.name||''} onChange={e=>setFormData({...formData,name:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <select value={formData.type||'other'} onChange={e=>setFormData({...formData,type:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}>
+            <option value="credit_card">Credit Card</option><option value="personal_loan">Personal Loan</option><option value="car_loan">Car Loan</option><option value="mortgage">Mortgage</option><option value="bnpl">Buy Now Pay Later</option><option value="fine">Fine</option><option value="other">Other</option>
+          </select>
+          <input placeholder="Original amount" type="number" value={formData.original_amount||''} onChange={e=>setFormData({...formData,original_amount:parseFloat(e.target.value)||0})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Current balance" type="number" value={formData.current_balance||''} onChange={e=>setFormData({...formData,current_balance:parseFloat(e.target.value)||0})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Interest rate %" type="number" value={formData.interest_rate||''} onChange={e=>setFormData({...formData,interest_rate:parseFloat(e.target.value)||0})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Monthly payment" type="number" value={formData.monthly_payment||''} onChange={e=>setFormData({...formData,monthly_payment:parseFloat(e.target.value)||0})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Lender" value={formData.lender||''} onChange={e=>setFormData({...formData,lender:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:16,outline:'none',fontFamily:'inherit'}}/>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={()=>saveItem('debts',formData,editItem?.id)} disabled={saving} style={{flex:1,padding:'14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:600,cursor:'pointer'}}>{saving?'Saving...':'Save'}</button>
+            <button onClick={()=>{setShowForm(false);setEditItem(null)}} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t3)',fontSize:16,cursor:'pointer'}}>Cancel</button>
+            {editItem&&<button onClick={()=>deleteItem('debts',editItem.id)} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:16,cursor:'pointer'}}>Delete</button>}
+          </div>
+        </div>}
+        <div className="gc">{debts.map((d,i)=><div key={d.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>{setFormData({name:d.name,type:d.type,original_amount:Number(d.original_amount),current_balance:Number(d.current_balance),interest_rate:Number(d.interest_rate),monthly_payment:Number(d.monthly_payment),lender:d.lender});setEditItem(d);setShowForm(true)}}><Ico bg="var(--red)" ch="💳"/><div className="rb"><div className="rt">{d.name}</div><div className="rs">{d.lender} · {d.type.replace('_',' ')}</div></div><span className="mono rr" style={{fontWeight:600,color:'var(--red)'}}>{$$(Number(d.current_balance))}</span></div>)}</div>
+      </div>}
+
+      {/* GOALS */}
+      {settingsTab==='goals_s'&&<div className="fu s2">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Savings Goals</div><button onClick={()=>{setFormData({name:'',icon:'🎯',color:'#30d158',target_amount:0,current_amount:0,deadline:'',notes:''});setEditItem(null);setShowForm(true)}} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
+        {showForm&&<div className="gc" style={{padding:20,marginBottom:12}}>
+          <div style={{fontSize:17,fontWeight:600,marginBottom:16}}>{editItem?'Edit Goal':'New Goal'}</div>
+          <input placeholder="Goal name" value={formData.name||''} onChange={e=>setFormData({...formData,name:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Icon emoji" value={formData.icon||''} onChange={e=>setFormData({...formData,icon:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Target amount" type="number" value={formData.target_amount||''} onChange={e=>setFormData({...formData,target_amount:parseFloat(e.target.value)||0})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Saved so far" type="number" value={formData.current_amount||''} onChange={e=>setFormData({...formData,current_amount:parseFloat(e.target.value)||0})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Deadline (YYYY-MM-DD)" value={formData.deadline||''} onChange={e=>setFormData({...formData,deadline:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Notes (optional)" value={formData.notes||''} onChange={e=>setFormData({...formData,notes:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:16,outline:'none',fontFamily:'inherit'}}/>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={()=>saveItem('savings_goals',formData,editItem?.id)} disabled={saving} style={{flex:1,padding:'14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:600,cursor:'pointer'}}>{saving?'Saving...':'Save'}</button>
+            <button onClick={()=>{setShowForm(false);setEditItem(null)}} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t3)',fontSize:16,cursor:'pointer'}}>Cancel</button>
+            {editItem&&<button onClick={()=>deleteItem('savings_goals',editItem.id)} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:16,cursor:'pointer'}}>Delete</button>}
+          </div>
+        </div>}
+        <div className="gc">{goals.map((g,i)=><div key={g.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>{setFormData({name:g.name,icon:g.icon,color:g.color,target_amount:Number(g.target_amount),current_amount:Number(g.current_amount),deadline:g.deadline,notes:g.notes});setEditItem(g);setShowForm(true)}}><Ico bg={g.color} ch={g.icon}/><div className="rb"><div className="rt">{g.name}</div><div className="rs">{$(Number(g.current_amount))} of {$(Number(g.target_amount))}</div></div></div>)}</div>
+      </div>}
+
+      {/* INCOME */}
+      {settingsTab==='income_s'&&<div className="fu s2">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Income Sources</div><button onClick={()=>{setFormData({name:'',type:'salary',amount:0,frequency:'monthly'});setEditItem(null);setShowForm(true)}} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
+        {showForm&&<div className="gc" style={{padding:20,marginBottom:12}}>
+          <div style={{fontSize:17,fontWeight:600,marginBottom:16}}>{editItem?'Edit Income':'New Income Source'}</div>
+          <input placeholder="Name" value={formData.name||''} onChange={e=>setFormData({...formData,name:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <select value={formData.type||'salary'} onChange={e=>setFormData({...formData,type:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}>
+            <option value="salary">Salary</option><option value="side_hustle">Side Hustle</option><option value="freelance">Freelance</option><option value="investment">Investment</option><option value="government">Government</option><option value="other">Other</option>
+          </select>
+          <input placeholder="Amount" type="number" value={formData.amount||''} onChange={e=>setFormData({...formData,amount:parseFloat(e.target.value)||0})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <select value={formData.frequency||'monthly'} onChange={e=>setFormData({...formData,frequency:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:16,outline:'none',fontFamily:'inherit'}}>
+            <option value="weekly">Weekly</option><option value="fortnightly">Fortnightly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="yearly">Yearly</option><option value="irregular">Irregular</option>
+          </select>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={()=>saveItem('income_sources',formData,editItem?.id)} disabled={saving} style={{flex:1,padding:'14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:600,cursor:'pointer'}}>{saving?'Saving...':'Save'}</button>
+            <button onClick={()=>{setShowForm(false);setEditItem(null)}} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t3)',fontSize:16,cursor:'pointer'}}>Cancel</button>
+            {editItem&&<button onClick={()=>deleteItem('income_sources',editItem.id)} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:16,cursor:'pointer'}}>Delete</button>}
+          </div>
+        </div>}
+        <div className="gc">{incs.map((inc,i)=><div key={inc.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>{setFormData({name:inc.name,type:inc.type,amount:Number(inc.amount),frequency:inc.frequency});setEditItem(inc);setShowForm(true)}}><Ico bg="var(--green)" ch="💰"/><div className="rb"><div className="rt">{inc.name}</div><div className="rs">{inc.type.replace('_',' ')} · {inc.frequency}</div></div><span className="mono rr" style={{fontWeight:600,color:'var(--green)'}}>{$$(Number(inc.amount))}</span></div>)}</div>
+      </div>}
+
+      {/* RECURRING */}
+      {settingsTab==='recurring_s'&&<div className="fu s2">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Recurring Payments</div><button onClick={()=>{setFormData({name:'',amount:0,frequency:'monthly',category:'',status:'active'});setEditItem(null);setShowForm(true)}} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
+        {showForm&&<div className="gc" style={{padding:20,marginBottom:12}}>
+          <div style={{fontSize:17,fontWeight:600,marginBottom:16}}>{editItem?'Edit Recurring':'New Recurring Payment'}</div>
+          <input placeholder="Name" value={formData.name||''} onChange={e=>setFormData({...formData,name:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Amount" type="number" value={formData.amount||''} onChange={e=>setFormData({...formData,amount:parseFloat(e.target.value)||0})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <select value={formData.frequency||'monthly'} onChange={e=>setFormData({...formData,frequency:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}>
+            <option value="weekly">Weekly</option><option value="fortnightly">Fortnightly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="yearly">Yearly</option>
+          </select>
+          <input placeholder="Category" value={formData.category||''} onChange={e=>setFormData({...formData,category:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <select value={formData.status||'active'} onChange={e=>setFormData({...formData,status:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:16,outline:'none',fontFamily:'inherit'}}>
+            <option value="active">Active</option><option value="flagged">Flagged</option><option value="duplicate">Duplicate</option><option value="cancelled">Cancelled</option><option value="paused">Paused</option>
+          </select>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={()=>saveItem('recurring_payments',formData,editItem?.id)} disabled={saving} style={{flex:1,padding:'14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:600,cursor:'pointer'}}>{saving?'Saving...':'Save'}</button>
+            <button onClick={()=>{setShowForm(false);setEditItem(null)}} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t3)',fontSize:16,cursor:'pointer'}}>Cancel</button>
+            {editItem&&<button onClick={()=>deleteItem('recurring_payments',editItem.id)} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:16,cursor:'pointer'}}>Delete</button>}
+          </div>
+        </div>}
+        <div className="gc">{recs.map((r,i)=><div key={r.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>{setFormData({name:r.name,amount:Number(r.amount),frequency:r.frequency,category:r.category,status:r.status});setEditItem(r);setShowForm(true)}}><Ico bg={r.status==='active'?'var(--green)':r.status==='flagged'||r.status==='duplicate'?'var(--red)':'var(--t3)'} ch="🔄"/><div className="rb"><div className="rt">{r.name}</div><div className="rs">{r.category} · {r.frequency}</div></div><span className="mono rr" style={{fontWeight:600}}>{$$(Number(r.amount))}</span></div>)}</div>
+      </div>}
+
+      {/* CONNECTIONS */}
+      {settingsTab==='connections'&&<div className="fu s2">
+        <div className="sh">Data Connections</div>
+        <div className="gc">
+          {[{n:'Basiq (Bank Feeds)',s:'Not connected',c:'var(--red)',i:'🏦',d:'Connects to ME Bank, ING, Amex for live transactions'},{n:'Gmail (Bill Scanner)',s:'Not connected',c:'var(--red)',i:'📬',d:'Scans email for bills, invoices & payment notices'},{n:'Photo Upload (OCR)',s:'Ready',c:'var(--green)',i:'📸',d:'Snap a bill photo and Fella reads it'},{n:'Fella AI Chat',s:typeof window!=='undefined'&&window.location.hostname==='localhost'?'Needs API key':'Check Vercel env',c:'var(--orange)',i:'🤖',d:'Voice + text AI assistant. Needs ANTHROPIC_API_KEY in Vercel'},{n:'Manual Entry',s:'Active',c:'var(--green)',i:'✏️',d:'Add transactions, debts, goals manually via Settings'}].map((ds,i)=><div key={i} style={{padding:'16px 20px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',alignItems:'center',gap:14}}><Ico bg={ds.c} ch={ds.i}/><div style={{flex:1}}><div style={{fontSize:17,fontWeight:500}}>{ds.n}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{ds.d}</div></div><span style={{fontSize:13,color:ds.c,fontWeight:600,flexShrink:0}}>{ds.s}</span></div></div>)}
+        </div>
+        <div style={{marginTop:16,padding:20,background:'var(--orange-s)',borderRadius:14}}>
+          <div style={{fontSize:17,fontWeight:600,color:'var(--orange)',marginBottom:8}}>Need help connecting?</div>
+          <div style={{fontSize:15,color:'var(--t2)',lineHeight:1.55}}>Ask me in our next Claude chat session and I'll set up Basiq bank feeds, Gmail bill scanning, and your Anthropic API key for Fella.</div>
+        </div>
+      </div>}
+    </div>}
+
+    <nav className="tbar">{[{id:'home',icon:'📊',l:'Home'},{id:'budget',icon:'🎯',l:'Budget'},{id:'debts',icon:'💳',l:'Debts'},{id:'fella',icon:'🤖',l:'Fella'},{id:'more',icon:'⚙️',l:'More'}].map(t=><button key={t.id} onClick={()=>t.id==='more'?setMore(true):setTab(t.id)} className={`tab ${(tab===t.id||(t.id==='more'&&['subs','goals','bills','trends','setup','settings'].includes(tab)))?'tab-on':'tab-off'}`}><span className="tab-icon">{t.icon}</span><span className="tab-label">{t.l}</span></button>)}</nav>
   </div>
 }
