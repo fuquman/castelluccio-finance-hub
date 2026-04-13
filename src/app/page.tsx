@@ -230,7 +230,7 @@ export default function App(){
       )}
       {children}
       <div style={{display:'flex',gap:10,marginTop:6}}>
-        <Btn onClick={()=>save(table,fd,editItem?.id)} disabled={saving} style={{flex:1}}>{saving?<><span className="spinner"/> Saving</>:'Save'}</Btn>
+        <Btn onClick={()=>save(table,fd,editItem?.id)} disabled={saving} style={{flex:1}}>{saving?'⏳ Saving...':'Save'}</Btn>
         <Btn variant="secondary" onClick={()=>{setShowForm(null);setEditItem(null)}}>Cancel</Btn>
         {editItem&&<Btn variant="danger" onClick={()=>{del(table,editItem.id);setShowForm(null);setEditItem(null)}}>Delete</Btn>}
       </div>
@@ -243,7 +243,7 @@ export default function App(){
     <div style={{fontSize:48,fontWeight:800,color:'var(--orange)',letterSpacing:-1,animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s both'}}>Ca$ter</div>
     <div className="brand-bar" style={{animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s both'}}/>
     <div style={{fontSize:15,color:'var(--t3)',animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.3s both'}}>Loading your finances...</div>
-    <div style={{display:'flex',gap:8,marginTop:8,animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s both'}}}>
+    <div style={{display:'flex',gap:8,marginTop:8,animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s both'}}>
       <div className="skeleton" style={{width:60,height:8}}/>
       <div className="skeleton" style={{width:40,height:8}}/>
       <div className="skeleton" style={{width:50,height:8}}/>
@@ -305,7 +305,7 @@ export default function App(){
           <div style={{display:'flex',gap:8}}><Input placeholder="Amount (-ve for expense)" type="number" value={fd.amount??''} onChange={e=>setFd({...fd,amount:e.target.value})} style={{flex:1,marginBottom:8}}/><Input type="date" value={fd.date||new Date().toISOString().split('T')[0]} onChange={e=>setFd({...fd,date:e.target.value})} style={{width:140,marginBottom:8}}/></div>
           <Select value={fd.category||''} onChange={e=>setFd({...fd,category:e.target.value})}><option value="">Category...</option>{cats.map(c=><option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}<option value="Income">Income</option></Select>
           <Input placeholder="Tags (comma separated, e.g. essential, kids)" value={fd.tags||''} onChange={e=>setFd({...fd,tags:e.target.value})}/>
-          <Btn onClick={()=>save('transactions',{description:fd.description,amount:parseFloat(fd.amount)||0,category:fd.category||'Uncategorised',date:fd.date||new Date().toISOString().split('T')[0],logged_by:'manual',tags:fd.tags?fd.tags.split(',').map((t:string)=>t.trim()).filter(Boolean):[]});showToast('Transaction added!','success')} disabled={saving} style={{width:'100%'}}>{saving?<><span className="spinner"/> Adding</>:'Add'}</Btn>
+          <Btn onClick={()=>save('transactions',{description:fd.description,amount:parseFloat(fd.amount)||0,category:fd.category||'Uncategorised',date:fd.date||new Date().toISOString().split('T')[0],logged_by:'manual',tags:fd.tags?fd.tags.split(',').map((t:string)=>t.trim()).filter(Boolean):[]});showToast('Transaction added!','success')} disabled={saving} style={{width:'100%'}}>{saving?'⏳ Adding...':'Add'}</Btn>
         </div>}
         <div className="gc">{(dateFrom||dateTo?txs.filter(t=>(!dateFrom||t.date>=dateFrom)&&(!dateTo||t.date<=dateTo)):txs).slice(0,20).map((tx,i)=><div key={tx.id} style={{position:'relative'}}>
           <div className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>setTxMenu(txMenu===tx.id?null:tx.id)}>
@@ -444,7 +444,7 @@ export default function App(){
           <Input placeholder="Amount" type="number" value={fd.cci_amount??''} onChange={e=>setFd({...fd,cci_amount:e.target.value})}/>
           <Input type="date" value={fd.cci_date||new Date().toISOString().split('T')[0]} onChange={e=>setFd({...fd,cci_date:e.target.value})}/>
           <Select value={fd.cci_category||'Other'} onChange={e=>setFd({...fd,cci_category:e.target.value})}><option value="School Fees">School Fees</option><option value="Sports">Sports</option><option value="Clothing">Clothing</option><option value="Medical">Medical</option><option value="Activities">Activities</option><option value="Food">Food</option><option value="Other">Other</option></Select>
-          <Btn onClick={async()=>{if(!fd.description||!fd.cci_amount)return;setSaving(true);await supabase.from('cost_centre_items').insert({cost_centre_id:selectedKid,description:fd.description,amount:parseFloat(fd.cci_amount)||0,date:fd.cci_date||new Date().toISOString().split('T')[0],category:fd.cci_category||'Other'});await load();setFd({});setShowForm(null);setSaving(false)}} disabled={saving} style={{width:'100%'}}>{saving?<><span className="spinner"/> Adding</>:'Add Expense'}</Btn>
+          <Btn onClick={async()=>{if(!fd.description||!fd.cci_amount)return;setSaving(true);await supabase.from('cost_centre_items').insert({cost_centre_id:selectedKid,description:fd.description,amount:parseFloat(fd.cci_amount)||0,date:fd.cci_date||new Date().toISOString().split('T')[0],category:fd.cci_category||'Other'});await load();setFd({});setShowForm(null);setSaving(false)}} disabled={saving} style={{width:'100%'}}>{saving?'⏳ Adding...':'Add Expense'}</Btn>
         </div>}
 
         {/* Items list */}
@@ -553,7 +553,7 @@ export default function App(){
         <div className="gc"><div style={{padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div><div style={{fontSize:17,fontWeight:500}}>Bill Reminders</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>Get alerts before bills are due</div></div><button onClick={async()=>{if('Notification' in window){const p=await Notification.requestPermission();alert(p==='granted'?'Notifications enabled!':'Blocked — enable in browser settings')}else{alert('Not supported in this browser')}}} style={{padding:'10px 18px',borderRadius:10,border:'none',background:'var(--blue)',color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>Enable</button></div></div>
 
         <div className="sh" style={{marginTop:20,color:'var(--red)'}}>Danger Zone</div>
-        <div className="gc"><div style={{padding:'16px 20px'}}><div style={{fontSize:17,fontWeight:500,marginBottom:4}}>Reset All Data</div><div style={{fontSize:13,color:'var(--t3)',marginBottom:12}}>Delete everything and start fresh. Cannot be undone.</div><button onClick={resetData} disabled={saving} style={{padding:'12px 20px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:15,fontWeight:600,cursor:'pointer'}}>{saving?<><span className="spinner"/> Clearing</>:'🗑️ Clear All Data'}</button></div></div>
+        <div className="gc"><div style={{padding:'16px 20px'}}><div style={{fontSize:17,fontWeight:500,marginBottom:4}}>Reset All Data</div><div style={{fontSize:13,color:'var(--t3)',marginBottom:12}}>Delete everything and start fresh. Cannot be undone.</div><button onClick={resetData} disabled={saving} style={{padding:'12px 20px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:15,fontWeight:600,cursor:'pointer'}}>{saving?'⏳ Clearing...':'🗑️ Clear All Data'}</button></div></div>
       </div>}
 
       {/* Accounts */}
