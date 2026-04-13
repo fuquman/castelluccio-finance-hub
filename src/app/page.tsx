@@ -13,6 +13,8 @@ type Alrt={id:string;type:string;title:string;message:string;severity:string;cre
 type EBill={id:string;vendor:string;amount:number;due_date:string;category:string;status:string;subject:string}
 type Snap={month:string;total_income:number;total_expenses:number;net_cashflow:number}
 type Msg={role:'user'|'assistant';text:string}
+type CC={id:string;name:string;type:string;icon:string;color:string}
+type CCI={id:string;cost_centre_id:string;date:string;description:string;amount:number;category:string}
 type User={id:string;email?:string}
 
 const $=(n:number)=>new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD',minimumFractionDigits:0,maximumFractionDigits:0}).format(n)
@@ -55,6 +57,9 @@ export default function App(){
   const[sending,setSe]=useState(false)
   const[listening,setLi]=useState(false)
   const[billMenu,setBillMenu]=useState<string|null>(null)
+  const[costCentres,setCC]=useState<CC[]>([])
+  const[ccItems,setCCI]=useState<CCI[]>([])
+  const[selectedKid,setSelectedKid]=useState<string|null>(null)
   const[settingsTab,setSettingsTab]=useState('accounts')
   const[editItem,setEditItem]=useState<any>(null)
   const[showForm,setShowForm]=useState(false)
@@ -68,7 +73,7 @@ export default function App(){
     if(window.location.hash) window.history.replaceState(null,'',window.location.pathname)
     const load=async()=>{
       try{
-        const[a,t,c,r,d,g,i,al,eb,sn]=await Promise.all([
+        const[a,t,c,r,d,g,i,al,eb,sn,cc,cci]=await Promise.all([
           supabase.from('bank_accounts').select('*').order('bank'),
           supabase.from('transactions').select('*').order('date',{ascending:false}).limit(50),
           supabase.from('budget_categories').select('*').order('name'),
@@ -79,6 +84,8 @@ export default function App(){
           supabase.from('finance_alerts').select('*').eq('is_dismissed',false).order('created_at',{ascending:false}),
           supabase.from('email_bills').select('*').order('due_date'),
           supabase.from('monthly_snapshots').select('*').order('month'),
+          supabase.from('cost_centres').select('*').eq('is_active',true).order('name'),
+          supabase.from('cost_centre_items').select('*').order('date',{ascending:false}),
         ])
         setA(a.data||[]);setT(t.data||[]);setC(c.data||[])
         setR(r.data||[]);setD(d.data||[]);setG(g.data||[])
@@ -120,7 +127,7 @@ export default function App(){
 
   // CRUD helpers
   const reload=async()=>{
-    const[a,t,c,r,d,g,i,al,eb,sn]=await Promise.all([
+    const[a,t,c,r,d,g,i,al,eb,sn,cc,cci]=await Promise.all([
       supabase.from('bank_accounts').select('*').order('bank'),
       supabase.from('transactions').select('*').order('date',{ascending:false}).limit(50),
       supabase.from('budget_categories').select('*').order('name'),
@@ -131,9 +138,12 @@ export default function App(){
       supabase.from('finance_alerts').select('*').eq('is_dismissed',false).order('created_at',{ascending:false}),
       supabase.from('email_bills').select('*').order('due_date'),
       supabase.from('monthly_snapshots').select('*').order('month'),
+          supabase.from('cost_centres').select('*').eq('is_active',true).order('name'),
+          supabase.from('cost_centre_items').select('*').order('date',{ascending:false}),
     ])
     setA(a.data||[]);setT(t.data||[]);setC(c.data||[]);setR(r.data||[]);setD(d.data||[])
     setG(g.data||[]);setI(i.data||[]);setAl(al.data||[]);setE(eb.data||[]);setS(sn.data||[])
+    setCC(cc.data||[]);setCCI(cci.data||[])
   }
   const saveItem=async(table:string,data:any,id?:string)=>{
     setSaving(true)
@@ -198,7 +208,7 @@ export default function App(){
 
     {tab==='fella'&&<div style={{display:'flex',flexDirection:'column',height:'calc(100dvh - 110px)',padding:'0 20px'}}><div className="fu" style={{display:'flex',alignItems:'center',gap:14,marginBottom:20}}><Ico bg="var(--orange)" ch="🤖" size={56}/><div><div style={{fontSize:28,fontWeight:800}}>Fella</div><div style={{fontSize:13,color:'var(--t3)'}}>Voice + Text · Your money brain</div></div></div><div style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:10,paddingBottom:8}}>{chat.map((m,i)=><div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start'}}><div className={m.role==='user'?'cb-u':'cb-a'}>{m.text}</div></div>)}{sending&&<div style={{display:'flex'}}><div className="cb-a" style={{color:'var(--t3)'}}>Thinking...</div></div>}{chat.length===1&&!sending&&<div style={{display:'flex',flexDirection:'column',gap:10,marginTop:16}}><div style={{fontSize:13,color:'var(--t3)',fontWeight:600,marginBottom:2}}>Try asking...</div>{[{icon:'🏖️',q:"Can we afford a week in Byron Bay for the wedding in October? What do we need to save each week?"},{icon:'💸',q:"Where are we wasting money? Find any subscriptions or spending we should cut"},{icon:'📊',q:"We just spent $350 on the kids' school camp. How does that affect our budget this month?"}].map((ex,i)=><button key={i} onClick={()=>setCI(ex.q)} style={{display:'flex',alignItems:'flex-start',gap:14,padding:'16px 18px',background:'var(--card)',border:'none',borderRadius:14,cursor:'pointer',textAlign:'left'}}><span style={{fontSize:32,flexShrink:0,marginTop:1}}>{ex.icon}</span><span style={{fontSize:17,color:'var(--t2)',lineHeight:1.45}}>{ex.q}</span></button>)}</div>}<div ref={chatEnd}/></div><div style={{display:'flex',gap:10,padding:'12px 0'}}><button onClick={voice} style={{width:54,height:54,borderRadius:27,border:'none',background:listening?'var(--red-s)':'var(--card)',color:listening?'var(--red)':'var(--t3)',cursor:'pointer',fontSize:26,display:'flex',alignItems:'center',justifyContent:'center'}}>{listening?'⏹':'🎙'}</button><input value={chatIn} onChange={e=>setCI(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask Fella..." style={{flex:1,padding:'0 18px',height:54,borderRadius:27,border:'none',background:'var(--card)',color:'var(--t1)',fontSize:18,outline:'none',fontFamily:'inherit'}}/><button onClick={send} disabled={sending} style={{width:54,height:54,borderRadius:27,border:'none',background:'var(--orange)',color:'#000',cursor:'pointer',fontSize:24,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>↑</button></div></div>}
 
-    {more&&<div className="overlay" onClick={()=>setMore(false)}><div className="more-menu" onClick={e=>e.stopPropagation()}><div className="more-handle"/>{[{icon:'📈',label:'Trends',color:'var(--orange)',id:'trends'},{icon:'🔄',label:'Subscriptions',color:'var(--purple)',id:'subs'},{icon:'🏖️',label:'Savings Goals',color:'var(--green)',id:'goals'},{icon:'📬',label:'Bills & Invoices',color:'var(--blue)',id:'bills'},{icon:'⚙️',label:'Settings',color:'var(--gray2)',id:'settings'},{icon:'📖',label:'Setup Guide',color:'var(--teal)',id:'setup'}].map(item=><div key={item.id} className="more-item" onClick={()=>{setTab(item.id);setMore(false)}}><Ico bg={item.color} ch={item.icon} size={56}/><span style={{fontSize:22,fontWeight:500}}>{item.label}</span></div>)}<div className="more-item" onClick={()=>setMore(false)} style={{justifyContent:'center',padding:'20px 24px'}}><span style={{fontSize:20,color:'var(--t3)'}}>Cancel</span></div></div></div>}
+    {more&&<div className="overlay" onClick={()=>setMore(false)}><div className="more-menu" onClick={e=>e.stopPropagation()}><div className="more-handle"/>{[{icon:'📈',label:'Trends',color:'var(--orange)',id:'trends'},{icon:'🔄',label:'Subscriptions',color:'var(--purple)',id:'subs'},{icon:'🏖️',label:'Savings Goals',color:'var(--green)',id:'goals'},{icon:'📬',label:'Bills & Invoices',color:'var(--blue)',id:'bills'},{icon:'👶',label:'Kids',color:'var(--pink)',id:'kids'},{icon:'⚙️',label:'Settings',color:'var(--gray2)',id:'settings'},{icon:'📖',label:'Setup Guide',color:'var(--teal)',id:'setup'}].map(item=><div key={item.id} className="more-item" onClick={()=>{setTab(item.id);setMore(false)}}><Ico bg={item.color} ch={item.icon} size={56}/><span style={{fontSize:22,fontWeight:500}}>{item.label}</span></div>)}<div className="more-item" onClick={()=>setMore(false)} style={{justifyContent:'center',padding:'20px 24px'}}><span style={{fontSize:20,color:'var(--t3)'}}>Cancel</span></div></div></div>}
 
     {tab==='setup'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:20}}>
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Setup Guide</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>Get the most out of your Finance Hub</div></div>
@@ -224,12 +234,83 @@ export default function App(){
       </div></div>
     </div>}
 
+    {tab==='kids'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16,paddingBottom:20}}>
+      <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Kids</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>Cost centres per child — {new Date().getFullYear()} spending</div></div>
+
+      {/* Kid selector */}
+      {!selectedKid&&<div className="fu s1" style={{display:'flex',flexDirection:'column',gap:10}}>
+        {costCentres.filter(c=>c.type==='child').map((kid,i)=>{
+          const items=ccItems.filter(x=>x.cost_centre_id===kid.id)
+          const yearItems=items.filter(x=>new Date(x.date).getFullYear()===new Date().getFullYear())
+          const total=yearItems.reduce((s,x)=>s+Number(x.amount),0)
+          const cats=[...new Set(yearItems.map(x=>x.category))]
+          return<div key={kid.id} className={`gc fu s${i+1}`} style={{padding:'18px 20px',cursor:'pointer'}} onClick={()=>setSelectedKid(kid.id)}>
+            <div style={{display:'flex',alignItems:'center',gap:14}}>
+              <div style={{width:56,height:56,borderRadius:28,background:kid.color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:28}}>{kid.icon}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:22,fontWeight:700}}>{kid.name}</div>
+                <div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{cats.length} categories · {yearItems.length} items</div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div className="mono" style={{fontSize:22,fontWeight:700,color:'var(--orange)'}}>{$(total)}</div>
+                <div style={{fontSize:12,color:'var(--t3)'}}>this year</div>
+              </div>
+            </div>
+          </div>})}
+        <div className="fu s6" style={{background:'var(--orange-s)',borderRadius:14,padding:18}}>
+          <div style={{fontSize:15,fontWeight:600,color:'var(--orange)',marginBottom:4}}>Total Kids Spend {new Date().getFullYear()}</div>
+          <div className="mono" style={{fontSize:28,fontWeight:800,color:'var(--orange)'}}>{$(ccItems.filter(x=>new Date(x.date).getFullYear()===new Date().getFullYear()).reduce((s,x)=>s+Number(x.amount),0))}</div>
+        </div>
+      </div>}
+
+      {/* Individual kid view */}
+      {selectedKid&&(()=>{
+        const kid=costCentres.find(c=>c.id===selectedKid)
+        if(!kid)return null
+        const items=ccItems.filter(x=>x.cost_centre_id===kid.id)
+        const yearItems=items.filter(x=>new Date(x.date).getFullYear()===new Date().getFullYear())
+        const total=yearItems.reduce((s,x)=>s+Number(x.amount),0)
+        const byCat:{[k:string]:number}={}
+        yearItems.forEach(x=>{byCat[x.category]=(byCat[x.category]||0)+Number(x.amount)})
+        const catList=Object.entries(byCat).sort((a,b)=>b[1]-a[1])
+        const maxCat=catList.length?catList[0][1]:1
+        const catIcons:{[k:string]:string}={School:'🎓',Sport:'⚽',Clothes:'👕',Birthday:'🎂',Medical:'🏥',Essentials:'🍼',Other:'📦',Childcare:'👶'}
+        return<div>
+          <button onClick={()=>setSelectedKid(null)} style={{display:'flex',alignItems:'center',gap:8,background:'none',border:'none',color:'var(--orange)',fontSize:17,fontWeight:600,cursor:'pointer',padding:'8px 0',marginBottom:12}}>← All Kids</button>
+          <div className="fu" style={{display:'flex',alignItems:'center',gap:16,marginBottom:20}}>
+            <div style={{width:64,height:64,borderRadius:32,background:kid.color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:32}}>{kid.icon}</div>
+            <div><div style={{fontSize:28,fontWeight:800}}>{kid.name}</div><div className="mono" style={{fontSize:24,fontWeight:700,color:'var(--orange)',marginTop:4}}>{$(total)} <span style={{fontSize:14,fontWeight:500,color:'var(--t3)'}}>this year</span></div></div>
+          </div>
+
+          {/* Category breakdown */}
+          <div className="sh">Spending by Category</div>
+          <div className="gc" style={{marginBottom:16}}>{catList.map(([cat,amt],i)=><div key={cat} style={{padding:'14px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+              <span style={{fontSize:16,fontWeight:500}}>{catIcons[cat]||'📦'} {cat}</span>
+              <span className="mono" style={{fontSize:15,fontWeight:600}}>{$(amt)}</span>
+            </div>
+            <div className="pbar" style={{height:8,borderRadius:4}}><div className="pfill" style={{width:\`\${(amt/maxCat)*100}%\`,background:kid.color,borderRadius:4}}/></div>
+          </div>)}</div>
+
+          {/* Recent items */}
+          <div className="sh">Recent Items</div>
+          <div className="gc">{yearItems.slice(0,10).map((item,i)=><div key={item.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}>
+            <div className="rb"><div className="rt">{item.description}</div><div className="rs">{item.category} · {new Date(item.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div></div>
+            <span className="mono rr" style={{fontWeight:600}}>{$$(Number(item.amount))}</span>
+          </div>)}</div>
+
+          {/* Add expense button */}
+          <button onClick={()=>{setFormData({cost_centre_id:kid.id,description:'',amount:0,category:'School',date:new Date().toISOString().split('T')[0]});setEditItem(null);setShowForm(true);setTab('settings');setSettingsTab('kids_s')}} style={{width:'100%',marginTop:16,padding:'16px',borderRadius:14,border:'none',background:'var(--orange)',color:'#000',fontSize:17,fontWeight:600,cursor:'pointer'}}>+ Add Expense for {kid.name}</button>
+        </div>
+      })()}
+    </div>}
+
     {tab==='settings'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16,paddingBottom:20}}>
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Settings</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>Manage your accounts, budgets & connections</div></div>
 
       {/* Settings sub-tabs */}
       <div className="fu s1" style={{display:'flex',gap:6,overflowX:'auto',paddingBottom:4}}>
-        {[{id:'accounts',l:'Accounts',i:'🏦'},{id:'budgets',l:'Budgets',i:'🎯'},{id:'debts_s',l:'Debts',i:'💳'},{id:'goals_s',l:'Goals',i:'🏖️'},{id:'income_s',l:'Income',i:'💰'},{id:'recurring_s',l:'Recurring',i:'🔄'},{id:'connections',l:'Connections',i:'🔗'}].map(st=>
+        {[{id:'accounts',l:'Accounts',i:'🏦'},{id:'budgets',l:'Budgets',i:'🎯'},{id:'debts_s',l:'Debts',i:'💳'},{id:'goals_s',l:'Goals',i:'🏖️'},{id:'income_s',l:'Income',i:'💰'},{id:'recurring_s',l:'Recurring',i:'🔄'},{id:'kids_s',l:'Kids',i:'👶'},{id:'connections',l:'Connections',i:'🔗'}].map(st=>
           <button key={st.id} onClick={()=>{setSettingsTab(st.id);setShowForm(false);setEditItem(null)}} style={{padding:'10px 16px',borderRadius:12,border:'none',background:settingsTab===st.id?'var(--orange)':'var(--card)',color:settingsTab===st.id?'#000':'var(--t2)',fontSize:15,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{st.i} {st.l}</button>
         )}
       </div>
@@ -358,6 +439,42 @@ export default function App(){
         <div className="gc">{recs.map((r,i)=><div key={r.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>{setFormData({name:r.name,amount:Number(r.amount),frequency:r.frequency,category:r.category,status:r.status});setEditItem(r);setShowForm(true)}}><Ico bg={r.status==='active'?'var(--green)':r.status==='flagged'||r.status==='duplicate'?'var(--red)':'var(--t3)'} ch="🔄"/><div className="rb"><div className="rt">{r.name}</div><div className="rs">{r.category} · {r.frequency}</div></div><span className="mono rr" style={{fontWeight:600}}>{$$(Number(r.amount))}</span></div>)}</div>
       </div>}
 
+      {/* KIDS / COST CENTRES */}
+      {settingsTab==='kids_s'&&<div className="fu s2">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Children & Cost Centres</div><button onClick={()=>{setFormData({name:'',type:'child',icon:'👤',color:'#ff9f0a'});setEditItem(null);setShowForm(true)}} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add Child</button></div>
+        {showForm&&!formData.cost_centre_id&&<div className="gc" style={{padding:20,marginBottom:12}}>
+          <div style={{fontSize:17,fontWeight:600,marginBottom:16}}>{editItem?'Edit Child':'New Child'}</div>
+          <input placeholder="Name" value={formData.name||''} onChange={e=>setFormData({...formData,name:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Icon emoji" value={formData.icon||''} onChange={e=>setFormData({...formData,icon:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:16,outline:'none',fontFamily:'inherit'}}/>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={()=>saveItem('cost_centres',formData,editItem?.id)} disabled={saving} style={{flex:1,padding:'14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:600,cursor:'pointer'}}>{saving?'Saving...':'Save'}</button>
+            <button onClick={()=>{setShowForm(false);setEditItem(null)}} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t3)',fontSize:16,cursor:'pointer'}}>Cancel</button>
+            {editItem&&<button onClick={()=>deleteItem('cost_centres',editItem.id)} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:16,cursor:'pointer'}}>Delete</button>}
+          </div>
+        </div>}
+        {showForm&&formData.cost_centre_id&&<div className="gc" style={{padding:20,marginBottom:12}}>
+          <div style={{fontSize:17,fontWeight:600,marginBottom:16}}>Add Expense for {costCentres.find(c=>c.id===formData.cost_centre_id)?.name}</div>
+          <input placeholder="Description" value={formData.description||''} onChange={e=>setFormData({...formData,description:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <input placeholder="Amount" type="number" value={formData.amount||''} onChange={e=>setFormData({...formData,amount:parseFloat(e.target.value)||0})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}/>
+          <select value={formData.category||'School'} onChange={e=>setFormData({...formData,category:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit'}}>
+            <option value="School">School</option><option value="Sport">Sport</option><option value="Clothes">Clothes</option><option value="Birthday">Birthday</option><option value="Medical">Medical</option><option value="Essentials">Essentials</option><option value="Childcare">Childcare</option><option value="Entertainment">Entertainment</option><option value="Other">Other</option>
+          </select>
+          <input placeholder="Date" type="date" value={formData.date||''} onChange={e=>setFormData({...formData,date:e.target.value})} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:16,outline:'none',fontFamily:'inherit'}}/>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={()=>saveItem('cost_centre_items',formData,editItem?.id)} disabled={saving} style={{flex:1,padding:'14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:600,cursor:'pointer'}}>{saving?'Saving...':'Save'}</button>
+            <button onClick={()=>{setShowForm(false);setEditItem(null);setFormData({})}} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t3)',fontSize:16,cursor:'pointer'}}>Cancel</button>
+          </div>
+        </div>}
+        <div className="gc">{costCentres.map((kid,i)=>{
+          const total=ccItems.filter(x=>x.cost_centre_id===kid.id&&new Date(x.date).getFullYear()===new Date().getFullYear()).reduce((s,x)=>s+Number(x.amount),0)
+          return<div key={kid.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>{setFormData({name:kid.name,type:kid.type,icon:kid.icon,color:kid.color});setEditItem(kid);setShowForm(true)}}>
+            <div style={{width:44,height:44,borderRadius:22,background:kid.color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>{kid.icon}</div>
+            <div className="rb"><div className="rt">{kid.name}</div><div className="rs">{kid.type}</div></div>
+            <span className="mono rr" style={{fontWeight:600,color:'var(--orange)'}}>{$(total)}</span>
+          </div>})}</div>
+        <button onClick={()=>{setFormData({cost_centre_id:costCentres[0]?.id||'',description:'',amount:0,category:'School',date:new Date().toISOString().split('T')[0]});setEditItem(null);setShowForm(true)}} style={{width:'100%',marginTop:12,padding:'14px',borderRadius:12,border:'1px dashed var(--sep)',background:'transparent',color:'var(--orange)',fontSize:15,fontWeight:600,cursor:'pointer'}}>+ Add Expense to a Child</button>
+      </div>}
+
       {/* CONNECTIONS */}
       {settingsTab==='connections'&&<div className="fu s2">
         <div className="sh">Data Connections</div>
@@ -371,6 +488,6 @@ export default function App(){
       </div>}
     </div>}
 
-    <nav className="tbar">{[{id:'home',icon:'📊',l:'Home'},{id:'budget',icon:'🎯',l:'Budget'},{id:'debts',icon:'💳',l:'Debts'},{id:'fella',icon:'🤖',l:'Fella'},{id:'more',icon:'⚙️',l:'More'}].map(t=><button key={t.id} onClick={()=>t.id==='more'?setMore(true):setTab(t.id)} className={`tab ${(tab===t.id||(t.id==='more'&&['subs','goals','bills','trends','setup','settings'].includes(tab)))?'tab-on':'tab-off'}`}><span className="tab-icon">{t.icon}</span><span className="tab-label">{t.l}</span></button>)}</nav>
+    <nav className="tbar">{[{id:'home',icon:'📊',l:'Home'},{id:'budget',icon:'🎯',l:'Budget'},{id:'debts',icon:'💳',l:'Debts'},{id:'fella',icon:'🤖',l:'Fella'},{id:'more',icon:'⚙️',l:'More'}].map(t=><button key={t.id} onClick={()=>t.id==='more'?setMore(true):setTab(t.id)} className={`tab ${(tab===t.id||(t.id==='more'&&['subs','goals','bills','trends','setup','settings','kids'].includes(tab)))?'tab-on':'tab-off'}`}><span className="tab-icon">{t.icon}</span><span className="tab-label">{t.l}</span></button>)}</nav>
   </div>
 }
