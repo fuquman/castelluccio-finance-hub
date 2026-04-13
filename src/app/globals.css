@@ -130,12 +130,30 @@ body{font-family:'DM Sans',-apple-system,'SF Pro Text',system-ui,sans-serif;back
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
 
-/* ══ DESKTOP / TABLET ══ */
+/* ══ TABLET (600-1024px) ══ */
 @media (min-width: 600px) {
   body{display:flex;justify-content:center;background:#000}
-  body>div{max-width:430px;width:100%;position:relative}
-  .tbar{max-width:430px;left:50%;transform:translateX(-50%)}
-  .overlay{max-width:430px;left:50%;transform:translateX(-50%)}
-  .more-menu{max-width:430px}
-  .toast{max-width:380px}
+  body>div{max-width:680px;width:100%;position:relative}
+  .tbar{max-width:680px;left:50%;transform:translateX(-50%)}
+  .overlay{max-width:680px;left:50%;transform:translateX(-50%)}
+  .more-menu{max-width:500px}
+  .toast{max-width:500px}
+  .row{padding:16px 20px !important}
+  .gc{border-radius:18px !important}
+}
+
+/* ══ DESKTOP (1024px+) ══ */
+@media (min-width: 1024px) {
+  body>div{max-width:900px;padding:0 40px}
+  .tbar{max-width:900px;border-radius:20px 20px 0 0;bottom:0}
+  .overlay{max-width:900px}
+  .more-menu{max-width:500px}
+  .gc{border-radius:20px !important}
+}
+
+/* ══ WIDE DESKTOP (1400px+) ══ */
+@media (min-width: 1400px) {
+  body>div{max-width:1100px}
+  .tbar{max-width:1100px}
+  .overlay{max-width:1100px}
 }
