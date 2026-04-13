@@ -75,10 +75,10 @@ export default function App(){
           supabase.from('email_bills').select('*').order('due_date'),
           supabase.from('monthly_snapshots').select('*').order('month'),
         ])
-        setAcc(a.data||[]);setTx(t.data||[]);setCat(c.data||[])
-        setRec(r.data||[]);setDeb(d.data||[]);setGo(g.data||[])
-        setInc(i.data||[]);setAl(al.data||[]);setE(eb.data||[])
-        setSnap(sn.data||[])
+        setA(a.data||[]);setT(t.data||[]);setC(c.data||[])
+        setR(r.data||[]);setD(d.data||[]);setG(g.data||[])
+        setI(i.data||[]);setAl(al.data||[]);setE(eb.data||[])
+        setS(sn.data||[])
       }catch(e){console.error('Data load error:',e)}
       setL(false)
     }
