@@ -502,12 +502,171 @@ export default function App(){
       </div>}
     </div>}
 
+
+    {/* ═══════ USER GUIDE ═══════ */}
+    {tab==='guide'&&<div style={{padding:'0 20px 40px',display:'flex',flexDirection:'column',gap:20}}>
+      <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>User Guide</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>Everything Ca$ter can do</div></div>
+
+      {/* HOME */}
+      <div className="gc fu s1" style={{padding:0}}>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>📊 Home</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Your financial dashboard at a glance.</div></div>
+        <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {t:'Net Worth',d:'Total across all accounts minus all debts. Updates automatically when you edit accounts or debts.'},
+            {t:'Account Cards',d:'Shows each bank account with its current balance. Tap any account in Settings → Accounts to edit.'},
+            {t:'Income / Spent / Recurring',d:'Monthly summary cards. Income calculated from your income sources. Spent totals this month\'s transactions. Recurring totals all active subscriptions.'},
+            {t:'Cash Flow Chart',d:'6-month bar chart showing income vs expenses. Savings rate percentage shown in the header.'},
+            {t:'+ Add Transaction',d:'Quick-add form for manual transactions. Enter description, amount (negative for expenses), date, category, and optional tags.'},
+            {t:'Date Filter',d:'Use the From/To date pickers to filter transactions to any range. Shows up to 20 results when filtered.'},
+            {t:'📥 CSV Export',d:'Downloads all transactions (or filtered range) as a CSV file for your accountant or spreadsheet.'},
+            {t:'Tags',d:'Add comma-separated tags to transactions like "essential, tax-deductible, kids". Tags appear as blue pills on each row.'},
+          ].map((item,i)=><div key={i} style={{paddingLeft:16,borderLeft:'3px solid var(--orange)',marginLeft:4}}><div style={{fontSize:15,fontWeight:600}}>{item.t}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2,lineHeight:1.5}}>{item.d}</div></div>)}
+        </div>
+      </div>
+
+      {/* BUDGET */}
+      <div className="gc fu s2" style={{padding:0}}>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>🎯 Budget</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Track spending against monthly limits by category.</div></div>
+        <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {t:'Ring Charts',d:'Each category shows a donut ring — green when under budget, orange at 75%, red at 90%+.'},
+            {t:'+ Add Category',d:'Create new budget categories with a name, emoji icon, and monthly limit.'},
+            {t:'Tap to Edit',d:'Tap any category to change its name, icon, or monthly limit. Delete categories you don\'t need.'},
+            {t:'Spending Calculation',d:'Spending is calculated from this month\'s transactions that match the category name. Make sure your transaction categories match your budget categories.'},
+          ].map((item,i)=><div key={i} style={{paddingLeft:16,borderLeft:'3px solid var(--orange)',marginLeft:4}}><div style={{fontSize:15,fontWeight:600}}>{item.t}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2,lineHeight:1.5}}>{item.d}</div></div>)}
+        </div>
+      </div>
+
+      {/* DEBTS */}
+      <div className="gc fu s3" style={{padding:0}}>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>💳 Debts</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Track and pay down everything you owe.</div></div>
+        <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {t:'Total Remaining',d:'Big red number showing total debt across credit cards, loans, BNPL, fines, etc.'},
+            {t:'Progress Bars',d:'Each debt shows how much you\'ve paid off as a percentage of the original amount.'},
+            {t:'+ Add Debt',d:'Add any debt — credit card, car loan, mortgage, BNPL, fine, or other. Set the original amount, current balance, interest rate, and monthly payment.'},
+            {t:'Tap to Edit',d:'Tap any debt to update the balance, increase payments, or delete when paid off.'},
+            {t:'Types',d:'Credit Card, Personal Loan, Car Loan, Mortgage, BNPL (Buy Now Pay Later), Fine, Other.'},
+          ].map((item,i)=><div key={i} style={{paddingLeft:16,borderLeft:'3px solid var(--orange)',marginLeft:4}}><div style={{fontSize:15,fontWeight:600}}>{item.t}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2,lineHeight:1.5}}>{item.d}</div></div>)}
+        </div>
+      </div>
+
+      {/* FELLA */}
+      <div className="gc fu s4" style={{padding:0}}>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>🤖 Fella</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Your AI finance assistant. Named after Rockefeller.</div></div>
+        <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {t:'Text Chat',d:'Type questions like "Can we afford Byron Bay in October?" or "Where are we wasting money?" Fella sees all your financial data and gives personalised answers.'},
+            {t:'Voice Input',d:'Tap the 🎙 button and speak. Uses your phone\'s speech recognition (works best in Chrome/Safari). Say things like "We spent $200 on dinner last night."'},
+            {t:'Photo Upload',d:'Tap the 📷 button to snap a photo of a bill or receipt. In the full version, Fella will OCR it and extract the amount, vendor, and due date.'},
+            {t:'Suggested Questions',d:'When the chat is empty, tap any suggested question to get started.'},
+            {t:'⚠️ Requires API Key',d:'Fella needs an ANTHROPIC_API_KEY set in Vercel environment variables. Without it, chat will error. Get a key from console.anthropic.com.'},
+          ].map((item,i)=><div key={i} style={{paddingLeft:16,borderLeft:'3px solid var(--orange)',marginLeft:4}}><div style={{fontSize:15,fontWeight:600}}>{item.t}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2,lineHeight:1.5}}>{item.d}</div></div>)}
+        </div>
+      </div>
+
+      {/* SUBS & BILLS */}
+      <div className="gc fu s5" style={{padding:0}}>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>🔄 Subs & Bills</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>All recurring costs and incoming bills in one place.</div></div>
+        <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {t:'Monthly & Annual Totals',d:'See what all your subscriptions cost per month and per year combined.'},
+            {t:'💰 Price Changes',d:'When a subscription changes price, Ca$ter shows the old vs new amount and how much more (or less) you\'re paying. Shows ↑ or ↓ with the difference.'},
+            {t:'⚠️ Flagged / Duplicates',d:'Subscriptions marked as duplicates or flagged for review appear in a red section at the top.'},
+            {t:'Ownership Labels',d:'Each subscription shows who it belongs to — 👨 Ben, 👩 Sarah, or 👨‍👩‍👧‍👦 Family. Change this in Settings → Recurring.'},
+            {t:'Tags',d:'Tags appear as orange pills next to subscriptions (e.g. "entertainment", "essential"). Edit in Settings → Recurring.'},
+            {t:'Quick Actions',d:'Flag or Cancel any active subscription with one tap — no need to go to Settings.'},
+            {t:'Mark as Paid',d:'Bills from email have a "Paid" button to mark them as paid.'},
+            {t:'📸 Snap a Bill',d:'Tap the photo card to take a picture of a paper bill. Sends to Fella for processing.'},
+          ].map((item,i)=><div key={i} style={{paddingLeft:16,borderLeft:'3px solid var(--orange)',marginLeft:4}}><div style={{fontSize:15,fontWeight:600}}>{item.t}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2,lineHeight:1.5}}>{item.d}</div></div>)}
+        </div>
+      </div>
+
+      {/* GOALS */}
+      <div className="gc fu s6" style={{padding:0}}>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>🏖️ Goals</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Set savings targets and track progress.</div></div>
+        <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {t:'Ring Progress',d:'Each goal shows a donut ring with percentage complete, plus the emoji icon you chose.'},
+            {t:'Save Per Week/Month',d:'Ca$ter calculates exactly how much you need to save per week or per month to hit your target by the deadline.'},
+            {t:'+ Add Goal',d:'Create goals with a name, emoji, target amount, amount saved so far, deadline date, and optional notes.'},
+            {t:'Tap to Edit',d:'Tap any goal to update the saved amount, change the target, or delete it.'},
+          ].map((item,i)=><div key={i} style={{paddingLeft:16,borderLeft:'3px solid var(--orange)',marginLeft:4}}><div style={{fontSize:15,fontWeight:600}}>{item.t}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2,lineHeight:1.5}}>{item.d}</div></div>)}
+        </div>
+      </div>
+
+      {/* KIDS / COST CENTRES */}
+      <div className="gc fu s7" style={{padding:0}}>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>👶 Cost Centres</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Track spending per child, household area, or custom category.</div></div>
+        <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {t:'+ Add Cost Centre',d:'Create centres for each child, pet, household area, or anything you want to track separately. Set a name, emoji icon, and type (Child, Household, Custom).'},
+            {t:'Select & View',d:'Tap a cost centre button to see all expenses logged against it, with a running total.'},
+            {t:'+ Add Expense',d:'Add expenses to a cost centre with description, amount, date, and category (School Fees, Sports, Clothing, Medical, Activities, Food, Other).'},
+            {t:'Edit & Delete',d:'Edit or delete cost centres and individual expense items. Deleting a cost centre removes all its expenses too.'},
+          ].map((item,i)=><div key={i} style={{paddingLeft:16,borderLeft:'3px solid var(--orange)',marginLeft:4}}><div style={{fontSize:15,fontWeight:600}}>{item.t}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2,lineHeight:1.5}}>{item.d}</div></div>)}
+        </div>
+      </div>
+
+      {/* REPORTS */}
+      <div className="gc fu s8" style={{padding:0}}>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>📊 Reports & Export</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Generate reports and export your data.</div></div>
+        <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {t:'Date Range',d:'Set From and To dates to filter all report data to a specific period.'},
+            {t:'Quick Presets',d:'One-tap buttons for This Month, Last Month, Last 3 Months, This Year, Last FY.'},
+            {t:'Report Views',d:'Switch between Summary, Spending, Income, Debts, and Transactions views.'},
+            {t:'🖨 Print / PDF',d:'Tap the Print button to generate a printer-friendly version or save as PDF.'},
+            {t:'📥 CSV Export',d:'Also available on the Home tab — downloads filtered transactions as a CSV file.'},
+          ].map((item,i)=><div key={i} style={{paddingLeft:16,borderLeft:'3px solid var(--orange)',marginLeft:4}}><div style={{fontSize:15,fontWeight:600}}>{item.t}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2,lineHeight:1.5}}>{item.d}</div></div>)}
+        </div>
+      </div>
+
+      {/* SETTINGS */}
+      <div className="gc fu s9" style={{padding:0}}>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>⚙️ Settings</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Manage your data and connections.</div></div>
+        <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
+          {[
+            {t:'🔗 Connections',d:'See the status of all data sources — Basiq bank feeds, Gmail bill scanner, Photo OCR, Fella AI, and Manual Entry. Enable bill notification reminders here.'},
+            {t:'🏦 Accounts',d:'Add, edit, and delete bank accounts. Set the bank name, account type, and balance.'},
+            {t:'💰 Income',d:'Manage income sources — salary, side hustles, freelance, etc. Set the amount and pay frequency (weekly, fortnightly, monthly, etc).'},
+            {t:'🔄 Recurring',d:'Add, edit, and delete recurring payments. Set the name, amount, frequency, category, status, owner (Ben/Sarah/Family), and tags.'},
+            {t:'🗑️ Clear All Data',d:'Nuclear option — deletes all demo data so you can start fresh with real numbers. Double confirmation required. Cannot be undone.'},
+          ].map((item,i)=><div key={i} style={{paddingLeft:16,borderLeft:'3px solid var(--orange)',marginLeft:4}}><div style={{fontSize:15,fontWeight:600}}>{item.t}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2,lineHeight:1.5}}>{item.d}</div></div>)}
+        </div>
+      </div>
+
+      {/* COMING SOON */}
+      <div className="gc fu s10" style={{padding:20}}>
+        <div style={{fontSize:20,fontWeight:700,marginBottom:12}}>🚀 Coming Soon</div>
+        {[
+          {t:'Basiq Bank Feeds',d:'Live transaction feed from ME Bank, ING, and Amex — auto-detects subscriptions and categorises spending.'},
+          {t:'Gmail Bill Scanner',d:'Auto-reads bills from your email and logs them with amount, due date, and vendor.'},
+          {t:'Photo OCR',d:'Snap a paper bill and Fella extracts the details automatically.'},
+          {t:'Push Notifications',d:'Get alerted on your phone when bills are due or budgets are nearly spent.'},
+          {t:'Supabase Auth',d:'Proper login for you and Sarah with magic link email. Row-level security locks data to your household.'},
+          {t:'Auto Subscription Detection',d:'Fella scans bank transactions and automatically finds recurring charges you might have forgotten about.'},
+        ].map((item,i)=><div key={i} style={{paddingLeft:16,borderLeft:'3px solid var(--teal, #64d2ff)',marginLeft:4,marginBottom:12}}><div style={{fontSize:15,fontWeight:600}}>{item.t}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2,lineHeight:1.5}}>{item.d}</div></div>)}
+      </div>
+
+      {/* Add to Home Screen */}
+      <div className="gc fu" style={{padding:20,background:'var(--orange-s)'}}>
+        <div style={{fontSize:18,fontWeight:700,color:'var(--orange)',marginBottom:8}}>📱 Add to Home Screen</div>
+        <div style={{fontSize:14,color:'var(--t2)',lineHeight:1.6}}>For the best experience, add Ca$ter to your home screen:</div>
+        <div style={{fontSize:14,color:'var(--t2)',lineHeight:1.8,marginTop:8}}>
+          <strong>iPhone (Safari):</strong> Tap Share ↗ → Add to Home Screen<br/>
+          <strong>Android (Chrome):</strong> Tap ⋮ menu → Add to Home Screen<br/>
+          <strong>Desktop:</strong> Bookmark the URL or use Chrome's "Install App" option
+        </div>
+      </div>
+    </div>}
+
     {/* ── More Menu ── */}
     {more&&<div className="overlay" onClick={()=>setMore(false)}><div className="more-menu" onClick={e=>e.stopPropagation()}><div className="more-handle"/>{[
       {icon:'🔄',label:'Subs & Bills',color:'var(--purple)',id:'subs'},
       {icon:'🏖️',label:'Goals',color:'var(--green)',id:'goals'},
       {icon:'👶',label:'Kids',color:'var(--pink, #ff375f)',id:'kids'},
-      {icon:'📊',label:'Reports & Export',color:'var(--blue)',id:'reports'},{icon:'⚙️',label:'Settings',color:'var(--gray2, #555)',id:'settings'},
+      {icon:'📊',label:'Reports & Export',color:'var(--blue)',id:'reports'},{icon:'⚙️',label:'Settings',color:'var(--gray2, #555)',id:'settings'},{icon:'📖',label:'User Guide',color:'var(--teal, #64d2ff)',id:'guide'},
     ].map(item=><div key={item.id} className="more-item" onClick={()=>{setTab(item.id);setMore(false)}}><Ico bg={item.color} ch={item.icon} size={56}/><span style={{fontSize:22,fontWeight:500}}>{item.label}</span></div>)}
     <div className="more-item" onClick={()=>setMore(false)} style={{justifyContent:'center',padding:'20px 24px'}}><span style={{fontSize:20,color:'var(--t3)'}}>Cancel</span></div></div></div>}
 
