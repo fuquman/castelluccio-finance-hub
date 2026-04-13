@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 
 // ── Types ──
 type Acc={id:string;name:string;bank:string;account_type:string;balance:number}
-type Tx={id:string;date:string;description:string;amount:number;category:string;tags?:string[]}
+type Tx={id:string;date:string;description:string;amount:number;category:string;tags?:string[];cost_centre_id?:string}
 type Cat={id:string;name:string;icon:string;color:string;monthly_limit:number}
 type Rec={id:string;name:string;amount:number;frequency:string;category:string;status:string;notes:string;next_due_date:string;owner:string;previous_amount:number|null;price_changed_at:string|null;tags?:string[]}
 type Dbt={id:string;name:string;type:string;original_amount:number;current_balance:number;interest_rate:number;monthly_payment:number;lender:string}
@@ -84,6 +84,7 @@ export default function App(){
   const[fd,setFd]=useState<any>({})
   const[saving,setSaving]=useState(false)
   const[billMenu,setBillMenu]=useState<string|null>(null)
+  const[txMenu,setTxMenu]=useState<string|null>(null)
   const[selectedKid,setSelectedKid]=useState<string|null>(null)
   const[settingsSection,setSettingsSection]=useState('connections')
   const[reportFrom,setReportFrom]=useState(new Date(new Date().getFullYear(),0,1).toISOString().split('T')[0])
@@ -170,6 +171,23 @@ export default function App(){
     const url=URL.createObjectURL(blob)
     const a=document.createElement('a');a.href=url;a.download=`caster-transactions-${new Date().toISOString().split('T')[0]}.csv`;a.click()
     URL.revokeObjectURL(url)
+  }
+
+  const assignCostCentre=async(txId:string,ccId:string)=>{
+    await supabase.from('transactions').update({cost_centre_id:ccId}).eq('id',txId)
+    // Also add to cost_centre_items for tracking
+    const tx=txs.find(t=>t.id===txId)
+    if(tx){
+      await supabase.from('cost_centre_items').insert({
+        cost_centre_id:ccId,
+        description:tx.description,
+        amount:Math.abs(Number(tx.amount)),
+        date:tx.date,
+        category:tx.category||'Other'
+      })
+    }
+    setTxMenu(null)
+    await load()
   }
 
   // ── Chat ──
@@ -265,7 +283,25 @@ export default function App(){
           <Input placeholder="Tags (comma separated, e.g. essential, kids)" value={fd.tags||''} onChange={e=>setFd({...fd,tags:e.target.value})}/>
           <Btn onClick={()=>save('transactions',{description:fd.description,amount:parseFloat(fd.amount)||0,category:fd.category||'Uncategorised',date:fd.date||new Date().toISOString().split('T')[0],logged_by:'manual',tags:fd.tags?fd.tags.split(',').map((t:string)=>t.trim()).filter(Boolean):[]})} disabled={saving} style={{width:'100%'}}>{saving?'Saving...':'Add'}</Btn>
         </div>}
-        <div className="gc">{(dateFrom||dateTo?txs.filter(t=>(!dateFrom||t.date>=dateFrom)&&(!dateTo||t.date<=dateTo)):txs).slice(0,20).map((tx,i)=><div key={tx.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{tx.description}</div><div className="rs">{tx.category} · {new Date(tx.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}{tx.tags&&tx.tags.length>0&&<> · {tx.tags.map((tag:string,ti:number)=><span key={ti} style={{background:'var(--blue-s)',color:'var(--blue)',padding:'1px 6px',borderRadius:4,fontSize:10,fontWeight:600,marginLeft:4}}>{tag}</span>)}</>}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(tx.amount)>=0?'var(--green)':'var(--t1)'}}>{Number(tx.amount)>=0?'+':''}{$$(Number(tx.amount))}</span></div>)}</div>
+        <div className="gc">{(dateFrom||dateTo?txs.filter(t=>(!dateFrom||t.date>=dateFrom)&&(!dateTo||t.date<=dateTo)):txs).slice(0,20).map((tx,i)=><div key={tx.id} style={{position:'relative'}}>
+          <div className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>setTxMenu(txMenu===tx.id?null:tx.id)}>
+            <div className="rb">
+              <div className="rt">{tx.description}</div>
+              <div className="rs">{tx.category} · {new Date(tx.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}
+                {tx.cost_centre_id&&ccs.find(c=>c.id===tx.cost_centre_id)&&<span style={{background:'var(--purple-s, rgba(139,92,246,0.15))',color:'var(--purple, #8b5cf6)',padding:'1px 8px',borderRadius:6,fontSize:11,fontWeight:600,marginLeft:6}}>{ccs.find(c=>c.id===tx.cost_centre_id)?.icon} {ccs.find(c=>c.id===tx.cost_centre_id)?.name}</span>}
+                {tx.tags&&tx.tags.length>0&&tx.tags.map((tag:string,ti:number)=><span key={ti} style={{background:'var(--blue-s)',color:'var(--blue)',padding:'1px 6px',borderRadius:4,fontSize:10,fontWeight:600,marginLeft:4}}>{tag}</span>)}
+              </div>
+            </div>
+            <span className="mono rr" style={{fontWeight:600,color:Number(tx.amount)>=0?'var(--green)':'var(--t1)'}}>{Number(tx.amount)>=0?'+':''}{$$(Number(tx.amount))}</span>
+          </div>
+          {txMenu===tx.id&&<div style={{padding:'12px 18px',background:'var(--card2)',borderTop:'0.33px solid var(--sep)'}}>
+            <div style={{fontSize:14,fontWeight:600,color:'var(--t3)',marginBottom:10}}>Assign Cost Centre</div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+              {ccs.map(cc=><button key={cc.id} onClick={()=>assignCostCentre(tx.id,cc.id)} style={{padding:'8px 14px',borderRadius:10,border:tx.cost_centre_id===cc.id?'2px solid var(--orange)':'none',background:tx.cost_centre_id===cc.id?'var(--orange-s)':'var(--card)',color:'var(--t1)',fontSize:14,fontWeight:500,cursor:'pointer'}}>{cc.icon} {cc.name}</button>)}
+              {tx.cost_centre_id&&<button onClick={async()=>{await supabase.from('transactions').update({cost_centre_id:null}).eq('id',tx.id);setTxMenu(null);await load()}} style={{padding:'8px 14px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:14,fontWeight:500,cursor:'pointer'}}>✕ Remove</button>}
+            </div>
+          </div>}
+        </div>)}</div>
       </div>
 
       {/* Savings callout */}
@@ -364,7 +400,7 @@ export default function App(){
     {tab==='kids'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
       <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Cost Centres</h2><button onClick={()=>newRow('cost_centres',{name:'',icon:'👤',color:'#ff9f0a',type:'child'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
 
-      {showForm==='cost_centres'&&<EditForm table="cost_centres" fields={[{key:'name',label:'Name (e.g. child name)'},{key:'icon',label:'Icon emoji'},{key:'type',label:'Type',options:[{v:'child',l:'Child'},{v:'household',l:'Household'},{v:'custom',l:'Custom'}]}]}/>}
+      {showForm==='cost_centres'&&<EditForm table="cost_centres" fields={[{key:'name',label:'Name (e.g. child name)'},{key:'icon',label:'Icon emoji'},{key:'type',label:'Type',options:[{v:'child',l:'👶 Child'},{v:'spending',l:'💰 Spending'},{v:'household',l:'🏠 Household'},{v:'custom',l:'📁 Custom'}]}]}/>}
 
       {/* Cost Centre selector */}
       <div className="fu s1" style={{display:'flex',gap:10,overflowX:'auto',flexWrap:'wrap'}}>{ccs.map(cc=><button key={cc.id} onClick={()=>setSelectedKid(selectedKid===cc.id?null:cc.id)} style={{padding:'12px 20px',borderRadius:12,border:'none',background:selectedKid===cc.id?'var(--orange)':'var(--card)',color:selectedKid===cc.id?'#000':'var(--t2)',fontSize:16,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>{cc.icon} {cc.name}</button>)}
@@ -688,7 +724,7 @@ export default function App(){
     {more&&<div className="overlay" onClick={()=>setMore(false)}><div className="more-menu" onClick={e=>e.stopPropagation()}><div className="more-handle"/>{[
       {icon:'🔄',label:'Subs & Bills',color:'var(--purple)',id:'subs'},
       {icon:'🏖️',label:'Goals',color:'var(--green)',id:'goals'},
-      {icon:'👶',label:'Kids',color:'var(--pink, #ff375f)',id:'kids'},
+      {icon:'📁',label:'Cost Centres',color:'var(--purple, #8b5cf6)',id:'kids'},
       {icon:'📊',label:'Reports & Export',color:'var(--blue)',id:'reports'},{icon:'⚙️',label:'Settings',color:'var(--gray2, #555)',id:'settings'},{icon:'📖',label:'User Guide',color:'var(--teal, #64d2ff)',id:'guide'},
     ].map(item=><div key={item.id} className="more-item" onClick={()=>{setTab(item.id);setMore(false)}}><Ico bg={item.color} ch={item.icon} size={56}/><span style={{fontSize:22,fontWeight:500}}>{item.label}</span></div>)}
     <div className="more-item" onClick={()=>setMore(false)} style={{justifyContent:'center',padding:'20px 24px'}}><span style={{fontSize:20,color:'var(--t3)'}}>Cancel</span></div></div></div>}
