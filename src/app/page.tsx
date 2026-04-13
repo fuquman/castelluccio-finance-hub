@@ -239,11 +239,11 @@ export default function App(){
 
   // ── Loading ──
   if(loading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:24,background:'#000'}}>
-    <div style={{fontSize:100,animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1)'}}>💰</div>
-    <div style={{fontSize:48,fontWeight:800,color:'var(--orange)',letterSpacing:-1,animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s both'}}>Ca$ter</div>
-    <div className="brand-bar" style={{animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s both'}}/>
-    <div style={{fontSize:15,color:'var(--t3)',animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.3s both'}}>Loading your finances...</div>
-    <div style={{display:'flex',gap:8,marginTop:8,animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s both'}}>
+    <div style={{fontSize:100}}>💰</div>
+    <div style={{fontSize:48,fontWeight:800,color:'var(--orange)',letterSpacing:-1}}>Ca$ter</div>
+    <div className="brand-bar"/>
+    <div style={{fontSize:15,color:'var(--t3)'}}>Loading your finances...</div>
+    <div style={{display:'flex',gap:8,marginTop:8}}>
       <div className="skeleton" style={{width:60,height:8}}/>
       <div className="skeleton" style={{width:40,height:8}}/>
       <div className="skeleton" style={{width:50,height:8}}/>
