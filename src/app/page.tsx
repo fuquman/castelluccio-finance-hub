@@ -38,10 +38,7 @@ function Ico({bg,ch,size=50}:{bg:string;ch:string;size?:number}){
 export default function App(){
   const[user,setUser]=useState<User|null>({id:'ben',email:'ben@castelluccio.com.au'})
   const[authLoading,setAuthLoading]=useState(false)
-  const[authEmail,setAuthEmail]=useState('')
-  const[authSent,setAuthSent]=useState(false)
-  const[authError,setAuthError]=useState('')
-  const[tab,setTab]=useState('home')
+        const[tab,setTab]=useState('home')
   const[more,setMore]=useState(false)
   const[accounts,setA]=useState<Acc[]>([])
   const[txs,setT]=useState<Tx[]>([])
@@ -104,59 +101,7 @@ export default function App(){
   },[])
 
   // Sign in with magic link
-  const signIn=async()=>{
-    setAuthError('')
-    const{error}=await supabase.auth.signInWithOtp({email:authEmail,options:{emailRedirectTo:window.location.origin}})
-    if(error){setAuthError(error.message)}else{setAuthSent(true)}
-  }
-
-  // Sign out
-  const signOut=async()=>{await supabase.auth.signOut();setUser(null)}
-
-  // Auth loading screen
-  if(authLoading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16,background:'#000',color:'#fff'}}><div style={{fontSize:48}}>💰</div><div style={{fontSize:24,fontWeight:700,color:'var(--orange)'}}>Finance Hub</div></div>
-
-  // Login screen
-  if(!user)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',background:'#000',color:'#fff',padding:20}}>
-    <div style={{width:'100%',maxWidth:380,textAlign:'center'}}>
-      <div style={{fontSize:64,marginBottom:16}}>💰</div>
-      <h1 style={{fontSize:34,fontWeight:800,marginBottom:8}}>Finance Hub</h1>
-      <div style={{fontSize:15,color:'var(--t3)',marginBottom:40}}>Castelluccio Family</div>
-      {authSent?<div style={{padding:24}}>
-        <div style={{fontSize:48,marginBottom:16}}>📬</div>
-        <div style={{fontSize:20,fontWeight:600,marginBottom:8}}>Check your email</div>
-        <div style={{fontSize:15,color:'var(--t3)',lineHeight:1.5,marginBottom:20}}>We sent a magic link to <span style={{color:'var(--orange)',fontWeight:600}}>{authEmail}</span></div>
-        <button onClick={()=>setAuthSent(false)} style={{background:'none',border:'none',color:'var(--orange)',fontSize:15,fontWeight:600,cursor:'pointer',padding:8}}>Try a different email</button>
-      </div>:<div>
-        <input value={authEmail} onChange={e=>setAuthEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&signIn()} placeholder="your@email.com" type="email" style={{width:'100%',padding:'16px 20px',borderRadius:14,border:'none',background:'var(--card, #1c1c1e)',color:'#fff',fontSize:18,outline:'none',fontFamily:'inherit',marginBottom:12,textAlign:'center'}}/>
-        <button onClick={signIn} style={{width:'100%',padding:'16px 20px',borderRadius:14,border:'none',background:'var(--orange, #ff9f0a)',color:'#000',fontSize:18,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Send Magic Link</button>
-        {authError&&<div style={{marginTop:12,padding:'10px 14px',borderRadius:10,background:'var(--red-s, rgba(255,69,58,0.15))',color:'var(--red, #ff453a)',fontSize:14}}>{authError}</div>}
-        <div style={{marginTop:24,fontSize:13,color:'var(--t3, rgba(255,255,255,0.35))'}}>Only authorised Castelluccio emails can sign in</div>
-      </div>}
-    </div>
-  </div>
-
-  useEffect(()=>{(async()=>{
-    const[a,t,c,r,d,g,i,al,eb,sn]=await Promise.all([
-      supabase.from('bank_accounts').select('*').order('bank'),
-      supabase.from('transactions').select('*').order('date',{ascending:false}).limit(50),
-      supabase.from('budget_categories').select('*').order('name'),
-      supabase.from('recurring_payments').select('*').order('name'),
-      supabase.from('debts').select('*').eq('is_active',true).order('current_balance',{ascending:false}),
-      supabase.from('savings_goals').select('*').eq('is_active',true).order('priority'),
-      supabase.from('income_sources').select('*').eq('is_active',true),
-      supabase.from('finance_alerts').select('*').eq('is_dismissed',false).order('created_at',{ascending:false}),
-      supabase.from('email_bills').select('*').order('due_date'),
-      supabase.from('monthly_snapshots').select('*').order('month'),
-    ])
-    setA(a.data||[]);setT(t.data||[]);setC(c.data||[]);setR(r.data||[])
-    setD(d.data||[]);setG(g.data||[]);setI(i.data||[]);setAl(al.data||[])
-    setE(eb.data||[]);setS(sn.data||[]);setL(false)
-  })()},[])
-
-  useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:'smooth'})},[chat])
-
-  const bal=accounts.reduce((s,a)=>s+Number(a.balance),0)
+      const bal=accounts.reduce((s,a)=>s+Number(a.balance),0)
   const dbt=debts.reduce((s,d)=>s+Number(d.current_balance),0)
   const nw=bal-dbt
   const mInc=incs.reduce((s,i)=>{const a=Number(i.amount);return s+(i.frequency==='weekly'?a*4.33:i.frequency==='fortnightly'?a*2.17:a)},0)
