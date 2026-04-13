@@ -671,6 +671,15 @@ export default function App(){
     <div className="more-item" onClick={()=>setMore(false)} style={{justifyContent:'center',padding:'20px 24px'}}><span style={{fontSize:20,color:'var(--t3)'}}>Cancel</span></div></div></div>}
 
     {/* ── Tab Bar ── */}
-    <nav className="tbar">{[{id:'home',icon:'📊',l:'Home'},{id:'budget',icon:'🎯',l:'Budget'},{id:'debts',icon:'💳',l:'Debts'},{id:'fella',icon:'🤖',l:'Fella'},{id:'more',icon:'⚙️',l:'More'}].map(t=><button key={t.id} onClick={()=>t.id==='more'?setMore(true):setTab(t.id)} className={`tab ${(tab===t.id||(t.id==='more'&&['subs','goals','kids','settings','reports'].includes(tab)))?'tab-on':'tab-off'}`}><span className="tab-icon">{t.icon}</span><span className="tab-label">{t.l}</span></button>)}</nav>
+    <nav className="tbar">{[
+      {id:'home',icon:'📊',l:'Home'},
+      {id:'budget',icon:'🎯',l:'Budget'},
+      {id:'debts',icon:'💳',l:'Debts'},
+      {id:'fella',icon:'🤖',l:'Fella'},
+      {id:'more',icon:'⚙️',l:'More'}
+    ].map(t=><button key={t.id} onClick={()=>t.id==='more'?setMore(true):setTab(t.id)} className={`tab ${(tab===t.id||(t.id==='more'&&['subs','goals','kids','reports','settings','guide'].includes(tab)))?'tab-on':'tab-off'}`} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,background:'none',border:'none',cursor:'pointer',padding:'4px 0',minWidth:56}}>
+      <div className="tab-bg"><span className="tab-icon">{t.icon}</span></div>
+      <span className="tab-label">{t.l}</span>
+    </button>)}</nav>
   </div>
 }
