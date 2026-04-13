@@ -1,0 +1,64 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-primary: #06090f;
+  --bg-secondary: #0c1119;
+  --bg-card: #111827;
+  --bg-card-hover: #1a2332;
+  --bg-elevated: #1e293b;
+  --border: #1e293b;
+  --border-light: #2d3a4d;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-dim: #64748b;
+  --accent: #10b981;
+  --accent-hover: #34d399;
+  --accent-glow: rgba(16, 185, 129, 0.15);
+  --accent-dark: #059669;
+  --warning: #f59e0b;
+  --warning-glow: rgba(245, 158, 11, 0.12);
+  --danger: #ef4444;
+  --danger-glow: rgba(239, 68, 68, 0.12);
+  --info: #3b82f6;
+  --info-glow: rgba(59, 130, 246, 0.12);
+  --purple: #a78bfa;
+  --purple-glow: rgba(167, 139, 250, 0.12);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); }
+  50% { box-shadow: 0 0 16px 4px rgba(16,185,129,0.15); }
+}
+
+.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+.animate-slide-up { animation: slideUp 0.5s ease-out forwards; }
+.card-hover { transition: all 0.2s ease; }
+.card-hover:hover { background: var(--bg-card-hover); border-color: var(--border-light); transform: translateY(-1px); }
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
