@@ -87,6 +87,8 @@ export default function App(){
   const[txMenu,setTxMenu]=useState<string|null>(null)
   const[insightIdx,setInsightIdx]=useState(0)
   const carouselRef=useRef<HTMLDivElement>(null)
+  const[toast,setToast]=useState<{msg:string;type:'success'|'error'|'info'}|null>(null)
+  const showToast=(msg:string,type:'success'|'error'|'info'='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),2500)}
   const[selectedKid,setSelectedKid]=useState<string|null>(null)
   const[settingsSection,setSettingsSection]=useState('connections')
   const[reportFrom,setReportFrom]=useState(new Date(new Date().getFullYear(),0,1).toISOString().split('T')[0])
@@ -145,15 +147,15 @@ export default function App(){
     if(typeof data.tags==='string'){data.tags=data.tags.split(',').map((t:string)=>t.trim()).filter(Boolean)}
     setSaving(true)
     try{if(id){await supabase.from(table).update(data).eq('id',id)}else{await supabase.from(table).insert(data)}
-      await load();setShowForm(null);setEditItem(null);setFd({})}catch(e){console.error(e)}
+      await load();setShowForm(null);setEditItem(null);setFd({});showToast(id?'Updated!':'Added!','success')}catch(e){console.error(e);showToast('Something went wrong','error')}
     setSaving(false)
   }
   const del=async(table:string,id:string)=>{
     if(!confirm('Delete this item?'))return
-    await supabase.from(table).delete().eq('id',id);await load()
+    await supabase.from(table).delete().eq('id',id);await load();showToast('Deleted','info')
   }
   const dismiss=async(id:string)=>{
-    await supabase.from('finance_alerts').update({is_dismissed:true}).eq('id',id);setAl(a=>a.filter(x=>x.id!==id))
+    await supabase.from('finance_alerts').update({is_dismissed:true}).eq('id',id);setAl(a=>a.filter(x=>x.id!==id));showToast('Dismissed','info')
   }
   const resetData=async()=>{
     if(!confirm('Delete ALL data including demo data?'))return
@@ -190,6 +192,7 @@ export default function App(){
     }
     setTxMenu(null)
     await load()
+    showToast('Cost centre assigned!','success')
   }
 
   // ── Chat ──
@@ -227,7 +230,7 @@ export default function App(){
       )}
       {children}
       <div style={{display:'flex',gap:10,marginTop:6}}>
-        <Btn onClick={()=>save(table,fd,editItem?.id)} disabled={saving} style={{flex:1}}>{saving?'Saving...':'Save'}</Btn>
+        <Btn onClick={()=>save(table,fd,editItem?.id)} disabled={saving} style={{flex:1}}>{saving?<><span className="spinner"/> Saving</>:'Save'}</Btn>
         <Btn variant="secondary" onClick={()=>{setShowForm(null);setEditItem(null)}}>Cancel</Btn>
         {editItem&&<Btn variant="danger" onClick={()=>{del(table,editItem.id);setShowForm(null);setEditItem(null)}}>Delete</Btn>}
       </div>
@@ -235,13 +238,26 @@ export default function App(){
   )
 
   // ── Loading ──
-  if(loading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:24}}><div style={{fontSize:120}}>💰</div><div style={{fontSize:52,fontWeight:800,color:'var(--orange)',letterSpacing:-1}}>Ca$ter</div><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>Loading your finances...</div></div>
+  if(loading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:24,background:'#000'}}>
+    <div style={{fontSize:100,animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1)'}}>💰</div>
+    <div style={{fontSize:48,fontWeight:800,color:'var(--orange)',letterSpacing:-1,animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s both'}}>Ca$ter</div>
+    <div className="brand-bar" style={{animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s both'}}/>
+    <div style={{fontSize:15,color:'var(--t3)',animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.3s both'}}>Loading your finances...</div>
+    <div style={{display:'flex',gap:8,marginTop:8,animation:'fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.4s both'}}}>
+      <div className="skeleton" style={{width:60,height:8}}/>
+      <div className="skeleton" style={{width:40,height:8}}/>
+      <div className="skeleton" style={{width:50,height:8}}/>
+    </div>
+  </div>
 
   return<div style={{minHeight:'100dvh',paddingBottom:120,background:'#000'}}>
+    {/* Toast */}
+    <div className={`toast ${toast?'toast-show':''} ${toast?.type==='success'?'toast-success':toast?.type==='error'?'toast-error':'toast-info'}`}>{toast?.msg}</div>
+
     <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handlePhoto}/>
 
     {/* ── Header ── */}
-    <div style={{padding:'16px 20px 24px'}}><div style={{fontSize:15,color:'var(--t3)',marginBottom:4}}>Castelluccio Family</div><h1 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7,lineHeight:1.05}}>Ca$ter</h1><div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:8}}><span className="mono" style={{fontSize:34,fontWeight:700,color:nw>=0?'var(--orange)':'var(--red)'}}>{$(nw)}</span><span style={{fontSize:13,color:'var(--t3)'}}>net worth</span></div></div>
+    <div style={{padding:'16px 20px 24px'}}><div style={{fontSize:15,color:'var(--t3)',marginBottom:4}}>Castelluccio Family</div><h1 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7,lineHeight:1.05}}>Ca$ter</h1><div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:8}}><span className="mono" style={{fontSize:34,fontWeight:700,color:nw>=0?'var(--orange)':'var(--red)'}}>{$(nw)}</span><span style={{fontSize:13,color:'var(--t3)'}}>net worth</span></div><div className="brand-bar"/></div>
 
     {/* ── Alerts ── */}
     {alerts.length>0&&tab==='home'&&<div style={{padding:'0 20px 16px'}}>
@@ -255,7 +271,7 @@ export default function App(){
       </div>}
 
     {/* ═══════ HOME ═══════ */}
-    {tab==='home'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:20}}>
+    {tab==='home'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:20}}>
       {/* Accounts */}
       <div className="fu s1"><div className="sh">Accounts</div><div className="gc">{accounts.map((a,i)=><div key={a.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><Ico bg={a.account_type==='credit'?'var(--purple)':a.account_type==='loan'?'var(--red)':a.account_type==='savings'?'var(--green)':'var(--blue)'} ch={a.account_type==='credit'?'💳':a.account_type==='loan'?'🏦':a.account_type==='savings'?'🐷':'💰'}/><div className="rb"><div className="rt">{a.name}</div><div className="rs">{a.bank}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(a.balance)>=0?'var(--t1)':'var(--red)'}}>{$$(Number(a.balance))}</span></div>)}</div></div>
 
@@ -270,7 +286,7 @@ export default function App(){
           <div className="sh" style={{margin:0}}>Transactions</div>
           <div style={{display:'flex',gap:8}}>
             <button onClick={exportCSV} style={{padding:'10px 14px',borderRadius:12,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:13,fontWeight:600,cursor:'pointer'}}>📥 CSV</button>
-            <button onClick={()=>setShowForm(showForm==='tx'?null:'tx')} style={{padding:'10px 14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}}>{showForm==='tx'?'Cancel':'+ Add'}</button>
+            <button onClick={()=>setShowForm(showForm==='tx'?null:'tx')} style={{padding:'10px 14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}} className="btn-press">{showForm==='tx'?'Cancel':'+ Add'}</button>
           </div>
         </div>
         <div style={{display:'flex',gap:10,marginBottom:12}}>
@@ -289,7 +305,7 @@ export default function App(){
           <div style={{display:'flex',gap:8}}><Input placeholder="Amount (-ve for expense)" type="number" value={fd.amount??''} onChange={e=>setFd({...fd,amount:e.target.value})} style={{flex:1,marginBottom:8}}/><Input type="date" value={fd.date||new Date().toISOString().split('T')[0]} onChange={e=>setFd({...fd,date:e.target.value})} style={{width:140,marginBottom:8}}/></div>
           <Select value={fd.category||''} onChange={e=>setFd({...fd,category:e.target.value})}><option value="">Category...</option>{cats.map(c=><option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}<option value="Income">Income</option></Select>
           <Input placeholder="Tags (comma separated, e.g. essential, kids)" value={fd.tags||''} onChange={e=>setFd({...fd,tags:e.target.value})}/>
-          <Btn onClick={()=>save('transactions',{description:fd.description,amount:parseFloat(fd.amount)||0,category:fd.category||'Uncategorised',date:fd.date||new Date().toISOString().split('T')[0],logged_by:'manual',tags:fd.tags?fd.tags.split(',').map((t:string)=>t.trim()).filter(Boolean):[]})} disabled={saving} style={{width:'100%'}}>{saving?'Saving...':'Add'}</Btn>
+          <Btn onClick={()=>save('transactions',{description:fd.description,amount:parseFloat(fd.amount)||0,category:fd.category||'Uncategorised',date:fd.date||new Date().toISOString().split('T')[0],logged_by:'manual',tags:fd.tags?fd.tags.split(',').map((t:string)=>t.trim()).filter(Boolean):[]});showToast('Transaction added!','success')} disabled={saving} style={{width:'100%'}}>{saving?<><span className="spinner"/> Adding</>:'Add'}</Btn>
         </div>}
         <div className="gc">{(dateFrom||dateTo?txs.filter(t=>(!dateFrom||t.date>=dateFrom)&&(!dateTo||t.date<=dateTo)):txs).slice(0,20).map((tx,i)=><div key={tx.id} style={{position:'relative'}}>
           <div className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>setTxMenu(txMenu===tx.id?null:tx.id)}>
@@ -317,7 +333,7 @@ export default function App(){
     </div>}
 
     {/* ═══════ BUDGET ═══════ */}
-    {tab==='budget'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
+    {tab==='budget'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
       <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><div><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Budgets</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>{$(mSp)} of {$(cats.reduce((s,c)=>s+Number(c.monthly_limit),0))} spent</div></div><button onClick={()=>newRow('budget_categories',{name:'',icon:'📁',color:'#ff9f0a',monthly_limit:0})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
       {showForm==='budget_categories'&&<EditForm table="budget_categories" fields={[{key:'name',label:'Category name'},{key:'icon',label:'Icon emoji'},{key:'monthly_limit',label:'Monthly limit',type:'number'}]}/>}
       <div className="gc fu s1">{byCat.map((c,i)=><div key={c.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),gap:14,cursor:'pointer'}} onClick={()=>editRow('budget_categories',c,{name:c.name,icon:c.icon,color:c.color,monthly_limit:Number(c.monthly_limit)})}>
@@ -327,15 +343,15 @@ export default function App(){
     </div>}
 
     {/* ═══════ DEBTS ═══════ */}
-    {tab==='debts'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
+    {tab==='debts'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
       <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Debts</h2><button onClick={()=>newRow('debts',{name:'',type:'other',original_amount:0,current_balance:0,interest_rate:0,monthly_payment:0,lender:''})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
       <div className="fu s1" style={{background:'var(--red-s)',borderRadius:14,padding:20,textAlign:'center'}}><div style={{fontSize:15,color:'var(--t3)',marginBottom:4}}>Total Remaining</div><div className="mono" style={{fontSize:42,fontWeight:800,color:'var(--red)'}}>{$(dbt)}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:6}}>{$(debts.reduce((s,d)=>s+Number(d.monthly_payment),0))}/mo repayments</div></div>
       {showForm==='debts'&&<EditForm table="debts" fields={[{key:'name',label:'Name'},{key:'type',label:'Type',options:[{v:'credit_card',l:'Credit Card'},{v:'personal_loan',l:'Personal Loan'},{v:'car_loan',l:'Car Loan'},{v:'mortgage',l:'Mortgage'},{v:'bnpl',l:'BNPL'},{v:'fine',l:'Fine'},{v:'other',l:'Other'}]},{key:'original_amount',label:'Original amount',type:'number'},{key:'current_balance',label:'Current balance',type:'number'},{key:'interest_rate',label:'Interest rate %',type:'number'},{key:'monthly_payment',label:'Monthly payment',type:'number'},{key:'lender',label:'Lender'}]}/>}
-      <div className="gc fu s2">{debts.map((d,i)=>{const paid=Number(d.original_amount)-Number(d.current_balance);const prog=pc(paid,Number(d.original_amount));return<div key={d.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('debts',d,{name:d.name,type:d.type,original_amount:Number(d.original_amount),current_balance:Number(d.current_balance),interest_rate:Number(d.interest_rate),monthly_payment:Number(d.monthly_payment),lender:d.lender})}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><div><div style={{fontSize:17,fontWeight:500}}>{d.name}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{d.lender}{Number(d.interest_rate)>0?` · ${d.interest_rate}%`:''}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}%</span></div><div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:'var(--green)',borderRadius:3}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:10,fontSize:13,color:'var(--t3)'}}><span>Left <span className="mono" style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span></span><span><span className="mono" style={{fontWeight:600}}>{$$(Number(d.monthly_payment))}</span>/mo</span></div></div>})}</div>
+      <div className="gc fu s2">{debts.length===0?<div className="empty-state"><div className="empty-icon">🎉</div><div className="empty-title">No debts!</div><div className="empty-desc">You're debt-free. Nice one!</div></div>:null}{debts.map((d,i)=>{const paid=Number(d.original_amount)-Number(d.current_balance);const prog=pc(paid,Number(d.original_amount));return<div key={d.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('debts',d,{name:d.name,type:d.type,original_amount:Number(d.original_amount),current_balance:Number(d.current_balance),interest_rate:Number(d.interest_rate),monthly_payment:Number(d.monthly_payment),lender:d.lender})}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><div><div style={{fontSize:17,fontWeight:500}}>{d.name}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{d.lender}{Number(d.interest_rate)>0?` · ${d.interest_rate}%`:''}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}%</span></div><div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:'var(--green)',borderRadius:3}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:10,fontSize:13,color:'var(--t3)'}}><span>Left <span className="mono" style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span></span><span><span className="mono" style={{fontWeight:600}}>{$$(Number(d.monthly_payment))}</span>/mo</span></div></div>})}</div>
     </div>}
 
     {/* ═══════ FELLA ═══════ */}
-    {tab==='fella'&&<div style={{display:'flex',flexDirection:'column',height:'calc(100dvh - 110px)',padding:'0 20px'}}>
+    {tab==='fella'&&<div className="tab-content" style={{display:'flex',flexDirection:'column',height:'calc(100dvh - 110px)',padding:'0 20px'}}>
       <div className="fu" style={{display:'flex',alignItems:'center',gap:14,marginBottom:20}}><Ico bg="var(--orange)" ch="🤖" size={56}/><div><div style={{fontSize:28,fontWeight:800}}>Fella</div><div style={{fontSize:13,color:'var(--t3)'}}>Voice + Text · Your money brain</div></div></div>
       <div style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:10,paddingBottom:8}}>
         {chat.map((m,i)=><div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start'}}><div className={m.role==='user'?'cb-u':'cb-a'}>{m.text}</div></div>)}
@@ -355,7 +371,7 @@ export default function App(){
     </div>}
 
     {/* ═══════ SUBS & BILLS (combined) ═══════ */}
-    {tab==='subs'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
+    {tab==='subs'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Subs & Bills</h2></div>
       <div className="fu s1" style={{display:'flex',gap:10}}><div className="gc" style={{flex:1,padding:16,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:6}}>Monthly</div><div className="mono" style={{fontSize:28,fontWeight:700}}>{$(mRec)}</div></div><div className="gc" style={{flex:1,padding:16,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:6}}>Annual</div><div className="mono" style={{fontSize:28,fontWeight:700,color:'var(--orange)'}}>{$(mRec*12)}</div></div></div>
 
@@ -393,10 +409,10 @@ export default function App(){
     </div>}
 
     {/* ═══════ GOALS ═══════ */}
-    {tab==='goals'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
+    {tab==='goals'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
       <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Goals</h2><button onClick={()=>newRow('savings_goals',{name:'',icon:'🎯',color:'#30d158',target_amount:0,current_amount:0,deadline:'',notes:''})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
       {showForm==='savings_goals'&&<EditForm table="savings_goals" fields={[{key:'name',label:'Goal name'},{key:'icon',label:'Icon emoji'},{key:'target_amount',label:'Target amount',type:'number'},{key:'current_amount',label:'Saved so far',type:'number'},{key:'deadline',label:'Deadline (YYYY-MM-DD)'},{key:'notes',label:'Notes'}]}/>}
-      {goals.map((g,i)=>{const prog=pc(Number(g.current_amount),Number(g.target_amount));const rem=Number(g.target_amount)-Number(g.current_amount);const dl=new Date(g.deadline);const ml=Math.max(1,(dl.getFullYear()-now.getFullYear())*12+dl.getMonth()-now.getMonth());const pm=rem/ml;const pw=pm/4.33;return<div key={g.id} className={`gc fu s${i+1}`} style={{padding:20,cursor:'pointer'}} onClick={()=>editRow('savings_goals',g,{name:g.name,icon:g.icon,color:g.color,target_amount:Number(g.target_amount),current_amount:Number(g.current_amount),deadline:g.deadline,notes:g.notes})}>
+      {goals.length===0&&<div className="gc" style={{padding:0}}><div className="empty-state"><div className="empty-icon">🏖️</div><div className="empty-title">No goals yet</div><div className="empty-desc">Tap + Add to set your first savings target</div></div></div>}{goals.map((g,i)=>{const prog=pc(Number(g.current_amount),Number(g.target_amount));const rem=Number(g.target_amount)-Number(g.current_amount);const dl=new Date(g.deadline);const ml=Math.max(1,(dl.getFullYear()-now.getFullYear())*12+dl.getMonth()-now.getMonth());const pm=rem/ml;const pw=pm/4.33;return<div key={g.id} className={`gc fu s${i+1}`} style={{padding:20,cursor:'pointer'}} onClick={()=>editRow('savings_goals',g,{name:g.name,icon:g.icon,color:g.color,target_amount:Number(g.target_amount),current_amount:Number(g.current_amount),deadline:g.deadline,notes:g.notes})}>
         <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}><Ring value={Number(g.current_amount)} max={Number(g.target_amount)} size={64} sw={6} color={g.color}><span style={{fontSize:26}}>{g.icon}</span></Ring><div style={{flex:1}}><div style={{fontSize:17,fontWeight:600}}>{g.name}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{$(Number(g.target_amount))} by {dl.toLocaleDateString('en-AU',{month:'short',year:'numeric'})}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}%</span></div>
         <div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:g.color,borderRadius:3}}/></div>
         <div style={{display:'flex',justifyContent:'space-between',marginTop:8,fontSize:13,color:'var(--t3)'}}><span>Saved <span className="mono" style={{color:'var(--green)',fontWeight:600}}>{$(Number(g.current_amount))}</span></span><span>Left <span className="mono" style={{fontWeight:600}}>{$(rem)}</span></span></div>
@@ -405,7 +421,7 @@ export default function App(){
     </div>}
 
     {/* ═══════ KIDS ═══════ */}
-    {tab==='kids'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
+    {tab==='kids'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
       <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Cost Centres</h2><button onClick={()=>newRow('cost_centres',{name:'',icon:'👤',color:'#ff9f0a',type:'child'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
 
       {showForm==='cost_centres'&&<EditForm table="cost_centres" fields={[{key:'name',label:'Name (e.g. child name)'},{key:'icon',label:'Icon emoji'},{key:'type',label:'Type',options:[{v:'child',l:'👶 Child'},{v:'spending',l:'💰 Spending'},{v:'household',l:'🏠 Household'},{v:'custom',l:'📁 Custom'}]}]}/>}
@@ -428,7 +444,7 @@ export default function App(){
           <Input placeholder="Amount" type="number" value={fd.cci_amount??''} onChange={e=>setFd({...fd,cci_amount:e.target.value})}/>
           <Input type="date" value={fd.cci_date||new Date().toISOString().split('T')[0]} onChange={e=>setFd({...fd,cci_date:e.target.value})}/>
           <Select value={fd.cci_category||'Other'} onChange={e=>setFd({...fd,cci_category:e.target.value})}><option value="School Fees">School Fees</option><option value="Sports">Sports</option><option value="Clothing">Clothing</option><option value="Medical">Medical</option><option value="Activities">Activities</option><option value="Food">Food</option><option value="Other">Other</option></Select>
-          <Btn onClick={async()=>{if(!fd.description||!fd.cci_amount)return;setSaving(true);await supabase.from('cost_centre_items').insert({cost_centre_id:selectedKid,description:fd.description,amount:parseFloat(fd.cci_amount)||0,date:fd.cci_date||new Date().toISOString().split('T')[0],category:fd.cci_category||'Other'});await load();setFd({});setShowForm(null);setSaving(false)}} disabled={saving} style={{width:'100%'}}>{saving?'Saving...':'Add Expense'}</Btn>
+          <Btn onClick={async()=>{if(!fd.description||!fd.cci_amount)return;setSaving(true);await supabase.from('cost_centre_items').insert({cost_centre_id:selectedKid,description:fd.description,amount:parseFloat(fd.cci_amount)||0,date:fd.cci_date||new Date().toISOString().split('T')[0],category:fd.cci_category||'Other'});await load();setFd({});setShowForm(null);setSaving(false)}} disabled={saving} style={{width:'100%'}}>{saving?<><span className="spinner"/> Adding</>:'Add Expense'}</Btn>
         </div>}
 
         {/* Items list */}
@@ -441,7 +457,7 @@ export default function App(){
 
 
     {/* ═══════ REPORTS & EXPORT ═══════ */}
-    {tab==='reports'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16,paddingBottom:20}}>
+    {tab==='reports'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16,paddingBottom:20}}>
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Reports</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>View & export your financial data</div></div>
 
       {/* Date Range Picker */}
@@ -521,7 +537,7 @@ export default function App(){
       })()}
     </div>}
     {/* ═══════ SETTINGS ═══════ */}
-    {tab==='settings'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16,paddingBottom:20}}>
+    {tab==='settings'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16,paddingBottom:20}}>
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Settings</h2></div>
 
       <div className="fu s1" style={{display:'flex',gap:6,overflowX:'auto',paddingBottom:4}}>{[
@@ -537,7 +553,7 @@ export default function App(){
         <div className="gc"><div style={{padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div><div style={{fontSize:17,fontWeight:500}}>Bill Reminders</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>Get alerts before bills are due</div></div><button onClick={async()=>{if('Notification' in window){const p=await Notification.requestPermission();alert(p==='granted'?'Notifications enabled!':'Blocked — enable in browser settings')}else{alert('Not supported in this browser')}}} style={{padding:'10px 18px',borderRadius:10,border:'none',background:'var(--blue)',color:'#fff',fontSize:14,fontWeight:600,cursor:'pointer'}}>Enable</button></div></div>
 
         <div className="sh" style={{marginTop:20,color:'var(--red)'}}>Danger Zone</div>
-        <div className="gc"><div style={{padding:'16px 20px'}}><div style={{fontSize:17,fontWeight:500,marginBottom:4}}>Reset All Data</div><div style={{fontSize:13,color:'var(--t3)',marginBottom:12}}>Delete everything and start fresh. Cannot be undone.</div><button onClick={resetData} disabled={saving} style={{padding:'12px 20px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:15,fontWeight:600,cursor:'pointer'}}>{saving?'Deleting...':'🗑️ Clear All Data'}</button></div></div>
+        <div className="gc"><div style={{padding:'16px 20px'}}><div style={{fontSize:17,fontWeight:500,marginBottom:4}}>Reset All Data</div><div style={{fontSize:13,color:'var(--t3)',marginBottom:12}}>Delete everything and start fresh. Cannot be undone.</div><button onClick={resetData} disabled={saving} style={{padding:'12px 20px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:15,fontWeight:600,cursor:'pointer'}}>{saving?<><span className="spinner"/> Clearing</>:'🗑️ Clear All Data'}</button></div></div>
       </div>}
 
       {/* Accounts */}
@@ -566,7 +582,7 @@ export default function App(){
 
 
         {/* ═══════ USER GUIDE ═══════ */}
-    {tab==='guide'&&<div style={{padding:'0 20px 40px',display:'flex',flexDirection:'column',gap:24}}>
+    {tab==='guide'&&<div className="tab-content" style={{padding:'0 20px 40px',display:'flex',flexDirection:'column',gap:24}}>
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>User Guide</h2><div style={{fontSize:17,color:'var(--t3)',marginTop:4}}>Everything Ca$ter can do</div></div>
 
       {/* Quick Jump */}
