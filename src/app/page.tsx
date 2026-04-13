@@ -129,10 +129,10 @@ export default function App(){
 
   useEffect(()=>{
     if(typeof window!=='undefined'&&window.location.hash)window.history.replaceState(null,'',window.location.pathname)
+    load()
     const onScroll=()=>setScrolled(window.scrollY>60)
     window.addEventListener('scroll',onScroll,{passive:true})
     return()=>window.removeEventListener('scroll',onScroll)
-    load()
   },[])
   useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:'smooth'})},[chat])
 
