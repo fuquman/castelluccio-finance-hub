@@ -40,11 +40,11 @@ function Ico({bg,ch,size=50}:{bg:string;ch:string;size?:number}){
 }
 
 function Input({...props}:React.InputHTMLAttributes<HTMLInputElement>){
-  return<input {...props} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit',...(props.style||{})}}/>
+  return<input {...props} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'1px solid transparent',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit',transition:'border-color 0.2s ease,box-shadow 0.2s ease',...(props.style||{})}} onFocus={e=>{e.currentTarget.style.borderColor='var(--orange)';e.currentTarget.style.boxShadow='0 0 0 3px rgba(255,159,10,0.15)'}} onBlur={e=>{e.currentTarget.style.borderColor='transparent';e.currentTarget.style.boxShadow='none'}}/>
 }
 
 function Select({children,...props}:React.SelectHTMLAttributes<HTMLSelectElement>&{children:React.ReactNode}){
-  return<select {...props} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit',...(props.style||{})}}>{children}</select>
+  return<select {...props} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'1px solid transparent',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit',transition:'border-color 0.2s ease,box-shadow 0.2s ease',...(props.style||{})}} onFocus={e=>{e.currentTarget.style.borderColor='var(--orange)';e.currentTarget.style.boxShadow='0 0 0 3px rgba(255,159,10,0.15)'}} onBlur={e=>{e.currentTarget.style.borderColor='transparent';e.currentTarget.style.boxShadow='none'}}>{children}</select>
 }
 
 function Btn({children,variant='primary',...props}:React.ButtonHTMLAttributes<HTMLButtonElement>&{variant?:'primary'|'secondary'|'danger';children:React.ReactNode}){
@@ -80,6 +80,7 @@ export default function App(){
   const chatEnd=useRef<HTMLDivElement>(null)
   // Forms
   const[showForm,setShowForm]=useState<string|null>(null)
+  const[showWelcome,setShowWelcome]=useState(false)
   const[editItem,setEditItem]=useState<any>(null)
   const[fd,setFd]=useState<any>({})
   const[saving,setSaving]=useState(false)
@@ -89,6 +90,9 @@ export default function App(){
   const carouselRef=useRef<HTMLDivElement>(null)
   const[toast,setToast]=useState<{msg:string;type:'success'|'error'|'info'}|null>(null)
   const showToast=(msg:string,type:'success'|'error'|'info'='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),2500)}
+  const[refreshing,setRefreshing]=useState(false)
+  const[scrolled,setScrolled]=useState(false)
+  const pullRefresh=async()=>{setRefreshing(true);await load();setRefreshing(false);showToast('Refreshed!','success')}
   const[selectedKid,setSelectedKid]=useState<string|null>(null)
   const[settingsSection,setSettingsSection]=useState('connections')
   const[reportFrom,setReportFrom]=useState(new Date(new Date().getFullYear(),0,1).toISOString().split('T')[0])
@@ -118,12 +122,16 @@ export default function App(){
       setA(a.data||[]);setT(t.data||[]);setC(c.data||[]);setR(r.data||[]);setD(d.data||[])
       setG(g.data||[]);setI(i.data||[]);setAl(al.data||[]);setE(eb.data||[]);setS(sn.data||[])
       setCC(cc.data||[]);setCCI(cci.data||[])
+      if((a.data||[]).length===0&&(t.data||[]).length===0)setShowWelcome(true)
     }catch(e){console.error('Load error:',e)}
     setL(false)
   }
 
   useEffect(()=>{
     if(typeof window!=='undefined'&&window.location.hash)window.history.replaceState(null,'',window.location.pathname)
+    const onScroll=()=>setScrolled(window.scrollY>60)
+    window.addEventListener('scroll',onScroll,{passive:true})
+    return()=>window.removeEventListener('scroll',onScroll)
     load()
   },[])
   useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:'smooth'})},[chat])
@@ -251,13 +259,31 @@ export default function App(){
   </div>
 
   return<div style={{minHeight:'100dvh',paddingBottom:120,background:'#000'}}>
+    {/* Welcome / Onboarding */}
+    {showWelcome&&<div className="overlay" style={{zIndex:200}} onClick={()=>setShowWelcome(false)}>
+      <div style={{background:'var(--card)',borderRadius:24,margin:'10vh 20px',padding:32,maxWidth:400,marginLeft:'auto',marginRight:'auto'}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:48,textAlign:'center',marginBottom:16}}>💰</div>
+        <h2 style={{fontSize:28,fontWeight:800,textAlign:'center',marginBottom:8}}>Welcome to Ca$ter!</h2>
+        <div style={{fontSize:16,color:'var(--t3)',textAlign:'center',lineHeight:1.6,marginBottom:24}}>Your family finance command centre. Let's get you set up.</div>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          <button onClick={()=>{setShowWelcome(false);setTab('settings');setSettingsSection('accounts')}} style={{padding:'16px',borderRadius:14,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:700,cursor:'pointer'}} className="btn-press">🏦 Add Your Bank Accounts</button>
+          <button onClick={()=>{setShowWelcome(false);setTab('settings');setSettingsSection('income')}} style={{padding:'16px',borderRadius:14,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,fontWeight:600,cursor:'pointer'}} className="btn-press">💰 Set Up Income Sources</button>
+          <button onClick={()=>{setShowWelcome(false);setTab('guide')}} style={{padding:'16px',borderRadius:14,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,fontWeight:600,cursor:'pointer'}} className="btn-press">📖 Read the User Guide</button>
+          <button onClick={()=>setShowWelcome(false)} style={{padding:'14px',borderRadius:14,border:'none',background:'transparent',color:'var(--t3)',fontSize:15,cursor:'pointer'}}>Skip — explore with demo data</button>
+        </div>
+      </div>
+    </div>}
+
+    {/* Pull to refresh */}
+    <div style={{textAlign:'center',padding:refreshing?'12px 0':'0',height:refreshing?'auto':'0',overflow:'hidden',transition:'all 0.3s ease'}}>{refreshing&&<div style={{fontSize:13,color:'var(--t3)',fontWeight:600}}>↻ Refreshing...</div>}</div>
+
     {/* Toast */}
     <div className={`toast ${toast?'toast-show':''} ${toast?.type==='success'?'toast-success':toast?.type==='error'?'toast-error':'toast-info'}`}>{toast?.msg}</div>
 
     <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handlePhoto}/>
 
     {/* ── Header ── */}
-    <div style={{padding:'16px 20px 24px'}}><div style={{fontSize:15,color:'var(--t3)',marginBottom:4}}>Castelluccio Family</div><h1 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7,lineHeight:1.05}}>Ca$ter</h1><div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:8}}><span className="mono" style={{fontSize:34,fontWeight:700,color:nw>=0?'var(--orange)':'var(--red)'}}>{$(nw)}</span><span style={{fontSize:13,color:'var(--t3)'}}>net worth</span></div><div className="brand-bar"/></div>
+    <div style={{padding:scrolled?'10px 20px 12px':'16px 20px 24px',cursor:'pointer',transition:'padding 0.3s ease'}} onDoubleClick={pullRefresh}>{!scrolled&&<div style={{fontSize:15,color:'var(--t3)',marginBottom:4}}>Castelluccio Family</div>}<h1 style={{fontSize:scrolled?28:42,fontWeight:800,letterSpacing:-0.7,lineHeight:1.05,transition:'font-size 0.3s ease'}}>Ca$ter</h1><div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:8}}><span className="mono" style={{fontSize:scrolled?22:34,fontWeight:700,color:nw>=0?'var(--orange)':'var(--red)',transition:'font-size 0.3s ease'}}>{$(nw)}</span><span style={{fontSize:13,color:'var(--t3)'}}>net worth</span></div>{!scrolled&&<div className="brand-bar"/>}</div>
 
     {/* ── Alerts ── */}
     {alerts.length>0&&tab==='home'&&<div style={{padding:'0 20px 16px'}}>
@@ -394,6 +420,7 @@ export default function App(){
       {flagged.length>0&&<><div className="sh" style={{color:'var(--red)'}}>⚠ Review</div><div className="gc fu s2">{flagged.map((s,i)=><div key={s.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{fontSize:17,fontWeight:500}}>{s.name}</span><div style={{display:'flex',alignItems:'center',gap:8}}><span className="mono" style={{fontSize:15,fontWeight:600}}>{$$(Number(s.amount))}</span><span className="pill pill-r">{s.status==='duplicate'?'Duplicate':'Review'}</span></div></div>{s.notes&&<div style={{fontSize:13,color:'var(--t3)',marginTop:8}}>{s.notes}</div>}<div style={{fontSize:12,color:'var(--t3)',marginTop:4}}>{s.owner==='ben'?'👨 Ben':s.owner==='sarah'?'👩 Sarah':'👨‍👩‍👧‍👦 Family'}</div></div>)}</div></>}
 
       <div className="sh">Active Subscriptions</div>
+      {recs.filter(r=>r.status==='active').length===0&&<div className="gc"><div className="empty-state"><div className="empty-icon">🔄</div><div className="empty-title">No active subscriptions</div><div className="empty-desc">Add recurring payments in Settings</div></div></div>}
       <div className="gc fu s3">{recs.filter(r=>r.status==='active').map((s,i)=><div key={s.id} style={{padding:'14px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',alignItems:'center',gap:12}}><div style={{flex:1}}><div style={{fontSize:17,fontWeight:500}}>{s.name}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{s.category} · {s.frequency} · <span style={{color:s.owner==='ben'?'var(--blue)':s.owner==='sarah'?'var(--pink, #ff375f)':'var(--green)'}}>{s.owner==='ben'?'👨 Ben':s.owner==='sarah'?'👩 Sarah':'👨‍👩‍👧‍👦 Family'}</span>{s.tags&&s.tags.length>0&&s.tags.map((tag:string,ti:number)=><span key={ti} style={{background:'var(--orange-s)',color:'var(--orange)',padding:'1px 6px',borderRadius:4,fontSize:10,fontWeight:600,marginLeft:4}}>{tag}</span>)}</div></div><span className="mono" style={{fontSize:15,fontWeight:600,marginRight:8}}>{$$(Number(s.amount))}</span>
         <button onClick={async()=>{await supabase.from('recurring_payments').update({status:'flagged'}).eq('id',s.id);await load()}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'var(--orange-s)',color:'var(--orange)',fontSize:12,fontWeight:600,cursor:'pointer'}}>Flag</button>
         <button onClick={async()=>{if(confirm('Cancel '+s.name+'?')){await supabase.from('recurring_payments').update({status:'cancelled'}).eq('id',s.id);await load()}}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:12,fontWeight:600,cursor:'pointer',marginLeft:4}}>Cancel</button>
