@@ -423,10 +423,25 @@ export default function App(){
 
       <div className="sh">Active Subscriptions</div>
       {recs.filter(r=>r.status==='active').length===0&&<div className="gc"><div className="empty-state"><div className="empty-icon">🔄</div><div className="empty-title">No active subscriptions</div><div className="empty-desc">Add recurring payments in Settings</div></div></div>}
-      <div className="gc fu s3">{recs.filter(r=>r.status==='active').map((s,i)=><div key={s.id} style={{padding:'14px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',alignItems:'center',gap:12}}><div style={{flex:1}}><div style={{fontSize:18,fontWeight:600}}>{s.name}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{s.category} · {s.frequency} · <span style={{color:s.owner==='ben'?'var(--blue)':s.owner==='sarah'?'var(--pink, #ff375f)':'var(--green)'}}>{s.owner==='ben'?'👨 Ben':s.owner==='sarah'?'👩 Sarah':'👨‍👩‍👧‍👦 Family'}</span>{s.tags&&s.tags.length>0&&s.tags.map((tag:string,ti:number)=><span key={ti} style={{background:'var(--orange-s)',color:'var(--orange)',padding:'2px 8px',borderRadius:5,fontSize:14,fontWeight:600,marginLeft:4}}>{tag}</span>)}</div></div><span className="mono" style={{fontSize:18,fontWeight:600,marginRight:8}}>{$$(Number(s.amount))}</span>
-        <button onClick={async()=>{await supabase.from('recurring_payments').update({status:'flagged'}).eq('id',s.id);await load()}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'var(--orange-s)',color:'var(--orange)',fontSize:18,fontWeight:600,cursor:'pointer'}}>Flag</button>
-        <button onClick={async()=>{if(confirm('Cancel '+s.name+'?')){await supabase.from('recurring_payments').update({status:'cancelled'}).eq('id',s.id);await load()}}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:18,fontWeight:600,cursor:'pointer',marginLeft:4}}>Cancel</button>
-      </div></div>)}</div>
+      <div className="gc fu s3">{recs.filter(r=>r.status==='active').map((s,i)=><div key={s.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+          <div style={{flex:1,minWidth:0,paddingRight:12}}>
+            <div style={{fontSize:18,fontWeight:700}}>{s.name}</div>
+            <div style={{fontSize:16,color:'var(--t3)',marginTop:4}}>{s.category} · {s.frequency}</div>
+          </div>
+          <span className="mono" style={{fontSize:20,fontWeight:700,flexShrink:0}}>{$$(Number(s.amount))}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+            <span style={{color:s.owner==='ben'?'var(--blue)':s.owner==='sarah'?'var(--pink, #ff375f)':'var(--green)',fontSize:16,fontWeight:600}}>{s.owner==='ben'?'👨 Ben':s.owner==='sarah'?'👩 Sarah':'👨‍👩‍👧‍👦 Family'}</span>
+            {s.tags&&s.tags.length>0&&s.tags.map((tag:string,ti:number)=><span key={ti} style={{background:'var(--orange-s)',color:'var(--orange)',padding:'2px 8px',borderRadius:5,fontSize:13,fontWeight:600}}>{tag}</span>)}
+          </div>
+          <div style={{display:'flex',gap:8,flexShrink:0}}>
+            <button onClick={async()=>{await supabase.from('recurring_payments').update({status:'flagged'}).eq('id',s.id);await load();showToast('Flagged','info')}} className="btn-press" style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange-s)',color:'var(--orange)',fontSize:14,fontWeight:600,cursor:'pointer'}}>Flag</button>
+            <button onClick={async()=>{if(confirm('Cancel '+s.name+'?')){await supabase.from('recurring_payments').update({status:'cancelled'}).eq('id',s.id);await load();showToast('Cancelled','info')}}} className="btn-press" style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:14,fontWeight:600,cursor:'pointer'}}>Cancel</button>
+          </div>
+        </div>
+      </div>)}</div>
 
       {/* Bills from email */}
       <div className="sh">📬 Bills from Email</div>
