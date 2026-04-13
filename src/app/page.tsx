@@ -515,9 +515,19 @@ export default function App(){
     {tab==='guide'&&<div style={{padding:'0 20px 40px',display:'flex',flexDirection:'column',gap:20}}>
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>User Guide</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>Everything Ca$ter can do</div></div>
 
+      {/* Quick Jump */}
+      <div className="gc fu s1" style={{padding:16}}>
+        <div style={{fontSize:15,fontWeight:600,marginBottom:12}}>Quick Jump</div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+          {[{l:'📊 Home',t:'home'},{l:'🎯 Budget',t:'budget'},{l:'💳 Debts',t:'debts'},{l:'🤖 Fella',t:'fella'},{l:'🔄 Subs',t:'subs'},{l:'🏖️ Goals',t:'goals'},{l:'👶 Kids',t:'kids'},{l:'📊 Reports',t:'reports'},{l:'⚙️ Settings',t:'settings'}].map(q=>
+            <button key={q.t} onClick={()=>setTab(q.t)} style={{padding:'10px 16px',borderRadius:12,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:14,fontWeight:600,cursor:'pointer'}}>{q.l}</button>
+          )}
+        </div>
+      </div>
+
       {/* HOME */}
       <div className="gc fu s1" style={{padding:0}}>
-        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>📊 Home</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Your financial dashboard at a glance.</div></div>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>📊 Home</div><button onClick={()=>setTab('home')} style={{marginTop:8,padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}}>Go to Home →</button><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Your financial dashboard at a glance.</div></div>
         <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
           {[
             {t:'Net Worth',d:'Total across all accounts minus all debts. Updates automatically when you edit accounts or debts.'},
@@ -534,7 +544,7 @@ export default function App(){
 
       {/* BUDGET */}
       <div className="gc fu s2" style={{padding:0}}>
-        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>🎯 Budget</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Track spending against monthly limits by category.</div></div>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>🎯 Budget</div><button onClick={()=>setTab('budget')} style={{marginTop:8,padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}}>Go to Budget →</button><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Track spending against monthly limits by category.</div></div>
         <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
           {[
             {t:'Ring Charts',d:'Each category shows a donut ring — green when under budget, orange at 75%, red at 90%+.'},
@@ -547,7 +557,7 @@ export default function App(){
 
       {/* DEBTS */}
       <div className="gc fu s3" style={{padding:0}}>
-        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>💳 Debts</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Track and pay down everything you owe.</div></div>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>💳 Debts</div><button onClick={()=>setTab('debts')} style={{marginTop:8,padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}}>Go to Debts →</button><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Track and pay down everything you owe.</div></div>
         <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
           {[
             {t:'Total Remaining',d:'Big red number showing total debt across credit cards, loans, BNPL, fines, etc.'},
@@ -561,7 +571,7 @@ export default function App(){
 
       {/* FELLA */}
       <div className="gc fu s4" style={{padding:0}}>
-        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>🤖 Fella</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Your AI finance assistant. Named after Rockefeller.</div></div>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>🤖 Fella</div><button onClick={()=>setTab('fella')} style={{marginTop:8,padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}}>Go to Fella →</button><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Your AI finance assistant. Named after Rockefeller.</div></div>
         <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
           {[
             {t:'Text Chat',d:'Type questions like "Can we afford Byron Bay in October?" or "Where are we wasting money?" Fella sees all your financial data and gives personalised answers.'},
@@ -575,7 +585,7 @@ export default function App(){
 
       {/* SUBS & BILLS */}
       <div className="gc fu s5" style={{padding:0}}>
-        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>🔄 Subs & Bills</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>All recurring costs and incoming bills in one place.</div></div>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>🔄 Subs & Bills</div><button onClick={()=>setTab('subs')} style={{marginTop:8,padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}}>Go to Subs & Bills →</button><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>All recurring costs and incoming bills in one place.</div></div>
         <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
           {[
             {t:'Monthly & Annual Totals',d:'See what all your subscriptions cost per month and per year combined.'},
@@ -592,7 +602,7 @@ export default function App(){
 
       {/* GOALS */}
       <div className="gc fu s6" style={{padding:0}}>
-        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>🏖️ Goals</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Set savings targets and track progress.</div></div>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>🏖️ Goals</div><button onClick={()=>setTab('goals')} style={{marginTop:8,padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}}>Go to Goals →</button><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Set savings targets and track progress.</div></div>
         <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
           {[
             {t:'Ring Progress',d:'Each goal shows a donut ring with percentage complete, plus the emoji icon you chose.'},
@@ -605,7 +615,7 @@ export default function App(){
 
       {/* KIDS / COST CENTRES */}
       <div className="gc fu s7" style={{padding:0}}>
-        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>👶 Cost Centres</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Track spending per child, household area, or custom category.</div></div>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>👶 Cost Centres</div><button onClick={()=>setTab('kids')} style={{marginTop:8,padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}}>Go to Cost Centres →</button><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Track spending per child, household area, or custom category.</div></div>
         <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
           {[
             {t:'+ Add Cost Centre',d:'Create centres for each child, pet, household area, or anything you want to track separately. Set a name, emoji icon, and type (Child, Household, Custom).'},
@@ -618,7 +628,7 @@ export default function App(){
 
       {/* REPORTS */}
       <div className="gc fu s8" style={{padding:0}}>
-        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>📊 Reports & Export</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Generate reports and export your data.</div></div>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>📊 Reports & Export</div><button onClick={()=>setTab('reports')} style={{marginTop:8,padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}}>Go to Reports →</button><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Generate reports and export your data.</div></div>
         <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
           {[
             {t:'Date Range',d:'Set From and To dates to filter all report data to a specific period.'},
@@ -632,7 +642,7 @@ export default function App(){
 
       {/* SETTINGS */}
       <div className="gc fu s9" style={{padding:0}}>
-        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>⚙️ Settings</div><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Manage your data and connections.</div></div>
+        <div style={{padding:'20px 20px 0'}}><div style={{fontSize:20,fontWeight:700}}>⚙️ Settings</div><button onClick={()=>setTab('settings')} style={{marginTop:8,padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}}>Go to Settings →</button><div style={{fontSize:14,color:'var(--t3)',marginTop:4,lineHeight:1.6}}>Manage your data and connections.</div></div>
         <div style={{padding:'12px 20px 20px',display:'flex',flexDirection:'column',gap:12}}>
           {[
             {t:'🔗 Connections',d:'See the status of all data sources — Basiq bank feeds, Gmail bill scanner, Photo OCR, Fella AI, and Manual Entry. Enable bill notification reminders here.'},
@@ -648,7 +658,7 @@ export default function App(){
       <div className="gc fu s10" style={{padding:20}}>
         <div style={{fontSize:20,fontWeight:700,marginBottom:12}}>🚀 Coming Soon</div>
         {[
-          {t:'Basiq Bank Feeds',d:'Live transaction feed from ME Bank, ING, and Amex — auto-detects subscriptions and categorises spending.'},
+          {t:'Get Anthropic API Key',d:'Sign up at console.anthropic.com to get your key for Fella AI chat'},{t:'Basiq Bank Feeds',d:'Live transaction feed from ME Bank, ING, and Amex — auto-detects subscriptions and categorises spending.'},
           {t:'Gmail Bill Scanner',d:'Auto-reads bills from your email and logs them with amount, due date, and vendor.'},
           {t:'Photo OCR',d:'Snap a paper bill and Fella extracts the details automatically.'},
           {t:'Push Notifications',d:'Get alerted on your phone when bills are due or budgets are nearly spent.'},
