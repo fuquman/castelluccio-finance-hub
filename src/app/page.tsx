@@ -565,8 +565,8 @@ export default function App(){
       <div className="gc fu s1" style={{padding:20}}>
         <div style={{fontSize:20,fontWeight:700,marginBottom:14}}>Quick Jump</div>
         <div style={{display:'flex',flexWrap:'wrap',gap:10}}>
-          {[{l:'🏠 Home',t:'home'},{l:'📈 Budget',t:'budget'},{l:'🏦 Debts',t:'debts'},{l:'💬 Fella',t:'fella'},{l:'🔄 Subs & Bills',t:'subs'},{l:'🏖️ Goals',t:'goals'},{l:'👶 Kids',t:'kids'},{l:'📊 Reports',t:'reports'},{l:'⚙️ Settings',t:'settings'}].map(q=>
-            <button key={q.t} onClick={()=>setTab(q.t)} style={{padding:'14px 20px',borderRadius:14,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:17,fontWeight:600,cursor:'pointer'}}>{q.l}</button>
+          {[{l:'🏠 Home',id:'guide-home'},{l:'📈 Budget',id:'guide-budget'},{l:'🏦 Debts',id:'guide-debts'},{l:'💬 Fella',id:'guide-fella'},{l:'🔄 Subs & Bills',id:'guide-subs'},{l:'🏖️ Goals',id:'guide-goals'},{l:'👶 Kids',id:'guide-kids'},{l:'📊 Reports',id:'guide-reports'},{l:'⚙️ Settings',id:'guide-settings'},{l:'🚀 Coming Soon',id:'guide-soon'}].map(q=>
+            <button key={q.id} onClick={()=>document.getElementById(q.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{padding:'14px 20px',borderRadius:14,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:17,fontWeight:600,cursor:'pointer'}}>{q.l}</button>
           )}
         </div>
       </div>
