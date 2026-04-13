@@ -63,31 +63,38 @@ export default function App(){
 
   // Auth: check session and listen for changes
   useEffect(()=>{
-    // Clear error hashes from URL (e.g. from expired magic links)
-    if(window.location.hash&&window.location.hash.includes('error=')){
+    // Clear any error/expired hashes from URL before processing
+    if(window.location.hash&&(window.location.hash.includes('error=')||window.location.hash.includes('error_code='))){
       window.history.replaceState(null,'',window.location.pathname)
     }
-    // First listen for auth changes (catches magic link callback)
-    const{data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
-      if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION'){
-        setUser(session?.user ? {id:session.user.id,email:session.user.email} : null)
-      }
-      if(event==='SIGNED_OUT'){setUser(null)}
+    // Listen for auth changes (catches magic link callback)
+    let subscription: any
+    try{
+      const result=supabase.auth.onAuthStateChange((event,session)=>{
+        if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION'){
+          setUser(session?.user ? {id:session.user.id,email:session.user.email} : null)
+        }
+        if(event==='SIGNED_OUT'){setUser(null)}
+        setAuthLoading(false)
+      })
+      subscription=result.data.subscription
+    }catch(e){
+      console.error('Auth listener error:',e)
       setAuthLoading(false)
-    })
-    // Check for existing session (but give hash processing a moment)
+    }
+    // Check for existing session
     const checkSession=async()=>{
-      // If URL has a hash with access_token, let onAuthStateChange handle it
-      if(window.location.hash&&window.location.hash.includes('access_token')){
-        // Hash will be processed by supabase client automatically
-        return
+      try{
+        if(window.location.hash&&window.location.hash.includes('access_token')){return}
+        const{data:{session}}=await supabase.auth.getSession()
+        setUser(session?.user ? {id:session.user.id,email:session.user.email} : null)
+      }catch(e){
+        console.error('Session check error:',e)
       }
-      const{data:{session}}=await supabase.auth.getSession()
-      setUser(session?.user ? {id:session.user.id,email:session.user.email} : null)
       setAuthLoading(false)
     }
     checkSession()
-    return()=>subscription.unsubscribe()
+    return()=>{try{subscription?.unsubscribe()}catch(e){}}
   },[])
 
   // Sign in with magic link
