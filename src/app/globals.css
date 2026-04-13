@@ -126,3 +126,5 @@ body{font-family:'DM Sans',-apple-system,'SF Pro Text',system-ui,sans-serif;back
 .row{min-height:64px}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;vertical-align:middle}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
