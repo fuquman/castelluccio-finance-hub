@@ -63,6 +63,10 @@ export default function App(){
 
   // Auth: check session and listen for changes
   useEffect(()=>{
+    // Clear error hashes from URL (e.g. from expired magic links)
+    if(window.location.hash&&window.location.hash.includes('error=')){
+      window.history.replaceState(null,'',window.location.pathname)
+    }
     // First listen for auth changes (catches magic link callback)
     const{data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
       if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION'){
