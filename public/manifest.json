@@ -1,0 +1,21 @@
+{
+  "name": "Castelluccio Finance Hub",
+  "short_name": "Finance Hub",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06090f",
+  "theme_color": "#10b981",
+  "description": "Family finance command center powered by Fella",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
