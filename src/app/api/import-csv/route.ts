@@ -26,11 +26,11 @@ export async function POST(req: NextRequest) {
     // Common Australian bank CSV formats
     if (header.includes('date') && header.includes('description') && header.includes('amount')) {
       // Standard format: Date, Description, Amount (ME Bank, generic)
-      const cols = lines[0].split(',').map(c => c.trim().toLowerCase().replace(/"/g, ''))
-      const dateIdx = cols.findIndex(c => c.includes('date'))
-      const descIdx = cols.findIndex(c => c.includes('description') || c.includes('narrative') || c.includes('details'))
-      const amtIdx = cols.findIndex(c => c.includes('amount') || c.includes('value'))
-      const catIdx = cols.findIndex(c => c.includes('category') || c.includes('type'))
+      const cols = lines[0].split(',').map((c: string) => c.trim().toLowerCase().replace(/"/g, ''))
+      const dateIdx = cols.findIndex((c: string) => c.includes('date'))
+      const descIdx = cols.findIndex((c: string) => c.includes('description') || c.includes('narrative') || c.includes('details'))
+      const amtIdx = cols.findIndex((c: string) => c.includes('amount') || c.includes('value'))
+      const catIdx = cols.findIndex((c: string) => c.includes('category') || c.includes('type'))
       
       for (let i = 1; i < lines.length; i++) {
         const row = parseCSVRow(lines[i])
@@ -48,11 +48,11 @@ export async function POST(req: NextRequest) {
       }
     } else if (header.includes('debit') && header.includes('credit')) {
       // ING/Amex format: Date, Description, Debit, Credit
-      const cols = lines[0].split(',').map(c => c.trim().toLowerCase().replace(/"/g, ''))
-      const dateIdx = cols.findIndex(c => c.includes('date'))
-      const descIdx = cols.findIndex(c => c.includes('description') || c.includes('narrative') || c.includes('details'))
-      const debitIdx = cols.findIndex(c => c.includes('debit'))
-      const creditIdx = cols.findIndex(c => c.includes('credit'))
+      const cols = lines[0].split(',').map((c: string) => c.trim().toLowerCase().replace(/"/g, ''))
+      const dateIdx = cols.findIndex((c: string) => c.includes('date'))
+      const descIdx = cols.findIndex((c: string) => c.includes('description') || c.includes('narrative') || c.includes('details'))
+      const debitIdx = cols.findIndex((c: string) => c.includes('debit'))
+      const creditIdx = cols.findIndex((c: string) => c.includes('credit'))
       
       for (let i = 1; i < lines.length; i++) {
         const row = parseCSVRow(lines[i])
@@ -96,8 +96,8 @@ export async function POST(req: NextRequest) {
 
     // Check for duplicates (same date + description + amount)
     const { data: existing } = await supabase.from('transactions').select('date,description,amount')
-    const existingSet = new Set((existing || []).map(t => `${t.date}|${t.description}|${t.amount}`))
-    const newTx = transactions.filter(t => !existingSet.has(`${t.date}|${t.description}|${t.amount}`))
+    const existingSet = new Set((existing || []).map((t: any) => `${t.date}|${t.description}|${t.amount}`))
+    const newTx = transactions.filter((t: any) => !existingSet.has(`${t.date}|${t.description}|${t.amount}`))
     const dupes = transactions.length - newTx.length
 
     if (newTx.length > 0) {
