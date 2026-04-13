@@ -344,7 +344,7 @@ export default function App(){
         <Ico bg="var(--orange)" ch="🤖"/>
         <div>
           <div style={{fontSize:22,fontWeight:800}}>Fella</div>
-          <div style={{fontSize:13,color:'var(--t3)'}}>Voice + Text</div>
+          <div style={{fontSize:13,color:'var(--t3)'}}>Voice + Text · Your money brain</div>
         </div>
       </div>
       <div style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:8,paddingBottom:8}}>
@@ -352,6 +352,18 @@ export default function App(){
           <div className={m.role==='user'?'cb-u':'cb-a'}>{m.text}</div>
         </div>)}
         {sending&&<div style={{display:'flex'}}><div className="cb-a" style={{color:'var(--t3)'}}>Thinking...</div></div>}
+        {/* Example prompts - only show when chat has just the welcome message */}
+        {chat.length===1&&!sending&&<div style={{display:'flex',flexDirection:'column',gap:8,marginTop:12}}>
+          <div style={{fontSize:13,color:'var(--t3)',fontWeight:600,marginBottom:4}}>Try asking...</div>
+          {[
+            {icon:'🏖️',text:'Can we afford a week in Byron Bay for the wedding in October? What do we need to save each week?'},
+            {icon:'💸',text:'Where are we wasting money? Find any subscriptions or spending we should cut'},
+            {icon:'📊',text:'We just spent $350 on the kids\' school camp. How does that affect our budget this month?'},
+          ].map((ex,i)=><button key={i} onClick={()=>{setCI(ex.text);setTimeout(()=>{const el=document.querySelector('input[placeholder="Ask Fella..."]') as HTMLInputElement;if(el){el.focus()}},100)}} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'14px 16px',background:'var(--card)',border:'1px solid var(--sep)',borderRadius:14,cursor:'pointer',textAlign:'left',transition:'background 0.15s'}}>
+            <span style={{fontSize:20,flexShrink:0,marginTop:1}}>{ex.icon}</span>
+            <span style={{fontSize:15,color:'var(--t2)',lineHeight:1.4}}>{ex.text}</span>
+          </button>)}
+        </div>}
         <div ref={chatEnd}/>
       </div>
       <div style={{display:'flex',gap:8,padding:'12px 0'}}>
