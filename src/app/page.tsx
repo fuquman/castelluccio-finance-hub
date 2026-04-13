@@ -501,46 +501,39 @@ export default function App(){
       {ccs.filter(c=>c.type==='child').length===0&&<div className="gc"><div className="empty-state"><div className="empty-icon">👶</div><div className="empty-title">No kids added yet</div><div className="empty-desc" style={{fontSize:18}}>Add children in Settings → Cost Centres</div></div></div>}
 
       {/* ── Spending Breakdown ── */}
-      <div className="sh">Spending Breakdown</div>
-      <div className="gc" style={{overflow:'hidden'}}>
-        <select value={selectedCC||''} onChange={e=>setSelectedCC(e.target.value||null)} style={{width:'100%',padding:'16px 20px',border:'none',borderBottom:selectedCC?'0.33px solid var(--sep)':'none',background:'transparent',color:'var(--t1)',fontSize:18,fontWeight:600,outline:'none',fontFamily:'inherit',cursor:'pointer'}}>
-          <option value="">All categories</option>
-          {ccs.filter(c=>c.type!=='child').map(cc=><option key={cc.id} value={cc.id}>{cc.icon} {cc.name}</option>)}
-        </select>
+      <div className="sh" style={{marginTop:8}}>Spending Breakdown</div>
 
-        {/* When a specific category is selected */}
-        {selectedCC&&<>
-          <div style={{padding:'20px',textAlign:'center',borderBottom:'0.33px solid var(--sep)'}}>
-            <div style={{fontSize:40,marginBottom:8}}>{ccs.find(c=>c.id===selectedCC)?.icon}</div>
-            <div className="mono" style={{fontSize:32,fontWeight:800,color:'var(--orange)'}}>{$(ccis.filter(i=>i.cost_centre_id===selectedCC).reduce((s,i)=>s+Number(i.amount),0)+txs.filter(t=>t.cost_centre_id===selectedCC).reduce((s,t)=>s+Math.abs(Number(t.amount)),0))}</div>
-            <div style={{fontSize:18,color:'var(--t3)',marginTop:4}}>total spent</div>
-          </div>
-          {ccis.filter(i=>i.cost_centre_id===selectedCC).concat(txs.filter(t=>t.cost_centre_id===selectedCC).map(t=>({id:t.id,cost_centre_id:t.cost_centre_id||'',date:t.date,description:t.description,amount:Math.abs(Number(t.amount)),category:t.category||'Other'}))).slice(0,15).map((item,i)=><div key={item.id} style={{padding:'14px 20px',display:'flex',alignItems:'center',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}>
+      {ccs.filter(c=>c.type!=='child').map((cc,i)=>{
+        const ccTotal=ccis.filter(item=>item.cost_centre_id===cc.id).reduce((s,item)=>s+Number(item.amount),0)
+        const txTotal=txs.filter(t=>t.cost_centre_id===cc.id).reduce((s,t)=>s+Math.abs(Number(t.amount)),0)
+        const total=ccTotal+txTotal
+        const allItems=[...ccis.filter(item=>item.cost_centre_id===cc.id),...txs.filter(t=>t.cost_centre_id===cc.id).map(t=>({id:t.id,cost_centre_id:t.cost_centre_id||'',date:t.date,description:t.description,amount:Math.abs(Number(t.amount)),category:t.category||'Other'}))]
+        const isOpen=selectedCC===cc.id
+        return<div key={cc.id} className={`gc fu s${i+10}`} style={{overflow:'hidden',marginBottom:8}}>
+          <div style={{padding:'18px 20px',display:'flex',alignItems:'center',gap:18,cursor:'pointer'}} onClick={()=>setSelectedCC(isOpen?null:cc.id)}>
+            <span style={{fontSize:32}}>{cc.icon}</span>
             <div style={{flex:1}}>
-              <div style={{fontSize:18,fontWeight:500}}>{item.description}</div>
-              <div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{item.category} · {new Date(item.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div>
+              <div style={{fontSize:18,fontWeight:700}}>{cc.name}</div>
+              <div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{allItems.length} item{allItems.length!==1?'s':''}</div>
             </div>
-            <span className="mono" style={{fontSize:18,fontWeight:600}}>{$$(Number(item.amount))}</span>
-          </div>)}
-          {ccis.filter(i=>i.cost_centre_id===selectedCC).length===0&&txs.filter(t=>t.cost_centre_id===selectedCC).length===0&&<div style={{padding:'24px 20px',textAlign:'center',color:'var(--t3)',fontSize:18}}>No expenses in this category</div>}
-        </>}
-
-        {/* When showing all categories */}
-        {!selectedCC&&ccs.filter(c=>c.type!=='child').map((cc,i)=>{
-          const total=ccis.filter(item=>item.cost_centre_id===cc.id).reduce((s,item)=>s+Number(item.amount),0)+txs.filter(t=>t.cost_centre_id===cc.id).reduce((s,t)=>s+Math.abs(Number(t.amount)),0)
-          const maxTotal=Math.max(...ccs.filter(c=>c.type!=='child').map(c=>ccis.filter(item=>item.cost_centre_id===c.id).reduce((s,item)=>s+Number(item.amount),0)+txs.filter(t=>t.cost_centre_id===c.id).reduce((s,t)=>s+Math.abs(Number(t.amount)),0)),1)
-          return<div key={cc.id} style={{padding:'16px 20px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>setSelectedCC(cc.id)}>
-            <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:total>0?10:0}}>
-              <span style={{fontSize:28}}>{cc.icon}</span>
-              <div style={{flex:1}}>
-                <div style={{fontSize:18,fontWeight:600}}>{cc.name}</div>
-              </div>
-              <span className="mono" style={{fontSize:18,fontWeight:700,color:total>0?'var(--orange)':'var(--t3)'}}>{total>0?$(total):'—'}</span>
+            <div style={{textAlign:'right'}}>
+              <div className="mono" style={{fontSize:22,fontWeight:700,color:total>0?'var(--orange)':'var(--t3)'}}>{total>0?$(total):'$0'}</div>
             </div>
-            {total>0&&<div style={{height:6,borderRadius:3,background:'rgba(255,255,255,0.06)',overflow:'hidden'}}><div style={{height:'100%',borderRadius:3,width:`${(total/maxTotal)*100}%`,background:cc.color||'var(--orange)',transition:'width 0.8s cubic-bezier(0.16,1,0.3,1)'}}/></div>}
+            <div style={{fontSize:18,color:'var(--t3)',marginLeft:4,transition:'transform 0.3s',transform:isOpen?'rotate(90deg)':'rotate(0deg)'}}>&rsaquo;</div>
           </div>
-        })}
-      </div>
+
+          {isOpen&&<div style={{borderTop:'0.33px solid var(--sep)'}}>
+            {allItems.length>0?allItems.slice(0,10).map((item,j)=><div key={item.id} style={{padding:'18px 20px',display:'flex',alignItems:'center',...(j>0?{borderTop:'0.33px solid var(--sep)'}:{})}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:18,fontWeight:500}}>{item.description}</div>
+                <div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{item.category} &middot; {new Date(item.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div>
+              </div>
+              <span className="mono" style={{fontSize:18,fontWeight:600}}>{$$(Number(item.amount))}</span>
+            </div>):<div style={{padding:'24px 20px',textAlign:'center',color:'var(--t3)',fontSize:18}}>No expenses yet &mdash; assign transactions from Home</div>}
+          </div>}
+        </div>
+      })}
+
     </div>}
 
     {/* ═══════ REPORTS & EXPORT ═══════ */}
