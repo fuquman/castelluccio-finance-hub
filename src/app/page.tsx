@@ -40,11 +40,11 @@ function Ico({bg,ch,size=50}:{bg:string;ch:string;size?:number}){
 }
 
 function Input({...props}:React.InputHTMLAttributes<HTMLInputElement>){
-  return<input {...props} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'1px solid transparent',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit',transition:'border-color 0.2s ease,box-shadow 0.2s ease',...(props.style||{})}} onFocus={e=>{e.currentTarget.style.borderColor='var(--orange)';e.currentTarget.style.boxShadow='0 0 0 3px rgba(255,159,10,0.15)'}} onBlur={e=>{e.currentTarget.style.borderColor='transparent';e.currentTarget.style.boxShadow='none'}}/>
+  return<input {...props} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'1px solid transparent',background:'var(--card2)',color:'var(--t1)',fontSize:18,marginBottom:10,outline:'none',fontFamily:'inherit',transition:'border-color 0.2s ease,box-shadow 0.2s ease',...(props.style||{})}} onFocus={e=>{e.currentTarget.style.borderColor='var(--orange)';e.currentTarget.style.boxShadow='0 0 0 3px rgba(255,159,10,0.15)'}} onBlur={e=>{e.currentTarget.style.borderColor='transparent';e.currentTarget.style.boxShadow='none'}}/>
 }
 
 function Select({children,...props}:React.SelectHTMLAttributes<HTMLSelectElement>&{children:React.ReactNode}){
-  return<select {...props} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'1px solid transparent',background:'var(--card2)',color:'var(--t1)',fontSize:16,marginBottom:10,outline:'none',fontFamily:'inherit',transition:'border-color 0.2s ease,box-shadow 0.2s ease',...(props.style||{})}} onFocus={e=>{e.currentTarget.style.borderColor='var(--orange)';e.currentTarget.style.boxShadow='0 0 0 3px rgba(255,159,10,0.15)'}} onBlur={e=>{e.currentTarget.style.borderColor='transparent';e.currentTarget.style.boxShadow='none'}}>{children}</select>
+  return<select {...props} style={{width:'100%',padding:'14px 16px',borderRadius:12,border:'1px solid transparent',background:'var(--card2)',color:'var(--t1)',fontSize:18,marginBottom:10,outline:'none',fontFamily:'inherit',transition:'border-color 0.2s ease,box-shadow 0.2s ease',...(props.style||{})}} onFocus={e=>{e.currentTarget.style.borderColor='var(--orange)';e.currentTarget.style.boxShadow='0 0 0 3px rgba(255,159,10,0.15)'}} onBlur={e=>{e.currentTarget.style.borderColor='transparent';e.currentTarget.style.boxShadow='none'}}>{children}</select>
 }
 
 function Btn({children,variant='primary',...props}:React.ButtonHTMLAttributes<HTMLButtonElement>&{variant?:'primary'|'secondary'|'danger';children:React.ReactNode}){
@@ -252,7 +252,7 @@ export default function App(){
     <div style={{fontSize:100}}>💰</div>
     <div style={{fontSize:48,fontWeight:800,color:'var(--orange)',letterSpacing:-1}}>Ca$ter</div>
     <div className="brand-bar"/>
-    <div style={{fontSize:15,color:'var(--t3)'}}>Loading your finances...</div>
+    <div style={{fontSize:18,color:'var(--t3)'}}>Loading your finances...</div>
     <div style={{display:'flex',gap:8,marginTop:8}}>
       <div className="skeleton" style={{width:60,height:8}}/>
       <div className="skeleton" style={{width:40,height:8}}/>
@@ -266,18 +266,18 @@ export default function App(){
       <div style={{background:'var(--card)',borderRadius:24,margin:'10vh 20px',padding:32,maxWidth:400,marginLeft:'auto',marginRight:'auto'}} onClick={e=>e.stopPropagation()}>
         <div style={{fontSize:48,textAlign:'center',marginBottom:16}}>💰</div>
         <h2 style={{fontSize:28,fontWeight:800,textAlign:'center',marginBottom:8}}>Welcome to Ca$ter!</h2>
-        <div style={{fontSize:16,color:'var(--t3)',textAlign:'center',lineHeight:1.6,marginBottom:24}}>Your family finance command centre. Let's get you set up.</div>
+        <div style={{fontSize:18,color:'var(--t3)',textAlign:'center',lineHeight:1.6,marginBottom:24}}>Your family finance command centre. Let's get you set up.</div>
         <div style={{display:'flex',flexDirection:'column',gap:12}}>
           <button onClick={()=>{setShowWelcome(false);setTab('settings');setSettingsSection('accounts')}} style={{padding:'16px',borderRadius:14,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:700,cursor:'pointer'}} className="btn-press">🏦 Add Your Bank Accounts</button>
           <button onClick={()=>{setShowWelcome(false);setTab('settings');setSettingsSection('income')}} style={{padding:'16px',borderRadius:14,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:18,fontWeight:600,cursor:'pointer'}} className="btn-press">💰 Set Up Income Sources</button>
           <button onClick={()=>{setShowWelcome(false);setTab('guide')}} style={{padding:'16px',borderRadius:14,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:18,fontWeight:600,cursor:'pointer'}} className="btn-press">📖 Read the User Guide</button>
-          <button onClick={()=>setShowWelcome(false)} style={{padding:'14px',borderRadius:14,border:'none',background:'transparent',color:'var(--t3)',fontSize:15,cursor:'pointer'}}>Skip — explore with demo data</button>
+          <button onClick={()=>setShowWelcome(false)} style={{padding:'14px',borderRadius:14,border:'none',background:'transparent',color:'var(--t3)',fontSize:18,cursor:'pointer'}}>Skip — explore with demo data</button>
         </div>
       </div>
     </div>}
 
     {/* Pull to refresh */}
-    <div style={{textAlign:'center',padding:refreshing?'12px 0':'0',height:refreshing?'auto':'0',overflow:'hidden',transition:'all 0.3s ease'}}>{refreshing&&<div style={{fontSize:13,color:'var(--t3)',fontWeight:600}}>↻ Refreshing...</div>}</div>
+    <div style={{textAlign:'center',padding:refreshing?'12px 0':'0',height:refreshing?'auto':'0',overflow:'hidden',transition:'all 0.3s ease'}}>{refreshing&&<div style={{fontSize:18,color:'var(--t3)',fontWeight:600}}>↻ Refreshing...</div>}</div>
 
     {/* Toast */}
     <div className={`toast ${toast?'toast-show':''} ${toast?.type==='success'?'toast-success':toast?.type==='error'?'toast-error':'toast-info'}`}>{toast?.msg}</div>
@@ -285,7 +285,7 @@ export default function App(){
     <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handlePhoto}/>
 
     {/* ── Header ── */}
-    <div style={{padding:scrolled?'10px 20px 12px':'16px 20px 24px',cursor:'pointer',transition:'padding 0.3s ease'}} onDoubleClick={pullRefresh}>{!scrolled&&<div style={{fontSize:15,color:'var(--t3)',marginBottom:4}}>Castelluccio Family</div>}<h1 style={{fontSize:scrolled?28:42,fontWeight:800,letterSpacing:-0.7,lineHeight:1.05,transition:'font-size 0.3s ease'}}>Ca$ter</h1><div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:8}}><span className="mono" style={{fontSize:scrolled?22:34,fontWeight:700,color:nw>=0?'var(--orange)':'var(--red)',transition:'font-size 0.3s ease'}}>{$(nw)}</span><span style={{fontSize:13,color:'var(--t3)'}}>net worth</span></div>{!scrolled&&<div className="brand-bar"/>}</div>
+    <div style={{padding:scrolled?'10px 20px 12px':'16px 20px 24px',cursor:'pointer',transition:'padding 0.3s ease'}} onDoubleClick={pullRefresh}>{!scrolled&&<div style={{fontSize:18,color:'var(--t3)',marginBottom:4}}>Castelluccio Family</div>}<h1 style={{fontSize:scrolled?28:42,fontWeight:800,letterSpacing:-0.7,lineHeight:1.05,transition:'font-size 0.3s ease'}}>Ca$ter</h1><div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:8}}><span className="mono" style={{fontSize:scrolled?22:34,fontWeight:700,color:nw>=0?'var(--orange)':'var(--red)',transition:'font-size 0.3s ease'}}>{$(nw)}</span><span style={{fontSize:18,color:'var(--t3)'}}>net worth</span></div>{!scrolled&&<div className="brand-bar"/>}</div>
 
     {/* ── Alerts ── */}
     {alerts.length>0&&tab==='home'&&<div style={{padding:'0 20px 16px'}}>
@@ -304,7 +304,7 @@ export default function App(){
       <div className="fu s1"><div className="sh">Accounts</div><div className="gc">{accounts.map((a,i)=><div key={a.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><Ico bg={a.account_type==='credit'?'var(--purple)':a.account_type==='loan'?'var(--red)':a.account_type==='savings'?'var(--green)':'var(--blue)'} ch={a.account_type==='credit'?'💳':a.account_type==='loan'?'🏦':a.account_type==='savings'?'🐷':'💰'}/><div className="rb"><div className="rt">{a.name}</div><div className="rs">{a.bank}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(a.balance)>=0?'var(--t1)':'var(--red)'}}>{$$(Number(a.balance))}</span></div>)}</div></div>
 
       {/* Stats */}
-      <div className="fu s2" style={{display:'flex',gap:10}}>{[['Income',$(mInc),'var(--green)'],['Spent',$(mSp),'var(--orange)'],['Recurring',$(mRec),'var(--purple)']].map(([l,v,c],i)=><div key={i} className="gc" style={{flex:1,padding:'14px 10px',textAlign:'center'}}><div style={{fontSize:16,color:'var(--t3)',fontWeight:500,marginBottom:6}}>{l as string}</div><div className="mono" style={{fontSize:22,fontWeight:700,color:c as string}}>{v as string}</div></div>)}</div>
+      <div className="fu s2" style={{display:'flex',gap:10}}>{[['Income',$(mInc),'var(--green)'],['Spent',$(mSp),'var(--orange)'],['Recurring',$(mRec),'var(--purple)']].map(([l,v,c],i)=><div key={i} className="gc" style={{flex:1,padding:'14px 10px',textAlign:'center'}}><div style={{fontSize:18,color:'var(--t3)',fontWeight:500,marginBottom:6}}>{l as string}</div><div className="mono" style={{fontSize:22,fontWeight:700,color:c as string}}>{v as string}</div></div>)}</div>
 
       {/* Cash Flow */}
       <div className="fu s3"><div className="sh">Cash Flow · {savingsRate}% saved</div><div className="gc" style={{padding:'16px 18px 14px'}}><div style={{display:'flex',gap:16,fontSize:12,color:'var(--t3)',marginBottom:14}}><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--orange)'}}/>Income</span><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--purple)'}}/>Expenses</span></div><div style={{display:'flex',alignItems:'flex-end',gap:8,height:110}}>{snaps.map((d,i)=>{const mx=Math.max(...snaps.flatMap(s=>[s.total_income,s.total_expenses]),1);return<div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:6}}><div style={{display:'flex',gap:3,alignItems:'flex-end',height:88,width:'100%'}}><div style={{flex:1,borderRadius:5,height:`${(Number(d.total_income)/mx)*100}%`,background:'var(--orange)',opacity:0.85,transition:'height 0.8s'}}/><div style={{flex:1,borderRadius:5,height:`${(Number(d.total_expenses)/mx)*100}%`,background:'var(--purple)',opacity:0.5,transition:'height 0.8s'}}/></div><span style={{fontSize:11,color:'var(--t3)'}}>{new Date(d.month+'T00:00').toLocaleDateString('en-AU',{month:'short'})}</span></div>})}</div></div></div>
@@ -313,18 +313,18 @@ export default function App(){
       <div className="fu s4"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
           <div className="sh" style={{margin:0}}>Transactions</div>
           <div style={{display:'flex',gap:8}}>
-            <button onClick={exportCSV} style={{padding:'10px 14px',borderRadius:12,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:16,fontWeight:600,cursor:'pointer'}}>📥 CSV</button>
-            <button onClick={()=>setShowForm(showForm==='tx'?null:'tx')} style={{padding:'10px 14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:600,cursor:'pointer'}} className="btn-press">{showForm==='tx'?'Cancel':'+ Add'}</button>
+            <button onClick={exportCSV} style={{padding:'10px 14px',borderRadius:12,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:18,fontWeight:600,cursor:'pointer'}}>📥 CSV</button>
+            <button onClick={()=>setShowForm(showForm==='tx'?null:'tx')} style={{padding:'10px 14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}} className="btn-press">{showForm==='tx'?'Cancel':'+ Add'}</button>
           </div>
         </div>
         <div style={{display:'flex',gap:10,marginBottom:12}}>
           <div style={{flex:1,background:'var(--card)',borderRadius:14,padding:'12px 16px',border:'1px solid var(--sep, rgba(255,255,255,0.08))'}}>
             <div style={{fontSize:12,color:'var(--t3)',fontWeight:600,marginBottom:6}}>From</div>
-            <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{width:'100%',padding:'8px 0',borderRadius:0,border:'none',background:'transparent',color:'var(--t1)',fontSize:16,outline:'none',fontFamily:'inherit'}}/>
+            <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{width:'100%',padding:'8px 0',borderRadius:0,border:'none',background:'transparent',color:'var(--t1)',fontSize:18,outline:'none',fontFamily:'inherit'}}/>
           </div>
           <div style={{flex:1,background:'var(--card)',borderRadius:14,padding:'12px 16px',border:'1px solid var(--sep, rgba(255,255,255,0.08))'}}>
             <div style={{fontSize:12,color:'var(--t3)',fontWeight:600,marginBottom:6}}>To</div>
-            <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} style={{width:'100%',padding:'8px 0',borderRadius:0,border:'none',background:'transparent',color:'var(--t1)',fontSize:16,outline:'none',fontFamily:'inherit'}}/>
+            <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} style={{width:'100%',padding:'8px 0',borderRadius:0,border:'none',background:'transparent',color:'var(--t1)',fontSize:18,outline:'none',fontFamily:'inherit'}}/>
           </div>
           {(dateFrom||dateTo)&&<button onClick={()=>{setDateFrom('');setDateTo('')}} style={{padding:'12px 16px',borderRadius:14,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:18,fontWeight:700,cursor:'pointer',alignSelf:'stretch',display:'flex',alignItems:'center'}}>✕</button>}
         </div>
@@ -340,8 +340,8 @@ export default function App(){
             <div className="rb">
               <div className="rt">{tx.description}</div>
               <div className="rs">{tx.category} · {new Date(tx.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}
-                {tx.cost_centre_id&&ccs.find(c=>c.id===tx.cost_centre_id)&&<span style={{background:'var(--purple-s, rgba(139,92,246,0.15))',color:'var(--purple, #8b5cf6)',padding:'2px 8px',borderRadius:6,fontSize:13,fontWeight:600,marginLeft:6}}>{ccs.find(c=>c.id===tx.cost_centre_id)?.icon} {ccs.find(c=>c.id===tx.cost_centre_id)?.name}</span>}
-                {tx.tags&&tx.tags.length>0&&tx.tags.map((tag:string,ti:number)=><span key={ti} style={{background:'var(--blue-s)',color:'var(--blue)',padding:'2px 8px',borderRadius:5,fontSize:13,fontWeight:600,marginLeft:4}}>{tag}</span>)}
+                {tx.cost_centre_id&&ccs.find(c=>c.id===tx.cost_centre_id)&&<span style={{background:'var(--purple-s, rgba(139,92,246,0.15))',color:'var(--purple, #8b5cf6)',padding:'2px 8px',borderRadius:6,fontSize:14,fontWeight:600,marginLeft:6}}>{ccs.find(c=>c.id===tx.cost_centre_id)?.icon} {ccs.find(c=>c.id===tx.cost_centre_id)?.name}</span>}
+                {tx.tags&&tx.tags.length>0&&tx.tags.map((tag:string,ti:number)=><span key={ti} style={{background:'var(--blue-s)',color:'var(--blue)',padding:'2px 8px',borderRadius:5,fontSize:14,fontWeight:600,marginLeft:4}}>{tag}</span>)}
               </div>
             </div>
             <span className="mono rr" style={{fontWeight:600,color:Number(tx.amount)>=0?'var(--green)':'var(--t1)'}}>{Number(tx.amount)>=0?'+':''}{$$(Number(tx.amount))}</span>
@@ -357,7 +357,7 @@ export default function App(){
       </div>
 
       {/* Savings callout */}
-      {flagged.length>0&&<div className="fu s5" style={{background:'var(--orange-s)',borderRadius:14,padding:18,display:'flex',alignItems:'center',gap:14}}><span style={{fontSize:28}}>💡</span><div><div style={{fontSize:18,fontWeight:700,color:'var(--orange)'}}>Save {$(flagged.reduce((s,r)=>s+Number(r.amount),0)*12)}/year</div><div style={{fontSize:13,color:'var(--t3)'}}>    {flagged.length} flagged subs</div></div></div>}
+      {flagged.length>0&&<div className="fu s5" style={{background:'var(--orange-s)',borderRadius:14,padding:18,display:'flex',alignItems:'center',gap:14}}><span style={{fontSize:28}}>💡</span><div><div style={{fontSize:18,fontWeight:700,color:'var(--orange)'}}>Save {$(flagged.reduce((s,r)=>s+Number(r.amount),0)*12)}/year</div><div style={{fontSize:18,color:'var(--t3)'}}>    {flagged.length} flagged subs</div></div></div>}
     </div>}
 
     {/* ═══════ BUDGET ═══════ */}
@@ -365,27 +365,27 @@ export default function App(){
       <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><div><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Budgets</h2><div style={{fontSize:18,color:'var(--t3)',marginTop:4}}>{$(mSp)} of {$(cats.reduce((s,c)=>s+Number(c.monthly_limit),0))} spent</div></div><button onClick={()=>newRow('budget_categories',{name:'',icon:'📁',color:'#ff9f0a',monthly_limit:0})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
       {showForm==='budget_categories'&&<EditForm table="budget_categories" fields={[{key:'name',label:'Category name'},{key:'icon',label:'Icon emoji'},{key:'monthly_limit',label:'Monthly limit',type:'number'}]}/>}
       <div className="gc fu s1">{byCat.map((c,i)=><div key={c.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),gap:14,cursor:'pointer'}} onClick={()=>editRow('budget_categories',c,{name:c.name,icon:c.icon,color:c.color,monthly_limit:Number(c.monthly_limit)})}>
-        <Ring value={c.spent} max={Number(c.monthly_limit)} size={52} sw={5} color={c.color}><span style={{fontSize:16}}>{c.icon}</span></Ring>
-        <div className="rb"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}><span className="rt">{c.name}</span><span className={`pill ${c.pct>=90?'pill-r':c.pct>=75?'pill-o':'pill-g'}`}>{c.pct}%</span></div><div className="pbar"><div className="pfill" style={{width:`${Math.min(c.pct,100)}%`,background:c.pct>90?'var(--red)':c.pct>75?'var(--orange)':c.color}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:6,fontSize:16,color:'var(--t3)'}}><span>{$(c.spent)}</span><span>{$(Number(c.monthly_limit)-c.spent)} left</span></div></div>
+        <Ring value={c.spent} max={Number(c.monthly_limit)} size={52} sw={5} color={c.color}><span style={{fontSize:18}}>{c.icon}</span></Ring>
+        <div className="rb"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}><span className="rt">{c.name}</span><span className={`pill ${c.pct>=90?'pill-r':c.pct>=75?'pill-o':'pill-g'}`}>{c.pct}%</span></div><div className="pbar"><div className="pfill" style={{width:`${Math.min(c.pct,100)}%`,background:c.pct>90?'var(--red)':c.pct>75?'var(--orange)':c.color}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:6,fontSize:18,color:'var(--t3)'}}><span>{$(c.spent)}</span><span>{$(Number(c.monthly_limit)-c.spent)} left</span></div></div>
       </div>)}</div>
     </div>}
 
     {/* ═══════ DEBTS ═══════ */}
     {tab==='debts'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
       <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Debts</h2><button onClick={()=>newRow('debts',{name:'',type:'other',original_amount:0,current_balance:0,interest_rate:0,monthly_payment:0,lender:''})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
-      <div className="fu s1" style={{background:'var(--red-s)',borderRadius:14,padding:20,textAlign:'center'}}><div style={{fontSize:18,color:'var(--t3)',marginBottom:4}}>Total Remaining</div><div className="mono" style={{fontSize:42,fontWeight:800,color:'var(--red)'}}>{$(dbt)}</div><div style={{fontSize:16,color:'var(--t3)',marginTop:6}}>{$(debts.reduce((s,d)=>s+Number(d.monthly_payment),0))}/mo repayments</div></div>
+      <div className="fu s1" style={{background:'var(--red-s)',borderRadius:14,padding:20,textAlign:'center'}}><div style={{fontSize:18,color:'var(--t3)',marginBottom:4}}>Total Remaining</div><div className="mono" style={{fontSize:42,fontWeight:800,color:'var(--red)'}}>{$(dbt)}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:6}}>{$(debts.reduce((s,d)=>s+Number(d.monthly_payment),0))}/mo repayments</div></div>
       {showForm==='debts'&&<EditForm table="debts" fields={[{key:'name',label:'Name'},{key:'type',label:'Type',options:[{v:'credit_card',l:'Credit Card'},{v:'personal_loan',l:'Personal Loan'},{v:'car_loan',l:'Car Loan'},{v:'mortgage',l:'Mortgage'},{v:'bnpl',l:'BNPL'},{v:'fine',l:'Fine'},{v:'other',l:'Other'}]},{key:'original_amount',label:'Original amount',type:'number'},{key:'current_balance',label:'Current balance',type:'number'},{key:'interest_rate',label:'Interest rate %',type:'number'},{key:'monthly_payment',label:'Monthly payment',type:'number'},{key:'lender',label:'Lender'}]}/>}
-      <div className="gc fu s2">{debts.length===0?<div className="empty-state"><div className="empty-icon">🎉</div><div className="empty-title">No debts!</div><div className="empty-desc">You're debt-free. Nice one!</div></div>:null}{debts.map((d,i)=>{const paid=Number(d.original_amount)-Number(d.current_balance);const prog=pc(paid,Number(d.original_amount));return<div key={d.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('debts',d,{name:d.name,type:d.type,original_amount:Number(d.original_amount),current_balance:Number(d.current_balance),interest_rate:Number(d.interest_rate),monthly_payment:Number(d.monthly_payment),lender:d.lender})}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><div><div style={{fontSize:20,fontWeight:700}}>{d.name}</div><div style={{fontSize:16,color:'var(--t3)',marginTop:2}}>{d.lender}{Number(d.interest_rate)>0?` · ${d.interest_rate}%`:''}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}%</span></div><div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:'var(--green)',borderRadius:3}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:10,fontSize:16,color:'var(--t3)'}}><span>Left <span className="mono" style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span></span><span><span className="mono" style={{fontWeight:600}}>{$$(Number(d.monthly_payment))}</span>/mo</span></div></div>})}</div>
+      <div className="gc fu s2">{debts.length===0?<div className="empty-state"><div className="empty-icon">🎉</div><div className="empty-title">No debts!</div><div className="empty-desc">You're debt-free. Nice one!</div></div>:null}{debts.map((d,i)=>{const paid=Number(d.original_amount)-Number(d.current_balance);const prog=pc(paid,Number(d.original_amount));return<div key={d.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('debts',d,{name:d.name,type:d.type,original_amount:Number(d.original_amount),current_balance:Number(d.current_balance),interest_rate:Number(d.interest_rate),monthly_payment:Number(d.monthly_payment),lender:d.lender})}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><div><div style={{fontSize:20,fontWeight:700}}>{d.name}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{d.lender}{Number(d.interest_rate)>0?` · ${d.interest_rate}%`:''}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}%</span></div><div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:'var(--green)',borderRadius:3}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:10,fontSize:18,color:'var(--t3)'}}><span>Left <span className="mono" style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span></span><span><span className="mono" style={{fontWeight:600}}>{$$(Number(d.monthly_payment))}</span>/mo</span></div></div>})}</div>
     </div>}
 
     {/* ═══════ FELLA ═══════ */}
     {tab==='fella'&&<div className="tab-content" style={{display:'flex',flexDirection:'column',height:'calc(100dvh - 110px)',padding:'0 20px'}}>
-      <div className="fu" style={{display:'flex',alignItems:'center',gap:14,marginBottom:20}}><Ico bg="var(--orange)" ch="🤖" size={56}/><div><div style={{fontSize:28,fontWeight:800}}>Fella</div><div style={{fontSize:14,color:'var(--t3)'}}>Voice + Text · Your money brain</div></div></div>
+      <div className="fu" style={{display:'flex',alignItems:'center',gap:14,marginBottom:20}}><Ico bg="var(--orange)" ch="🤖" size={56}/><div><div style={{fontSize:28,fontWeight:800}}>Fella</div><div style={{fontSize:18,color:'var(--t3)'}}>Voice + Text · Your money brain</div></div></div>
       <div style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:10,paddingBottom:8}}>
         {chat.map((m,i)=><div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start'}}><div className={m.role==='user'?'cb-u':'cb-a'}>{m.text}</div></div>)}
         {sending&&<div style={{display:'flex'}}><div className="cb-a" style={{color:'var(--t3)'}}>Thinking...</div></div>}
         {chat.length===1&&!sending&&<div style={{display:'flex',flexDirection:'column',gap:10,marginTop:16}}>
-          <div style={{fontSize:13,color:'var(--t3)',fontWeight:600}}>Try asking...</div>
+          <div style={{fontSize:18,color:'var(--t3)',fontWeight:600}}>Try asking...</div>
           {[{i:'🏖️',q:"Can we afford Byron Bay in October? What do we need to save each week?"},{i:'💸',q:"Where are we wasting money? Find subscriptions we should cut"},{i:'📸',q:"I just took a photo of a bill — can you help me log it?"}].map((ex,j)=><button key={j} onClick={()=>setCI(ex.q)} style={{display:'flex',alignItems:'flex-start',gap:14,padding:'16px 18px',background:'var(--card)',border:'none',borderRadius:14,cursor:'pointer',textAlign:'left'}}><span style={{fontSize:32,flexShrink:0}}>{ex.i}</span><span style={{fontSize:18,color:'var(--t2)',lineHeight:1.45}}>{ex.q}</span></button>)}
         </div>}
         <div ref={chatEnd}/>
@@ -401,7 +401,7 @@ export default function App(){
     {/* ═══════ SUBS & BILLS (combined) ═══════ */}
     {tab==='subs'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Subs & Bills</h2></div>
-      <div className="fu s1" style={{display:'flex',gap:10}}><div className="gc" style={{flex:1,padding:16,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:6}}>Monthly</div><div className="mono" style={{fontSize:28,fontWeight:700}}>{$(mRec)}</div></div><div className="gc" style={{flex:1,padding:16,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:6}}>Annual</div><div className="mono" style={{fontSize:28,fontWeight:700,color:'var(--orange)'}}>{$(mRec*12)}</div></div></div>
+      <div className="fu s1" style={{display:'flex',gap:10}}><div className="gc" style={{flex:1,padding:16,textAlign:'center'}}><div style={{fontSize:18,color:'var(--t3)',marginBottom:6}}>Monthly</div><div className="mono" style={{fontSize:28,fontWeight:700}}>{$(mRec)}</div></div><div className="gc" style={{flex:1,padding:16,textAlign:'center'}}><div style={{fontSize:18,color:'var(--t3)',marginBottom:6}}>Annual</div><div className="mono" style={{fontSize:28,fontWeight:700,color:'var(--orange)'}}>{$(mRec*12)}</div></div></div>
 
       {/* Price Changes */}
       {recs.filter(r=>r.previous_amount&&r.previous_amount!==Number(r.amount)).length>0&&<>
@@ -410,8 +410,8 @@ export default function App(){
           const diff=Number(r.amount)-Number(r.previous_amount);const up=diff>0
           return<div key={r.id} style={{padding:'14px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <div><div style={{fontSize:18,fontWeight:500}}>{r.name}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{r.price_changed_at?new Date(r.price_changed_at).toLocaleDateString('en-AU',{month:'short',year:'numeric'}):''}</div></div>
-              <div style={{textAlign:'right'}}><div style={{display:'flex',alignItems:'center',gap:6}}><span className="mono" style={{fontSize:13,color:'var(--t3)',textDecoration:'line-through'}}>{$$(Number(r.previous_amount))}</span><span style={{fontSize:16}}>→</span><span className="mono" style={{fontSize:18,fontWeight:600}}>{$$(Number(r.amount))}</span></div>
+              <div><div style={{fontSize:18,fontWeight:500}}>{r.name}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{r.price_changed_at?new Date(r.price_changed_at).toLocaleDateString('en-AU',{month:'short',year:'numeric'}):''}</div></div>
+              <div style={{textAlign:'right'}}><div style={{display:'flex',alignItems:'center',gap:6}}><span className="mono" style={{fontSize:18,color:'var(--t3)',textDecoration:'line-through'}}>{$$(Number(r.previous_amount))}</span><span style={{fontSize:18}}>→</span><span className="mono" style={{fontSize:18,fontWeight:600}}>{$$(Number(r.amount))}</span></div>
                 <span className={`pill ${up?'pill-r':'pill-g'}`}>{up?'↑':'↓'} {$$(Math.abs(diff))}/mo</span>
               </div>
             </div>
@@ -423,16 +423,16 @@ export default function App(){
 
       <div className="sh">Active Subscriptions</div>
       {recs.filter(r=>r.status==='active').length===0&&<div className="gc"><div className="empty-state"><div className="empty-icon">🔄</div><div className="empty-title">No active subscriptions</div><div className="empty-desc">Add recurring payments in Settings</div></div></div>}
-      <div className="gc fu s3">{recs.filter(r=>r.status==='active').map((s,i)=><div key={s.id} style={{padding:'14px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',alignItems:'center',gap:12}}><div style={{flex:1}}><div style={{fontSize:18,fontWeight:600}}>{s.name}</div><div style={{fontSize:16,color:'var(--t3)',marginTop:2}}>{s.category} · {s.frequency} · <span style={{color:s.owner==='ben'?'var(--blue)':s.owner==='sarah'?'var(--pink, #ff375f)':'var(--green)'}}>{s.owner==='ben'?'👨 Ben':s.owner==='sarah'?'👩 Sarah':'👨‍👩‍👧‍👦 Family'}</span>{s.tags&&s.tags.length>0&&s.tags.map((tag:string,ti:number)=><span key={ti} style={{background:'var(--orange-s)',color:'var(--orange)',padding:'2px 8px',borderRadius:5,fontSize:13,fontWeight:600,marginLeft:4}}>{tag}</span>)}</div></div><span className="mono" style={{fontSize:18,fontWeight:600,marginRight:8}}>{$$(Number(s.amount))}</span>
-        <button onClick={async()=>{await supabase.from('recurring_payments').update({status:'flagged'}).eq('id',s.id);await load()}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'var(--orange-s)',color:'var(--orange)',fontSize:14,fontWeight:600,cursor:'pointer'}}>Flag</button>
-        <button onClick={async()=>{if(confirm('Cancel '+s.name+'?')){await supabase.from('recurring_payments').update({status:'cancelled'}).eq('id',s.id);await load()}}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:14,fontWeight:600,cursor:'pointer',marginLeft:4}}>Cancel</button>
+      <div className="gc fu s3">{recs.filter(r=>r.status==='active').map((s,i)=><div key={s.id} style={{padding:'14px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',alignItems:'center',gap:12}}><div style={{flex:1}}><div style={{fontSize:18,fontWeight:600}}>{s.name}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{s.category} · {s.frequency} · <span style={{color:s.owner==='ben'?'var(--blue)':s.owner==='sarah'?'var(--pink, #ff375f)':'var(--green)'}}>{s.owner==='ben'?'👨 Ben':s.owner==='sarah'?'👩 Sarah':'👨‍👩‍👧‍👦 Family'}</span>{s.tags&&s.tags.length>0&&s.tags.map((tag:string,ti:number)=><span key={ti} style={{background:'var(--orange-s)',color:'var(--orange)',padding:'2px 8px',borderRadius:5,fontSize:14,fontWeight:600,marginLeft:4}}>{tag}</span>)}</div></div><span className="mono" style={{fontSize:18,fontWeight:600,marginRight:8}}>{$$(Number(s.amount))}</span>
+        <button onClick={async()=>{await supabase.from('recurring_payments').update({status:'flagged'}).eq('id',s.id);await load()}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'var(--orange-s)',color:'var(--orange)',fontSize:18,fontWeight:600,cursor:'pointer'}}>Flag</button>
+        <button onClick={async()=>{if(confirm('Cancel '+s.name+'?')){await supabase.from('recurring_payments').update({status:'cancelled'}).eq('id',s.id);await load()}}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:18,fontWeight:600,cursor:'pointer',marginLeft:4}}>Cancel</button>
       </div></div>)}</div>
 
       {/* Bills from email */}
       <div className="sh">📬 Bills from Email</div>
       <div className="gc fu s4" style={{padding:24,textAlign:'center',cursor:'pointer'}} onClick={()=>fileRef.current?.click()}><span style={{fontSize:50}}>📸</span><div style={{fontSize:18,fontWeight:500,marginTop:10}}>Snap a Bill</div><div style={{fontSize:18,color:'var(--t3)',marginTop:4}}>Fella reads it automatically</div></div>
       <div className="gc fu s5">{ebills.map((b,i)=><div key={b.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{b.vendor}</div><div className="rs">Due {new Date(b.due_date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div></div><div style={{display:'flex',alignItems:'center',gap:8}}><span className="mono rr" style={{fontWeight:600}}>{$$(Number(b.amount))}</span>
-        {b.status!=='paid'&&<button onClick={async()=>{await supabase.from('email_bills').update({status:'paid'}).eq('id',b.id);await load()}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'var(--green-s)',color:'var(--green)',fontSize:14,fontWeight:600,cursor:'pointer'}}>Paid</button>}
+        {b.status!=='paid'&&<button onClick={async()=>{await supabase.from('email_bills').update({status:'paid'}).eq('id',b.id);await load()}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'var(--green-s)',color:'var(--green)',fontSize:18,fontWeight:600,cursor:'pointer'}}>Paid</button>}
         {b.status==='paid'&&<span className="pill pill-g">Paid</span>}
       </div></div>)}</div>
     </div>}
@@ -442,10 +442,10 @@ export default function App(){
       <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Goals</h2><button onClick={()=>newRow('savings_goals',{name:'',icon:'🎯',color:'#30d158',target_amount:0,current_amount:0,deadline:'',notes:''})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
       {showForm==='savings_goals'&&<EditForm table="savings_goals" fields={[{key:'name',label:'Goal name'},{key:'icon',label:'Icon emoji'},{key:'target_amount',label:'Target amount',type:'number'},{key:'current_amount',label:'Saved so far',type:'number'},{key:'deadline',label:'Deadline (YYYY-MM-DD)'},{key:'notes',label:'Notes'}]}/>}
       {goals.length===0&&<div className="gc" style={{padding:0}}><div className="empty-state"><div className="empty-icon">🏖️</div><div className="empty-title">No goals yet</div><div className="empty-desc">Tap + Add to set your first savings target</div></div></div>}{goals.map((g,i)=>{const prog=pc(Number(g.current_amount),Number(g.target_amount));const rem=Number(g.target_amount)-Number(g.current_amount);const dl=new Date(g.deadline);const ml=Math.max(1,(dl.getFullYear()-now.getFullYear())*12+dl.getMonth()-now.getMonth());const pm=rem/ml;const pw=pm/4.33;return<div key={g.id} className={`gc fu s${i+1}`} style={{padding:20,cursor:'pointer'}} onClick={()=>editRow('savings_goals',g,{name:g.name,icon:g.icon,color:g.color,target_amount:Number(g.target_amount),current_amount:Number(g.current_amount),deadline:g.deadline,notes:g.notes})}>
-        <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}><Ring value={Number(g.current_amount)} max={Number(g.target_amount)} size={64} sw={6} color={g.color}><span style={{fontSize:26}}>{g.icon}</span></Ring><div style={{flex:1}}><div style={{fontSize:18,fontWeight:600}}>{g.name}</div><div style={{fontSize:16,color:'var(--t3)',marginTop:2}}>{$(Number(g.target_amount))} by {dl.toLocaleDateString('en-AU',{month:'short',year:'numeric'})}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}%</span></div>
+        <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}><Ring value={Number(g.current_amount)} max={Number(g.target_amount)} size={64} sw={6} color={g.color}><span style={{fontSize:26}}>{g.icon}</span></Ring><div style={{flex:1}}><div style={{fontSize:18,fontWeight:600}}>{g.name}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{$(Number(g.target_amount))} by {dl.toLocaleDateString('en-AU',{month:'short',year:'numeric'})}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}%</span></div>
         <div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:g.color,borderRadius:3}}/></div>
-        <div style={{display:'flex',justifyContent:'space-between',marginTop:8,fontSize:13,color:'var(--t3)'}}><span>Saved <span className="mono" style={{color:'var(--green)',fontWeight:600}}>{$(Number(g.current_amount))}</span></span><span>Left <span className="mono" style={{fontWeight:600}}>{$(rem)}</span></span></div>
-        <div style={{marginTop:12,background:'var(--orange-s)',borderRadius:10,padding:'12px 16px',fontSize:15}}>Save <span className="mono" style={{fontWeight:700,color:'var(--orange)'}}>{$(pw)}/wk</span> or <span className="mono" style={{fontWeight:700,color:'var(--orange)'}}>{$(pm)}/mo</span></div>
+        <div style={{display:'flex',justifyContent:'space-between',marginTop:8,fontSize:18,color:'var(--t3)'}}><span>Saved <span className="mono" style={{color:'var(--green)',fontWeight:600}}>{$(Number(g.current_amount))}</span></span><span>Left <span className="mono" style={{fontWeight:600}}>{$(rem)}</span></span></div>
+        <div style={{marginTop:12,background:'var(--orange-s)',borderRadius:10,padding:'12px 16px',fontSize:18}}>Save <span className="mono" style={{fontWeight:700,color:'var(--orange)'}}>{$(pw)}/wk</span> or <span className="mono" style={{fontWeight:700,color:'var(--orange)'}}>{$(pm)}/mo</span></div>
       </div>})}
     </div>}
 
@@ -463,7 +463,7 @@ export default function App(){
             <div style={{fontSize:40}}>{cc.icon}</div>
             <div style={{flex:1}}>
               <div style={{fontSize:20,fontWeight:700}}>{cc.name}</div>
-              <div style={{fontSize:16,color:'var(--t3)',marginTop:2}}>{items.length} expense{items.length!==1?'s':''}</div>
+              <div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{items.length} expense{items.length!==1?'s':''}</div>
             </div>
             <div style={{textAlign:'right'}}>
               <div className="mono" style={{fontSize:22,fontWeight:700,color:total>0?'var(--orange)':'var(--t3)'}}>{total>0?$(total):'$0'}</div>
@@ -474,8 +474,8 @@ export default function App(){
           {isOpen&&<div style={{borderTop:'0.33px solid var(--sep)'}}>
             {/* Add expense */}
             <div style={{padding:'12px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{fontSize:16,color:'var(--t3)',fontWeight:600}}>Expenses</span>
-              <button onClick={e=>{e.stopPropagation();setShowForm(showForm==='cci'?null:'cci')}} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:600,cursor:'pointer'}} className="btn-press">{showForm==='cci'?'Cancel':'+ Add'}</button>
+              <span style={{fontSize:18,color:'var(--t3)',fontWeight:600}}>Expenses</span>
+              <button onClick={e=>{e.stopPropagation();setShowForm(showForm==='cci'?null:'cci')}} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}} className="btn-press">{showForm==='cci'?'Cancel':'+ Add'}</button>
             </div>
 
             {showForm==='cci'&&<div style={{padding:'0 20px 16px'}}>
@@ -490,7 +490,7 @@ export default function App(){
             {items.length>0?items.slice(0,10).map((item,j)=><div key={item.id} style={{padding:'14px 20px',display:'flex',alignItems:'center',...(j>0||showForm==='cci'?{borderTop:'0.33px solid var(--sep)'}:{})}}>
               <div style={{flex:1}}>
                 <div style={{fontSize:18,fontWeight:500}}>{item.description}</div>
-                <div style={{fontSize:16,color:'var(--t3)',marginTop:2}}>{item.category} · {new Date(item.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div>
+                <div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{item.category} · {new Date(item.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div>
               </div>
               <span className="mono" style={{fontSize:18,fontWeight:600}}>{$$(Number(item.amount))}</span>
             </div>):<div style={{padding:'24px 20px',textAlign:'center',color:'var(--t3)',fontSize:18}}>No expenses yet</div>}
@@ -513,12 +513,12 @@ export default function App(){
           <div style={{padding:'20px',textAlign:'center',borderBottom:'0.33px solid var(--sep)'}}>
             <div style={{fontSize:40,marginBottom:8}}>{ccs.find(c=>c.id===selectedCC)?.icon}</div>
             <div className="mono" style={{fontSize:32,fontWeight:800,color:'var(--orange)'}}>{$(ccis.filter(i=>i.cost_centre_id===selectedCC).reduce((s,i)=>s+Number(i.amount),0)+txs.filter(t=>t.cost_centre_id===selectedCC).reduce((s,t)=>s+Math.abs(Number(t.amount)),0))}</div>
-            <div style={{fontSize:16,color:'var(--t3)',marginTop:4}}>total spent</div>
+            <div style={{fontSize:18,color:'var(--t3)',marginTop:4}}>total spent</div>
           </div>
           {ccis.filter(i=>i.cost_centre_id===selectedCC).concat(txs.filter(t=>t.cost_centre_id===selectedCC).map(t=>({id:t.id,cost_centre_id:t.cost_centre_id||'',date:t.date,description:t.description,amount:Math.abs(Number(t.amount)),category:t.category||'Other'}))).slice(0,15).map((item,i)=><div key={item.id} style={{padding:'14px 20px',display:'flex',alignItems:'center',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}>
             <div style={{flex:1}}>
               <div style={{fontSize:18,fontWeight:500}}>{item.description}</div>
-              <div style={{fontSize:16,color:'var(--t3)',marginTop:2}}>{item.category} · {new Date(item.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div>
+              <div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{item.category} · {new Date(item.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div>
             </div>
             <span className="mono" style={{fontSize:18,fontWeight:600}}>{$$(Number(item.amount))}</span>
           </div>)}
@@ -552,11 +552,11 @@ export default function App(){
         <div style={{display:'flex',gap:10,marginBottom:10}}>
           <div style={{flex:1,background:'var(--card)',borderRadius:14,padding:'12px 16px',border:'1px solid var(--sep, rgba(255,255,255,0.08))'}}>
             <div style={{fontSize:12,color:'var(--t3)',fontWeight:600,marginBottom:6}}>From</div>
-            <input type="date" value={reportFrom} onChange={e=>setReportFrom(e.target.value)} style={{width:'100%',padding:'8px 0',border:'none',background:'transparent',color:'var(--t1)',fontSize:16,outline:'none',fontFamily:'inherit'}}/>
+            <input type="date" value={reportFrom} onChange={e=>setReportFrom(e.target.value)} style={{width:'100%',padding:'8px 0',border:'none',background:'transparent',color:'var(--t1)',fontSize:18,outline:'none',fontFamily:'inherit'}}/>
           </div>
           <div style={{flex:1,background:'var(--card)',borderRadius:14,padding:'12px 16px',border:'1px solid var(--sep, rgba(255,255,255,0.08))'}}>
             <div style={{fontSize:12,color:'var(--t3)',fontWeight:600,marginBottom:6}}>To</div>
-            <input type="date" value={reportTo} onChange={e=>setReportTo(e.target.value)} style={{width:'100%',padding:'8px 0',border:'none',background:'transparent',color:'var(--t1)',fontSize:16,outline:'none',fontFamily:'inherit'}}/>
+            <input type="date" value={reportTo} onChange={e=>setReportTo(e.target.value)} style={{width:'100%',padding:'8px 0',border:'none',background:'transparent',color:'var(--t1)',fontSize:18,outline:'none',fontFamily:'inherit'}}/>
           </div>
         </div>
         <div style={{display:'flex',gap:8,marginTop:12,flexWrap:'wrap'}}>
@@ -565,7 +565,7 @@ export default function App(){
             {l:'This Quarter',f:()=>{const q=Math.floor(now.getMonth()/3)*3;const s=new Date(now.getFullYear(),q,1);setReportFrom(s.toISOString().split('T')[0]);setReportTo(now.toISOString().split('T')[0])}},
             {l:'YTD',f:()=>{setReportFrom(new Date(now.getFullYear(),0,1).toISOString().split('T')[0]);setReportTo(now.toISOString().split('T')[0])}},
             {l:'All Time',f:()=>{setReportFrom('2020-01-01');setReportTo(now.toISOString().split('T')[0])}}
-          ].map(p=><button key={p.l} onClick={p.f} style={{padding:'8px 14px',borderRadius:10,border:'none',background:'var(--card2)',color:'var(--t2)',fontSize:13,fontWeight:600,cursor:'pointer'}}>{p.l}</button>)}
+          ].map(p=><button key={p.l} onClick={p.f} style={{padding:'8px 14px',borderRadius:10,border:'none',background:'var(--card2)',color:'var(--t2)',fontSize:18,fontWeight:600,cursor:'pointer'}}>{p.l}</button>)}
         </div>
       </div>
 
@@ -587,10 +587,10 @@ export default function App(){
           {/* SUMMARY */}
           {reportTab==='summary'&&<div className="fu s3" style={{display:'flex',flexDirection:'column',gap:12}}>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-              <div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:4}}>Income</div><div className="mono" style={{fontSize:24,fontWeight:700,color:'var(--green)'}}>{$(rIncome)}</div></div>
-              <div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:4}}>Expenses</div><div className="mono" style={{fontSize:24,fontWeight:700,color:'var(--orange)'}}>{$(rExpense)}</div></div>
-              <div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:4}}>Net</div><div className="mono" style={{fontSize:24,fontWeight:700,color:rNet>=0?'var(--green)':'var(--red)'}}>{$(rNet)}</div></div>
-              <div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:4}}>Transactions</div><div className="mono" style={{fontSize:24,fontWeight:700}}>{rTx.length}</div></div>
+              <div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:18,color:'var(--t3)',marginBottom:4}}>Income</div><div className="mono" style={{fontSize:24,fontWeight:700,color:'var(--green)'}}>{$(rIncome)}</div></div>
+              <div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:18,color:'var(--t3)',marginBottom:4}}>Expenses</div><div className="mono" style={{fontSize:24,fontWeight:700,color:'var(--orange)'}}>{$(rExpense)}</div></div>
+              <div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:18,color:'var(--t3)',marginBottom:4}}>Net</div><div className="mono" style={{fontSize:24,fontWeight:700,color:rNet>=0?'var(--green)':'var(--red)'}}>{$(rNet)}</div></div>
+              <div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:18,color:'var(--t3)',marginBottom:4}}>Transactions</div><div className="mono" style={{fontSize:24,fontWeight:700}}>{rTx.length}</div></div>
             </div>
             <div className="gc" style={{padding:18}}>
               <div style={{fontSize:18,fontWeight:600,marginBottom:12}}>Top Categories</div>
@@ -598,11 +598,11 @@ export default function App(){
             </div>
             <div className="gc" style={{padding:18}}>
               <div style={{fontSize:18,fontWeight:600,marginBottom:12}}>Debts Snapshot</div>
-              {debts.map((d,i)=>{const prog=pc(Number(d.original_amount)-Number(d.current_balance),Number(d.original_amount));return<div key={d.id} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><span style={{fontSize:18,fontWeight:500}}>{d.name}</span><span className="mono" style={{fontSize:15}}><span style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span> <span style={{color:'var(--green)',fontSize:12}}>{prog}%</span></span></div>})}
+              {debts.map((d,i)=>{const prog=pc(Number(d.original_amount)-Number(d.current_balance),Number(d.original_amount));return<div key={d.id} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><span style={{fontSize:18,fontWeight:500}}>{d.name}</span><span className="mono" style={{fontSize:18}}><span style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span> <span style={{color:'var(--green)',fontSize:12}}>{prog}%</span></span></div>})}
             </div>
             <div className="gc" style={{padding:18}}>
               <div style={{fontSize:18,fontWeight:600,marginBottom:12}}>Goals Progress</div>
-              {goals.map((g,i)=>{const prog=pc(Number(g.current_amount),Number(g.target_amount));return<div key={g.id} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><span style={{fontSize:18,fontWeight:500}}>{g.icon} {g.name}</span><span className="mono" style={{fontSize:15}}>{$(Number(g.current_amount))} <span style={{color:'var(--t3)',fontSize:12}}>/ {$(Number(g.target_amount))}</span></span></div>})}
+              {goals.map((g,i)=>{const prog=pc(Number(g.current_amount),Number(g.target_amount));return<div key={g.id} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><span style={{fontSize:18,fontWeight:500}}>{g.icon} {g.name}</span><span className="mono" style={{fontSize:18}}>{$(Number(g.current_amount))} <span style={{color:'var(--t3)',fontSize:12}}>/ {$(Number(g.target_amount))}</span></span></div>})}
             </div>
           </div>}
 
@@ -611,11 +611,11 @@ export default function App(){
 
           {/* INCOME */}
           {reportTab==='income_r'&&<div className="fu s3"><div className="gc">{incs.map((inc,i)=><div key={inc.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><Ico bg="var(--green)" ch="💰"/><div className="rb"><div className="rt">{inc.name}</div><div className="rs">{inc.type.replace('_',' ')} · {inc.frequency}</div></div><span className="mono rr" style={{fontWeight:600,color:'var(--green)'}}>{$$(Number(inc.amount))}</span></div>)}</div>
-            <div className="gc" style={{padding:18,textAlign:'center',marginTop:12}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:4}}>Period Income</div><div className="mono" style={{fontSize:28,fontWeight:700,color:'var(--green)'}}>{$(rIncome)}</div></div>
+            <div className="gc" style={{padding:18,textAlign:'center',marginTop:12}}><div style={{fontSize:18,color:'var(--t3)',marginBottom:4}}>Period Income</div><div className="mono" style={{fontSize:28,fontWeight:700,color:'var(--green)'}}>{$(rIncome)}</div></div>
           </div>}
 
           {/* DEBTS */}
-          {reportTab==='debts_r'&&<div className="fu s3"><div className="gc">{debts.map((d,i)=>{const paid=Number(d.original_amount)-Number(d.current_balance);const prog=pc(paid,Number(d.original_amount));return<div key={d.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}><div><div style={{fontSize:20,fontWeight:700}}>{d.name}</div><div style={{fontSize:16,color:'var(--t3)',marginTop:2}}>{d.lender}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}% paid</span></div><div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:'var(--green)',borderRadius:3}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:8,fontSize:13,color:'var(--t3)'}}><span>Remaining: <span className="mono" style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span></span><span>{$$(Number(d.monthly_payment))}/mo</span></div></div>})}</div></div>}
+          {reportTab==='debts_r'&&<div className="fu s3"><div className="gc">{debts.map((d,i)=>{const paid=Number(d.original_amount)-Number(d.current_balance);const prog=pc(paid,Number(d.original_amount));return<div key={d.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}><div><div style={{fontSize:20,fontWeight:700}}>{d.name}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{d.lender}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}% paid</span></div><div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:'var(--green)',borderRadius:3}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:8,fontSize:18,color:'var(--t3)'}}><span>Remaining: <span className="mono" style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span></span><span>{$$(Number(d.monthly_payment))}/mo</span></div></div>})}</div></div>}
 
           {/* TRANSACTION LIST */}
           {reportTab==='txlist'&&<div className="fu s3"><div className="gc">{rTx.length===0?<div style={{padding:20,textAlign:'center',color:'var(--t3)'}}>No transactions in this period</div>:rTx.map((tx,i)=><div key={tx.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{tx.description}</div><div className="rs">{tx.category} · {new Date(tx.date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(tx.amount)>=0?'var(--green)':'var(--t1)'}}>{Number(tx.amount)>=0?'+':''}{$$(Number(tx.amount))}</span></div>)}</div></div>}
@@ -625,7 +625,7 @@ export default function App(){
             <button onClick={()=>{const filtered=txs.filter(t=>t.date>=reportFrom&&t.date<=reportTo);const csv='Date,Description,Amount,Category\n'+filtered.map(t=>t.date+',"'+t.description+'",'+t.amount+',"'+(t.category||'')+'"').join('\n');const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='caster-report-'+reportFrom+'-to-'+reportTo+'.csv';a.click();URL.revokeObjectURL(url);showToast('CSV downloaded!','success')}} style={{flex:1,padding:'16px',borderRadius:14,border:'none',background:'var(--card)',color:'var(--t1)',fontSize:18,fontWeight:700,cursor:'pointer'}} className="btn-press">📥 Export CSV</button>
             <button onClick={()=>window.print()} style={{flex:1,padding:'16px',borderRadius:14,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:700,cursor:'pointer'}} className="btn-press">🖨️ Print / PDF</button>
           </div>
-          <div style={{fontSize:13,color:'var(--t3)',textAlign:'center',lineHeight:1.5}}>CSV exports filtered transactions. Print saves the current view as PDF.</div>
+          <div style={{fontSize:18,color:'var(--t3)',textAlign:'center',lineHeight:1.5}}>CSV exports filtered transactions. Print saves the current view as PDF.</div>
         </>
       })()}
     </div>}
@@ -640,13 +640,13 @@ export default function App(){
       {/* Connections */}
       {settingsSection==='connections'&&<div className="fu s2">
         <div className="sh">Data Sources</div>
-        <div className="gc">{[{n:'Basiq (Bank Feeds)',s:'Not connected',c:'var(--red)',i:'🏦',d:'ME Bank, ING, Amex live feeds'},{n:'Gmail (Bills)',s:'Not connected',c:'var(--red)',i:'📬',d:'Auto-scan email for bills'},{n:'Photo OCR',s:'Ready',c:'var(--green)',i:'📸',d:'Snap bills → Fella reads them'},{n:'Fella AI',s:'Needs API key',c:'var(--orange)',i:'🤖',d:'Add ANTHROPIC_API_KEY in Vercel'},{n:'Manual Entry',s:'Active',c:'var(--green)',i:'✏️',d:'Add via Settings or Home tab'}].map((ds,i)=><div key={i} style={{padding:'16px 20px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',alignItems:'center',gap:14}}><Ico bg={ds.c} ch={ds.i}/><div style={{flex:1}}><div style={{fontSize:18,fontWeight:600}}>{ds.n}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{ds.d}</div></div><span style={{fontSize:13,color:ds.c,fontWeight:600,flexShrink:0}}>{ds.s}</span></div></div>)}</div>
+        <div className="gc">{[{n:'Basiq (Bank Feeds)',s:'Not connected',c:'var(--red)',i:'🏦',d:'ME Bank, ING, Amex live feeds'},{n:'Gmail (Bills)',s:'Not connected',c:'var(--red)',i:'📬',d:'Auto-scan email for bills'},{n:'Photo OCR',s:'Ready',c:'var(--green)',i:'📸',d:'Snap bills → Fella reads them'},{n:'Fella AI',s:'Needs API key',c:'var(--orange)',i:'🤖',d:'Add ANTHROPIC_API_KEY in Vercel'},{n:'Manual Entry',s:'Active',c:'var(--green)',i:'✏️',d:'Add via Settings or Home tab'}].map((ds,i)=><div key={i} style={{padding:'16px 20px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',alignItems:'center',gap:14}}><Ico bg={ds.c} ch={ds.i}/><div style={{flex:1}}><div style={{fontSize:18,fontWeight:600}}>{ds.n}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{ds.d}</div></div><span style={{fontSize:18,color:ds.c,fontWeight:600,flexShrink:0}}>{ds.s}</span></div></div>)}</div>
 
         <div className="sh" style={{marginTop:20}}>Notifications</div>
-        <div className="gc"><div style={{padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div><div style={{fontSize:18,fontWeight:600}}>Bill Reminders</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>Get alerts before bills are due</div></div><button onClick={async()=>{if('Notification' in window){const p=await Notification.requestPermission();alert(p==='granted'?'Notifications enabled!':'Blocked — enable in browser settings')}else{alert('Not supported in this browser')}}} style={{padding:'10px 18px',borderRadius:10,border:'none',background:'var(--blue)',color:'#fff',fontSize:18,fontWeight:600,cursor:'pointer'}}>Enable</button></div></div>
+        <div className="gc"><div style={{padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div><div style={{fontSize:18,fontWeight:600}}>Bill Reminders</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>Get alerts before bills are due</div></div><button onClick={async()=>{if('Notification' in window){const p=await Notification.requestPermission();alert(p==='granted'?'Notifications enabled!':'Blocked — enable in browser settings')}else{alert('Not supported in this browser')}}} style={{padding:'10px 18px',borderRadius:10,border:'none',background:'var(--blue)',color:'#fff',fontSize:18,fontWeight:600,cursor:'pointer'}}>Enable</button></div></div>
 
         <div className="sh" style={{marginTop:20,color:'var(--red)'}}>Danger Zone</div>
-        <div className="gc"><div style={{padding:'16px 20px'}}><div style={{fontSize:18,fontWeight:600,marginBottom:4}}>Reset All Data</div><div style={{fontSize:13,color:'var(--t3)',marginBottom:12}}>Delete everything and start fresh. Cannot be undone.</div><button onClick={resetData} disabled={saving} style={{padding:'12px 20px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:18,fontWeight:600,cursor:'pointer'}}>{saving?'⏳ Clearing...':'🗑️ Clear All Data'}</button></div></div>
+        <div className="gc"><div style={{padding:'16px 20px'}}><div style={{fontSize:18,fontWeight:600,marginBottom:4}}>Reset All Data</div><div style={{fontSize:18,color:'var(--t3)',marginBottom:12}}>Delete everything and start fresh. Cannot be undone.</div><button onClick={resetData} disabled={saving} style={{padding:'12px 20px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:18,fontWeight:600,cursor:'pointer'}}>{saving?'⏳ Clearing...':'🗑️ Clear All Data'}</button></div></div>
       </div>}
 
       {/* Accounts */}
@@ -680,9 +680,9 @@ export default function App(){
 
       {/* Search */}
       <div style={{position:'relative'}}>
-        <input value={guideSearch} onChange={e=>setGuideSearch(e.target.value)} placeholder="Search features..." style={{width:'100%',padding:'14px 16px 14px 44px',borderRadius:14,border:'1px solid var(--sep, rgba(255,255,255,0.08))',background:'var(--card)',color:'var(--t1)',fontSize:16,outline:'none',fontFamily:'inherit'}} onFocus={e=>{e.currentTarget.style.borderColor='var(--orange)';e.currentTarget.style.boxShadow='0 0 0 3px rgba(255,159,10,0.15)'}} onBlur={e=>{e.currentTarget.style.borderColor='var(--sep, rgba(255,255,255,0.08))';e.currentTarget.style.boxShadow='none'}}/>
+        <input value={guideSearch} onChange={e=>setGuideSearch(e.target.value)} placeholder="Search features..." style={{width:'100%',padding:'14px 16px 14px 44px',borderRadius:14,border:'1px solid var(--sep, rgba(255,255,255,0.08))',background:'var(--card)',color:'var(--t1)',fontSize:18,outline:'none',fontFamily:'inherit'}} onFocus={e=>{e.currentTarget.style.borderColor='var(--orange)';e.currentTarget.style.boxShadow='0 0 0 3px rgba(255,159,10,0.15)'}} onBlur={e=>{e.currentTarget.style.borderColor='var(--sep, rgba(255,255,255,0.08))';e.currentTarget.style.boxShadow='none'}}/>
         <span style={{position:'absolute',left:16,top:'50%',transform:'translateY(-50%)',fontSize:18,opacity:0.4}}>🔍</span>
-        {guideSearch&&<button onClick={()=>setGuideSearch('')} style={{position:'absolute',right:14,top:'50%',transform:'translateY(-50%)',background:'var(--card2)',border:'none',color:'var(--t3)',width:24,height:24,borderRadius:12,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>}
+        {guideSearch&&<button onClick={()=>setGuideSearch('')} style={{position:'absolute',right:14,top:'50%',transform:'translateY(-50%)',background:'var(--card2)',border:'none',color:'var(--t3)',width:24,height:24,borderRadius:12,fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>}
       </div>
 
 
@@ -709,7 +709,7 @@ export default function App(){
           return results.length===0?
             <div className="empty-state"><div className="empty-icon">🔍</div><div className="empty-title">No results</div><div className="empty-desc">Try a different search term</div></div>:
             results.map((r,i)=><div key={i} style={{paddingLeft:20,borderLeft:'3px solid var(--orange)',marginBottom:16,cursor:'pointer'}} onClick={()=>{setGuideSearch('');setTab(r.tab)}}>
-              <div style={{fontSize:14,color:'var(--orange)',fontWeight:600,marginBottom:4}}>{r.section}</div>
+              <div style={{fontSize:18,color:'var(--orange)',fontWeight:600,marginBottom:4}}>{r.section}</div>
               <div style={{fontSize:18,fontWeight:700}}>{r.t}</div>
               <div style={{fontSize:18,color:'var(--t3)',marginTop:4,lineHeight:1.55}}>{r.d}</div>
             </div>)
@@ -719,7 +719,7 @@ export default function App(){
       {settingsSection==='costcentres'&&<div className="fu s2">
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Spending Cost Centres</div><button onClick={()=>newRow('cost_centres',{name:'',icon:'📁',color:'#ff9f0a',type:'spending'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
         {showForm==='cost_centres'&&settingsSection==='costcentres'&&<EditForm table="cost_centres" fields={[{key:'name',label:'Name (e.g. Clothes, Sports)'},{key:'icon',label:'Icon emoji'},{key:'type',label:'Type',options:[{v:'spending',l:'💰 Spending'},{v:'household',l:'🏠 Household'},{v:'custom',l:'📁 Custom'},{v:'child',l:'👶 Child'}]}]}/>}
-        <div className="gc">{ccs.filter(c=>c.type!=='child').map((cc,i)=><div key={cc.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('cost_centres',cc,{name:cc.name,icon:cc.icon,color:cc.color,type:cc.type||'spending'})}><Ico bg={cc.color||'var(--purple)'} ch={cc.icon}/><div className="rb"><div className="rt">{cc.name}</div><div className="rs" style={{fontSize:16}}>{cc.type}</div></div></div>)}</div>
+        <div className="gc">{ccs.filter(c=>c.type!=='child').map((cc,i)=><div key={cc.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('cost_centres',cc,{name:cc.name,icon:cc.icon,color:cc.color,type:cc.type||'spending'})}><Ico bg={cc.color||'var(--purple)'} ch={cc.icon}/><div className="rb"><div className="rt">{cc.name}</div><div className="rs" style={{fontSize:18}}>{cc.type}</div></div></div>)}</div>
         {ccs.filter(c=>c.type!=='child').length===0&&<div className="gc"><div className="empty-state"><div className="empty-icon">📁</div><div className="empty-title">No cost centres yet</div><div className="empty-desc">Add categories like Clothes, Sports, School to track spending</div></div></div>}
       </div>}
     </div>}
