@@ -128,3 +128,14 @@ body{font-family:'DM Sans',-apple-system,'SF Pro Text',system-ui,sans-serif;back
 .spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;vertical-align:middle}
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+
+/* ══ DESKTOP / TABLET ══ */
+@media (min-width: 600px) {
+  body{display:flex;justify-content:center;background:#000}
+  body>div{max-width:430px;width:100%;position:relative}
+  .tbar{max-width:430px;left:50%;transform:translateX(-50%)}
+  .overlay{max-width:430px;left:50%;transform:translateX(-50%)}
+  .more-menu{max-width:430px}
+  .toast{max-width:380px}
+}
