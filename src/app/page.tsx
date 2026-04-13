@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 type Acc={id:string;name:string;bank:string;account_type:string;balance:number}
 type Tx={id:string;date:string;description:string;amount:number;category:string}
 type Cat={id:string;name:string;icon:string;color:string;monthly_limit:number}
-type Rec={id:string;name:string;amount:number;frequency:string;category:string;status:string;notes:string;next_due_date:string;owner:string}
+type Rec={id:string;name:string;amount:number;frequency:string;category:string;status:string;notes:string;next_due_date:string;owner:string;previous_amount:number|null;price_changed_at:string|null}
 type Dbt={id:string;name:string;type:string;original_amount:number;current_balance:number;interest_rate:number;monthly_payment:number;lender:string}
 type Goal={id:string;name:string;icon:string;color:string;target_amount:number;current_amount:number;deadline:string;notes:string}
 type Inc={id:string;name:string;type:string;amount:number;frequency:string}
@@ -90,6 +90,8 @@ export default function App(){
   const[reportTo,setReportTo]=useState(new Date().toISOString().split('T')[0])
   const[reportTab,setReportTab]=useState('summary')
   const fileRef=useRef<HTMLInputElement>(null)
+  const[dateFrom,setDateFrom]=useState('')
+  const[dateTo,setDateTo]=useState('')
 
   // ── Data Loading ──
   const load=async()=>{
@@ -155,6 +157,17 @@ export default function App(){
     for(const t of['transactions','finance_alerts','fella_chat','bill_uploads','email_bills','monthly_snapshots','cost_centre_items','recurring_payments','debts','savings_goals','income_sources','budget_categories','bank_accounts','data_connections','cost_centres']){
       await supabase.from(t).delete().neq('id','00000000-0000-0000-0000-000000000000')}
     await load();setSaving(false)
+  }
+
+  // ── Export CSV ──
+  const exportCSV=()=>{
+    const filtered=dateFrom||dateTo?txs.filter(t=>{const d=t.date;return(!dateFrom||d>=dateFrom)&&(!dateTo||d<=dateTo)}):txs
+    const header='Date,Description,Amount,Category\n'
+    const rows=filtered.map(t=>`${t.date},"${t.description}",${t.amount},"${t.category||''}"`).join('\n')
+    const blob=new Blob([header+rows],{type:'text/csv'})
+    const url=URL.createObjectURL(blob)
+    const a=document.createElement('a');a.href=url;a.download=`caster-transactions-${new Date().toISOString().split('T')[0]}.csv`;a.click()
+    URL.revokeObjectURL(url)
   }
 
   // ── Chat ──
@@ -223,14 +236,15 @@ export default function App(){
       <div className="fu s3"><div className="sh">Cash Flow · {savingsRate}% saved</div><div className="gc" style={{padding:'16px 18px 14px'}}><div style={{display:'flex',gap:16,fontSize:12,color:'var(--t3)',marginBottom:14}}><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--orange)'}}/>Income</span><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--purple)'}}/>Expenses</span></div><div style={{display:'flex',alignItems:'flex-end',gap:8,height:110}}>{snaps.map((d,i)=>{const mx=Math.max(...snaps.flatMap(s=>[s.total_income,s.total_expenses]),1);return<div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:6}}><div style={{display:'flex',gap:3,alignItems:'flex-end',height:88,width:'100%'}}><div style={{flex:1,borderRadius:5,height:`${(Number(d.total_income)/mx)*100}%`,background:'var(--orange)',opacity:0.85,transition:'height 0.8s'}}/><div style={{flex:1,borderRadius:5,height:`${(Number(d.total_expenses)/mx)*100}%`,background:'var(--purple)',opacity:0.5,transition:'height 0.8s'}}/></div><span style={{fontSize:11,color:'var(--t3)'}}>{new Date(d.month+'T00:00').toLocaleDateString('en-AU',{month:'short'})}</span></div>})}</div></div></div>
 
       {/* Recent Transactions + Add */}
-      <div className="fu s4"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><div className="sh" style={{margin:0}}>Recent</div><button onClick={()=>setShowForm(showForm==='tx'?null:'tx')} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>{showForm==='tx'?'Cancel':'+ Add'}</button></div>
+      <div className="fu s4"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}><div className="sh" style={{margin:0}}>Transactions</div><div style={{display:'flex',gap:6}}><button onClick={exportCSV} style={{padding:'8px 14px',borderRadius:10,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:13,fontWeight:600,cursor:'pointer'}}>📥 CSV</button><button onClick={()=>setShowForm(showForm==='tx'?null:'tx')} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>{showForm==='tx'?'Cancel':'+ Add'}</button></div></div>
+        <div style={{display:'flex',gap:8,marginTop:4}}><input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} placeholder="From" style={{flex:1,padding:'10px 12px',borderRadius:10,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:13,outline:'none',fontFamily:'inherit'}}/><input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} placeholder="To" style={{flex:1,padding:'10px 12px',borderRadius:10,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:13,outline:'none',fontFamily:'inherit'}}/>{(dateFrom||dateTo)&&<button onClick={()=>{setDateFrom('');setDateTo('')}} style={{padding:'10px 12px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:13,fontWeight:600,cursor:'pointer'}}>Clear</button>}</div>
         {showForm==='tx'&&<div className="gc" style={{padding:18,marginTop:10,marginBottom:4}}>
           <Input placeholder="What was it?" value={fd.description||''} onChange={e=>setFd({...fd,description:e.target.value})}/>
           <div style={{display:'flex',gap:8}}><Input placeholder="Amount (-ve for expense)" type="number" value={fd.amount??''} onChange={e=>setFd({...fd,amount:e.target.value})} style={{flex:1,marginBottom:8}}/><Input type="date" value={fd.date||new Date().toISOString().split('T')[0]} onChange={e=>setFd({...fd,date:e.target.value})} style={{width:140,marginBottom:8}}/></div>
           <Select value={fd.category||''} onChange={e=>setFd({...fd,category:e.target.value})}><option value="">Category...</option>{cats.map(c=><option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}<option value="Income">Income</option></Select>
           <Btn onClick={()=>save('transactions',{description:fd.description,amount:parseFloat(fd.amount)||0,category:fd.category||'Uncategorised',date:fd.date||new Date().toISOString().split('T')[0],logged_by:'manual'})} disabled={saving} style={{width:'100%'}}>{saving?'Saving...':'Add'}</Btn>
         </div>}
-        <div className="gc">{txs.slice(0,7).map((tx,i)=><div key={tx.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{tx.description}</div><div className="rs">{tx.category} · {new Date(tx.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(tx.amount)>=0?'var(--green)':'var(--t1)'}}>{Number(tx.amount)>=0?'+':''}{$$(Number(tx.amount))}</span></div>)}</div>
+        <div className="gc">{(dateFrom||dateTo?txs.filter(t=>(!dateFrom||t.date>=dateFrom)&&(!dateTo||t.date<=dateTo)):txs).slice(0,20).map((tx,i)=><div key={tx.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{tx.description}</div><div className="rs">{tx.category} · {new Date(tx.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(tx.amount)>=0?'var(--green)':'var(--t1)'}}>{Number(tx.amount)>=0?'+':''}{$$(Number(tx.amount))}</span></div>)}</div>
       </div>
 
       {/* Savings callout */}
@@ -279,6 +293,22 @@ export default function App(){
     {tab==='subs'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Subs & Bills</h2></div>
       <div className="fu s1" style={{display:'flex',gap:10}}><div className="gc" style={{flex:1,padding:16,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:6}}>Monthly</div><div className="mono" style={{fontSize:28,fontWeight:700}}>{$(mRec)}</div></div><div className="gc" style={{flex:1,padding:16,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:6}}>Annual</div><div className="mono" style={{fontSize:28,fontWeight:700,color:'var(--orange)'}}>{$(mRec*12)}</div></div></div>
+
+      {/* Price Changes */}
+      {recs.filter(r=>r.previous_amount&&r.previous_amount!==Number(r.amount)).length>0&&<>
+        <div className="sh" style={{color:'var(--blue)'}}>💰 Price Changes</div>
+        <div className="gc fu s2">{recs.filter(r=>r.previous_amount&&r.previous_amount!==Number(r.amount)).map((r,i)=>{
+          const diff=Number(r.amount)-Number(r.previous_amount);const up=diff>0
+          return<div key={r.id} style={{padding:'14px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div><div style={{fontSize:17,fontWeight:500}}>{r.name}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{r.price_changed_at?new Date(r.price_changed_at).toLocaleDateString('en-AU',{month:'short',year:'numeric'}):''}</div></div>
+              <div style={{textAlign:'right'}}><div style={{display:'flex',alignItems:'center',gap:6}}><span className="mono" style={{fontSize:13,color:'var(--t3)',textDecoration:'line-through'}}>{$$(Number(r.previous_amount))}</span><span style={{fontSize:16}}>→</span><span className="mono" style={{fontSize:15,fontWeight:600}}>{$$(Number(r.amount))}</span></div>
+                <span className={`pill ${up?'pill-r':'pill-g'}`}>{up?'↑':'↓'} {$$(Math.abs(diff))}/mo</span>
+              </div>
+            </div>
+          </div>
+        })}</div>
+      </>}
 
       {flagged.length>0&&<><div className="sh" style={{color:'var(--red)'}}>⚠ Review</div><div className="gc fu s2">{flagged.map((s,i)=><div key={s.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{fontSize:17,fontWeight:500}}>{s.name}</span><div style={{display:'flex',alignItems:'center',gap:8}}><span className="mono" style={{fontSize:15,fontWeight:600}}>{$$(Number(s.amount))}</span><span className="pill pill-r">{s.status==='duplicate'?'Duplicate':'Review'}</span></div></div>{s.notes&&<div style={{fontSize:13,color:'var(--t3)',marginTop:8}}>{s.notes}</div>}<div style={{fontSize:12,color:'var(--t3)',marginTop:4}}>{s.owner==='ben'?'👨 Ben':s.owner==='sarah'?'👩 Sarah':'👨‍👩‍👧‍👦 Family'}</div></div>)}</div></>}
 
