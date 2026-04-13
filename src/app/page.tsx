@@ -289,7 +289,7 @@ export default function App(){
               <span style={{fontSize:16,fontWeight:500}}>{catIcons[cat]||'📦'} {cat}</span>
               <span className="mono" style={{fontSize:15,fontWeight:600}}>{$(amt)}</span>
             </div>
-            <div className="pbar" style={{height:8,borderRadius:4}}><div className="pfill" style={{width:\`\${(amt/maxCat)*100}%\`,background:kid.color,borderRadius:4}}/></div>
+            <div className="pbar" style={{height:8,borderRadius:4}}><div className="pfill" style={{width:`${(amt/maxCat)*100}%`,background:kid.color,borderRadius:4}}/></div>
           </div>)}</div>
 
           {/* Recent items */}
