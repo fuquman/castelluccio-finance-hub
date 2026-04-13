@@ -63,14 +63,26 @@ export default function App(){
 
   // Auth: check session and listen for changes
   useEffect(()=>{
-    supabase.auth.getSession().then(({data:{session}})=>{
-      setUser(session?.user ? {id:session.user.id,email:session.user.email} : null)
+    // First listen for auth changes (catches magic link callback)
+    const{data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
+      if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION'){
+        setUser(session?.user ? {id:session.user.id,email:session.user.email} : null)
+      }
+      if(event==='SIGNED_OUT'){setUser(null)}
       setAuthLoading(false)
     })
-    const{data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{
+    // Check for existing session (but give hash processing a moment)
+    const checkSession=async()=>{
+      // If URL has a hash with access_token, let onAuthStateChange handle it
+      if(window.location.hash&&window.location.hash.includes('access_token')){
+        // Hash will be processed by supabase client automatically
+        return
+      }
+      const{data:{session}}=await supabase.auth.getSession()
       setUser(session?.user ? {id:session.user.id,email:session.user.email} : null)
       setAuthLoading(false)
-    })
+    }
+    checkSession()
     return()=>subscription.unsubscribe()
   },[])
 
