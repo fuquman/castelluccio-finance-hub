@@ -450,12 +450,12 @@ export default function App(){
 
     {/* ═══════ KIDS ═══════ */}
     {tab==='kids'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
-      <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Cost Centres</h2><button onClick={()=>newRow('cost_centres',{name:'',icon:'👤',color:'#ff9f0a',type:'child'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
+      <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Kids</h2><button onClick={()=>newRow('cost_centres',{name:'',icon:'👦',color:'#ff375f',type:'child'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
 
       {showForm==='cost_centres'&&<EditForm table="cost_centres" fields={[{key:'name',label:'Name (e.g. child name)'},{key:'icon',label:'Icon emoji'},{key:'type',label:'Type',options:[{v:'child',l:'👶 Child'},{v:'spending',l:'💰 Spending'},{v:'household',l:'🏠 Household'},{v:'custom',l:'📁 Custom'}]}]}/>}
 
       {/* Cost Centre selector */}
-      <div className="fu s1" style={{display:'flex',gap:10,overflowX:'auto',flexWrap:'wrap'}}>{ccs.map(cc=><button key={cc.id} onClick={()=>setSelectedKid(selectedKid===cc.id?null:cc.id)} style={{padding:'12px 20px',borderRadius:12,border:'none',background:selectedKid===cc.id?'var(--orange)':'var(--card)',color:selectedKid===cc.id?'#000':'var(--t2)',fontSize:16,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>{cc.icon} {cc.name}</button>)}
+      <div className="fu s1" style={{display:'flex',gap:10,overflowX:'auto',flexWrap:'wrap'}}>{ccs.filter(cc=>cc.type==='child').map(cc=><button key={cc.id} onClick={()=>setSelectedKid(selectedKid===cc.id?null:cc.id)} style={{padding:'12px 20px',borderRadius:12,border:'none',background:selectedKid===cc.id?'var(--orange)':'var(--card)',color:selectedKid===cc.id?'#000':'var(--t2)',fontSize:16,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>{cc.icon} {cc.name}</button>)}
       </div>
 
       {/* Edit/Delete selected cost centre */}
@@ -575,7 +575,7 @@ export default function App(){
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Settings</h2></div>
 
       <div className="fu s1" style={{display:'flex',gap:6,overflowX:'auto',paddingBottom:4}}>{[
-        {id:'connections',l:'Connections',i:'🔗'},{id:'accounts',l:'Accounts',i:'🏦'},{id:'income',l:'Income',i:'💰'},{id:'recurring',l:'Recurring',i:'🔄'}
+        {id:'connections',l:'Connections',i:'🔗'},{id:'accounts',l:'Accounts',i:'🏦'},{id:'income',l:'Income',i:'💰'},{id:'recurring',l:'Recurring',i:'🔄'},{id:'costcentres',l:'Cost Centres',i:'📁'}
       ].map(st=><button key={st.id} onClick={()=>{setSettingsSection(st.id);setShowForm(null);setEditItem(null)}} style={{padding:'10px 16px',borderRadius:12,border:'none',background:settingsSection===st.id?'var(--orange)':'var(--card)',color:settingsSection===st.id?'#000':'var(--t2)',fontSize:15,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{st.i} {st.l}</button>)}</div>
 
       {/* Connections */}
@@ -655,7 +655,15 @@ export default function App(){
               <div style={{fontSize:16,color:'var(--t3)',marginTop:4,lineHeight:1.55}}>{r.d}</div>
             </div>)
         })()}
+  
+      {/* Cost Centres */}
+      {settingsSection==='costcentres'&&<div className="fu s2">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Spending Cost Centres</div><button onClick={()=>newRow('cost_centres',{name:'',icon:'📁',color:'#ff9f0a',type:'spending'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
+        {showForm==='cost_centres'&&settingsSection==='costcentres'&&<EditForm table="cost_centres" fields={[{key:'name',label:'Name (e.g. Clothes, Sports)'},{key:'icon',label:'Icon emoji'},{key:'type',label:'Type',options:[{v:'spending',l:'💰 Spending'},{v:'household',l:'🏠 Household'},{v:'custom',l:'📁 Custom'},{v:'child',l:'👶 Child'}]}]}/>}
+        <div className="gc">{ccs.filter(c=>c.type!=='child').map((cc,i)=><div key={cc.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('cost_centres',cc,{name:cc.name,icon:cc.icon,color:cc.color,type:cc.type||'spending'})}><Ico bg={cc.color||'var(--purple)'} ch={cc.icon}/><div className="rb"><div className="rt">{cc.name}</div><div className="rs">{cc.type}</div></div></div>)}</div>
+        {ccs.filter(c=>c.type!=='child').length===0&&<div className="gc"><div className="empty-state"><div className="empty-icon">📁</div><div className="empty-title">No cost centres yet</div><div className="empty-desc">Add categories like Clothes, Sports, School to track spending</div></div></div>}
       </div>}
+    </div>}
 
       {/* Quick Jump */}
       {!guideSearch&&<div className="gc fu s1" style={{padding:20}}>
@@ -820,7 +828,7 @@ export default function App(){
     {more&&<div className="overlay" onClick={()=>setMore(false)}><div className="more-menu" onClick={e=>e.stopPropagation()}><div className="more-handle"/>{[
       {icon:'🔄',label:'Subs & Bills',color:'var(--purple)',id:'subs'},
       {icon:'🏖️',label:'Goals',color:'var(--green)',id:'goals'},
-      {icon:'📁',label:'Cost Centres',color:'var(--purple, #8b5cf6)',id:'kids'},
+      {icon:'👶',label:'Kids',color:'var(--pink, #ff375f)',id:'kids'},
       {icon:'📊',label:'Reports & Export',color:'var(--blue)',id:'reports'},{icon:'⚙️',label:'Settings',color:'var(--gray2, #555)',id:'settings'},{icon:'📖',label:'User Guide',color:'var(--teal, #64d2ff)',id:'guide'},
     ].map(item=><div key={item.id} className="more-item" onClick={()=>{setTab(item.id);setMore(false)}}><Ico bg={item.color} ch={item.icon} size={56}/><span style={{fontSize:22,fontWeight:500}}>{item.label}</span></div>)}
     <div className="more-item" onClick={()=>setMore(false)} style={{justifyContent:'center',padding:'20px 24px'}}><span style={{fontSize:20,color:'var(--t3)'}}>Cancel</span></div></div></div>}
