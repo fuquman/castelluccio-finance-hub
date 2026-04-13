@@ -99,3 +99,6 @@ body{font-family:'DM Sans',-apple-system,'SF Pro Text',system-ui,sans-serif;back
 .more-item{display:flex;align-items:center;gap:20px;padding:20px 28px;cursor:pointer;transition:background 0.15s}
 .more-item:active{background:rgba(255,255,255,0.05)}
 .more-item+.more-item{border-top:0.33px solid var(--sep)}
+
+/* Carousel */
+.carousel-hide::-webkit-scrollbar{display:none}
