@@ -36,8 +36,8 @@ function Ico({bg,ch,size=50}:{bg:string;ch:string;size?:number}){
 }
 
 export default function App(){
-  const[user,setUser]=useState<User|null>(null)
-  const[authLoading,setAuthLoading]=useState(true)
+  const[user,setUser]=useState<User|null>({id:'ben',email:'ben@castelluccio.com.au'})
+  const[authLoading,setAuthLoading]=useState(false)
   const[authEmail,setAuthEmail]=useState('')
   const[authSent,setAuthSent]=useState(false)
   const[authError,setAuthError]=useState('')
