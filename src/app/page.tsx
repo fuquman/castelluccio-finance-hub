@@ -238,15 +238,25 @@ export default function App(){
       <div className="fu s3"><div className="sh">Cash Flow · {savingsRate}% saved</div><div className="gc" style={{padding:'16px 18px 14px'}}><div style={{display:'flex',gap:16,fontSize:12,color:'var(--t3)',marginBottom:14}}><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--orange)'}}/>Income</span><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--purple)'}}/>Expenses</span></div><div style={{display:'flex',alignItems:'flex-end',gap:8,height:110}}>{snaps.map((d,i)=>{const mx=Math.max(...snaps.flatMap(s=>[s.total_income,s.total_expenses]),1);return<div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:6}}><div style={{display:'flex',gap:3,alignItems:'flex-end',height:88,width:'100%'}}><div style={{flex:1,borderRadius:5,height:`${(Number(d.total_income)/mx)*100}%`,background:'var(--orange)',opacity:0.85,transition:'height 0.8s'}}/><div style={{flex:1,borderRadius:5,height:`${(Number(d.total_expenses)/mx)*100}%`,background:'var(--purple)',opacity:0.5,transition:'height 0.8s'}}/></div><span style={{fontSize:11,color:'var(--t3)'}}>{new Date(d.month+'T00:00').toLocaleDateString('en-AU',{month:'short'})}</span></div>})}</div></div></div>
 
       {/* Recent Transactions + Add */}
-      <div className="fu s4"><div className="sh" style={{margin:0}}>Transactions</div>
-        <div style={{display:'flex',gap:8,marginTop:8,marginBottom:8}}>
-          <button onClick={exportCSV} style={{padding:'10px 16px',borderRadius:12,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:14,fontWeight:600,cursor:'pointer',flex:1}}>📥 Export CSV</button>
-          <button onClick={()=>setShowForm(showForm==='tx'?null:'tx')} style={{padding:'10px 16px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer',flex:1}}>{showForm==='tx'?'Cancel':'+ Add'}</button>
+      <div className="fu s4"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <div className="sh" style={{margin:0}}>Transactions</div>
+          <div style={{display:'flex',gap:8}}>
+            <button onClick={exportCSV} style={{padding:'10px 14px',borderRadius:12,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:13,fontWeight:600,cursor:'pointer'}}>📥 CSV</button>
+            <button onClick={()=>setShowForm(showForm==='tx'?null:'tx')} style={{padding:'10px 14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}}>{showForm==='tx'?'Cancel':'+ Add'}</button>
+          </div>
         </div>
-        <div style={{display:'flex',gap:8,marginBottom:8}}>
-          <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} placeholder="From" style={{flex:1,padding:'12px 14px',borderRadius:12,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:14,outline:'none',fontFamily:'inherit'}}/>
-          <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} placeholder="To" style={{flex:1,padding:'12px 14px',borderRadius:12,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:14,outline:'none',fontFamily:'inherit'}}/>
-          {(dateFrom||dateTo)&&<button onClick={()=>{setDateFrom('');setDateTo('')}} style={{padding:'12px 14px',borderRadius:12,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:14,fontWeight:600,cursor:'pointer'}}>✕</button>}
+        <div className="gc" style={{padding:'12px 14px',marginBottom:12}}>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:11,color:'var(--t3)',marginBottom:4}}>From</div>
+              <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{width:'100%',padding:'10px 12px',borderRadius:10,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:14,outline:'none',fontFamily:'inherit'}}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:11,color:'var(--t3)',marginBottom:4}}>To</div>
+              <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} style={{width:'100%',padding:'10px 12px',borderRadius:10,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:14,outline:'none',fontFamily:'inherit'}}/>
+            </div>
+            {(dateFrom||dateTo)&&<div><div style={{fontSize:11,color:'transparent',marginBottom:4}}>.</div><button onClick={()=>{setDateFrom('');setDateTo('')}} style={{padding:'10px 14px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:13,fontWeight:700,cursor:'pointer'}}>✕</button></div>}
+          </div>
         </div>
         {showForm==='tx'&&<div className="gc" style={{padding:18,marginTop:10,marginBottom:4}}>
           <Input placeholder="What was it?" value={fd.description||''} onChange={e=>setFd({...fd,description:e.target.value})}/>
