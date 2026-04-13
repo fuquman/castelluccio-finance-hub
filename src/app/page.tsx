@@ -464,9 +464,9 @@ export default function App(){
         <div className="gc fu s2" style={{padding:20,display:'flex',alignItems:'center',gap:16}}>
           <div style={{fontSize:48}}>{ccs.find(c=>c.id===selectedKid)?.icon}</div>
           <div style={{flex:1}}>
-            <div style={{fontSize:22,fontWeight:700}}>{ccs.find(c=>c.id===selectedKid)?.name}</div>
+            <div style={{fontSize:28,fontWeight:700}}>{ccs.find(c=>c.id===selectedKid)?.name}</div>
             <div className="mono" style={{fontSize:28,fontWeight:800,color:'var(--orange)',marginTop:4}}>{$(ccis.filter(i=>i.cost_centre_id===selectedKid).reduce((s,i)=>s+Number(i.amount),0))}</div>
-            <div style={{fontSize:13,color:'var(--t3)'}}>total spent</div>
+            <div style={{fontSize:18,color:'var(--t3)'}}>total spent</div>
           </div>
         </div>
 
@@ -492,8 +492,8 @@ export default function App(){
         const total=ccis.filter(item=>item.cost_centre_id===cc.id).reduce((s,item)=>s+Number(item.amount),0)
         return<div key={cc.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>setSelectedKid(cc.id)}>
           <div style={{fontSize:32,width:50,textAlign:'center'}}>{cc.icon}</div>
-          <div className="rb"><div className="rt" style={{fontSize:18}}>{cc.name}</div><div className="rs">{ccis.filter(item=>item.cost_centre_id===cc.id).length} expenses</div></div>
-          <span className="mono rr" style={{fontWeight:700,fontSize:18,color:total>0?'var(--orange)':'var(--t3)'}}>{total>0?$(total):'—'}</span>
+          <div className="rb"><div className="rt" style={{fontSize:20}}>{cc.name}</div><div className="rs" style={{fontSize:16}}>{ccis.filter(item=>item.cost_centre_id===cc.id).length} expenses</div></div>
+          <span className="mono rr" style={{fontWeight:700,fontSize:20,fontWeight:700,color:total>0?'var(--orange)':'var(--t3)'}}>{total>0?$(total):'—'}</span>
         </div>
       })}</div>}
 
@@ -510,9 +510,9 @@ export default function App(){
         {selectedCC&&<>
           <div className="gc" style={{padding:20,textAlign:'center',marginBottom:12}}>
             <div style={{fontSize:36,marginBottom:8}}>{ccs.find(c=>c.id===selectedCC)?.icon}</div>
-            <div style={{fontSize:20,fontWeight:700,marginBottom:4}}>{ccs.find(c=>c.id===selectedCC)?.name}</div>
+            <div style={{fontSize:24,fontWeight:700,marginBottom:4}}>{ccs.find(c=>c.id===selectedCC)?.name}</div>
             <div className="mono" style={{fontSize:32,fontWeight:800,color:'var(--orange)',marginTop:8}}>{$(ccis.filter(i=>i.cost_centre_id===selectedCC).reduce((s,i)=>s+Number(i.amount),0))}</div>
-            <div style={{fontSize:13,color:'var(--t3)',marginTop:4}}>total spent</div>
+            <div style={{fontSize:18,color:'var(--t3)',marginTop:4}}>total spent</div>
           </div>
           {ccis.filter(i=>i.cost_centre_id===selectedCC).length>0?
             <div className="gc">{ccis.filter(i=>i.cost_centre_id===selectedCC).slice(0,15).map((item,i)=><div key={item.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{item.description}</div><div className="rs">{item.category} · {new Date(item.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div></div><span className="mono rr" style={{fontWeight:600}}>{$$(Number(item.amount))}</span></div>)}</div>:
@@ -707,7 +707,7 @@ export default function App(){
       {settingsSection==='costcentres'&&<div className="fu s2">
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Spending Cost Centres</div><button onClick={()=>newRow('cost_centres',{name:'',icon:'📁',color:'#ff9f0a',type:'spending'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
         {showForm==='cost_centres'&&settingsSection==='costcentres'&&<EditForm table="cost_centres" fields={[{key:'name',label:'Name (e.g. Clothes, Sports)'},{key:'icon',label:'Icon emoji'},{key:'type',label:'Type',options:[{v:'spending',l:'💰 Spending'},{v:'household',l:'🏠 Household'},{v:'custom',l:'📁 Custom'},{v:'child',l:'👶 Child'}]}]}/>}
-        <div className="gc">{ccs.filter(c=>c.type!=='child').map((cc,i)=><div key={cc.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('cost_centres',cc,{name:cc.name,icon:cc.icon,color:cc.color,type:cc.type||'spending'})}><Ico bg={cc.color||'var(--purple)'} ch={cc.icon}/><div className="rb"><div className="rt">{cc.name}</div><div className="rs">{cc.type}</div></div></div>)}</div>
+        <div className="gc">{ccs.filter(c=>c.type!=='child').map((cc,i)=><div key={cc.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('cost_centres',cc,{name:cc.name,icon:cc.icon,color:cc.color,type:cc.type||'spending'})}><Ico bg={cc.color||'var(--purple)'} ch={cc.icon}/><div className="rb"><div className="rt">{cc.name}</div><div className="rs" style={{fontSize:16}}>{cc.type}</div></div></div>)}</div>
         {ccs.filter(c=>c.type!=='child').length===0&&<div className="gc"><div className="empty-state"><div className="empty-icon">📁</div><div className="empty-title">No cost centres yet</div><div className="empty-desc">Add categories like Clothes, Sports, School to track spending</div></div></div>}
       </div>}
     </div>}
