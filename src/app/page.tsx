@@ -11,14 +11,13 @@ type Goal={id:string;name:string;icon:string;color:string;target_amount:number;c
 type Inc={id:string;name:string;type:string;amount:number;frequency:string}
 type Alrt={id:string;type:string;title:string;message:string;severity:string;created_at:string}
 type EBill={id:string;vendor:string;amount:number;due_date:string;category:string;status:string;subject:string}
-type Snap={month:string;total_income:number;total_expenses:number}
+type Snap={month:string;total_income:number;total_expenses:number;net_cashflow:number}
 type Msg={role:'user'|'assistant';text:string}
 
 const $=(n:number)=>new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD',minimumFractionDigits:0,maximumFractionDigits:0}).format(n)
 const $$=(n:number)=>new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(n)
 const pc=(a:number,b:number)=>b>0?Math.round((a/b)*100):0
 
-/* Ring */
 function Ring({value,max,size=44,sw=4,color='var(--orange)',children}:{value:number;max:number;size?:number;sw?:number;color?:string;children?:React.ReactNode}){
   const p=Math.min(pc(value,max),100),r=(size-sw)/2,c=2*Math.PI*r,off=c-(p/100)*c
   const col=p>90?'var(--red)':p>75?'var(--orange)':color
@@ -31,14 +30,13 @@ function Ring({value,max,size=44,sw=4,color='var(--orange)',children}:{value:num
   </div>
 }
 
-/* iOS Icon */
-function Ico({bg,ch}:{bg:string;ch:string}){
-  return<div className="row-icon" style={{background:bg}}>{ch}</div>
+function Ico({bg,ch,size=34}:{bg:string;ch:string;size?:number}){
+  return<div className="ri" style={{background:bg,width:size,height:size,fontSize:size*0.5}}>{ch}</div>
 }
 
-/* ═══ MAIN ═══ */
 export default function App(){
   const[tab,setTab]=useState('home')
+  const[more,setMore]=useState(false)
   const[accounts,setA]=useState<Acc[]>([])
   const[txs,setT]=useState<Tx[]>([])
   const[cats,setC]=useState<Cat[]>([])
@@ -50,7 +48,7 @@ export default function App(){
   const[ebills,setE]=useState<EBill[]>([])
   const[snaps,setS]=useState<Snap[]>([])
   const[loading,setL]=useState(true)
-  const[chat,setCh]=useState<Msg[]>([{role:'assistant',text:"G'day! I'm Fella — your finance brain. Ask me anything about your money."}])
+  const[chat,setCh]=useState<Msg[]>([{role:'assistant',text:"G'day! I'm Fella \u2014 your finance brain. Ask me anything about your money."}])
   const[chatIn,setCI]=useState('')
   const[sending,setSe]=useState(false)
   const[listening,setLi]=useState(false)
@@ -73,7 +71,6 @@ export default function App(){
     setD(d.data||[]);setG(g.data||[]);setI(i.data||[]);setAl(al.data||[])
     setE(eb.data||[]);setS(sn.data||[]);setL(false)
   })()},[])
-
   useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:'smooth'})},[chat])
 
   const bal=accounts.reduce((s,a)=>s+Number(a.balance),0)
@@ -86,299 +83,58 @@ export default function App(){
   const byCat=cats.map(c=>{const sp=mTx.filter(t=>t.category===c.name&&Number(t.amount)<0).reduce((s,t)=>s+Math.abs(Number(t.amount)),0);return{...c,spent:sp,pct:pc(sp,Number(c.monthly_limit))}}).sort((a,b)=>b.pct-a.pct)
   const mRec=recs.filter(r=>r.status!=='cancelled').reduce((s,r)=>{const a=Number(r.amount);return s+(r.frequency==='weekly'?a*4.33:r.frequency==='fortnightly'?a*2.17:r.frequency==='quarterly'?a/3:r.frequency==='yearly'?a/12:a)},0)
   const flagged=recs.filter(r=>r.status==='duplicate'||r.status==='flagged')
-
-  const dismiss=async(id:string)=>{
-    await supabase.from('finance_alerts').update({is_dismissed:true}).eq('id',id)
-    setAl(a=>a.filter(x=>x.id!==id))
-  }
-
+  const dismiss=async(id:string)=>{await supabase.from('finance_alerts').update({is_dismissed:true}).eq('id',id);setAl(a=>a.filter(x=>x.id!==id))}
   const voice=()=>{const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;if(!SR)return;const r=new SR();r.lang='en-AU';r.interimResults=false;r.onstart=()=>setLi(true);r.onresult=(e:any)=>{setCI(e.results[0][0].transcript);setLi(false)};r.onerror=()=>setLi(false);r.onend=()=>setLi(false);r.start()}
-
   const send=async()=>{
     if(!chatIn.trim()||sending)return;const msg=chatIn.trim();setCI('');setCh(p=>[...p,{role:'user',text:msg}]);setSe(true)
-    try{
-      const sys=`You are Fella — a sharp, warm Aussie family finance assistant for the Castelluccios (Melbourne). Named after Rockefeller. DATA: Accounts:${JSON.stringify(accounts.map(a=>({n:a.name,b:a.bank,bal:a.balance})))} | NW:${$$(nw)} | MonthlyInc:${$$(mInc)} | Spent:${$$(mSp)} | Recurring:${$$(mRec)} | Budgets:${JSON.stringify(byCat.map(c=>({n:c.name,b:c.monthly_limit,s:c.spent,p:c.pct+'%'})))} | Debts:${JSON.stringify(debts.map(d=>({n:d.name,bal:d.current_balance,r:d.interest_rate})))} | Goals:${JSON.stringify(goals.map(g=>({n:g.name,t:g.target_amount,s:g.current_amount,dl:g.deadline})))} Be direct, AUD, 2-4 sentences, casual Aussie.`
-      const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,systemPrompt:sys})})
-      const d=await res.json();setCh(p=>[...p,{role:'assistant',text:d.reply||'Had a hiccup.'}])
-    }catch{setCh(p=>[...p,{role:'assistant',text:'Connection issue — try again.'}])}
+    try{const sys=`You are Fella \u2014 a sharp, warm Aussie family finance assistant for the Castelluccios (Melbourne). Named after Rockefeller. DATA: Accounts:${JSON.stringify(accounts.map(a=>({n:a.name,b:a.bank,bal:a.balance})))} | NW:${$$(nw)} | MonthlyInc:${$$(mInc)} | Spent:${$$(mSp)} | Recurring:${$$(mRec)} | Budgets:${JSON.stringify(byCat.map(c=>({n:c.name,b:c.monthly_limit,s:c.spent,p:c.pct+'%'})))} | Debts:${JSON.stringify(debts.map(d=>({n:d.name,bal:d.current_balance,r:d.interest_rate})))} | Goals:${JSON.stringify(goals.map(g=>({n:g.name,t:g.target_amount,s:g.current_amount,dl:g.deadline})))} | Snapshots:${JSON.stringify(snaps)} Be direct, AUD, 2-4 sentences, casual Aussie.`;const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,systemPrompt:sys})});const d=await res.json();setCh(p=>[...p,{role:'assistant',text:d.reply||'Had a hiccup.'}])}catch{setCh(p=>[...p,{role:'assistant',text:'Connection issue \u2014 try again.'}])}
     setSe(false)
   }
+  const avgInc=snaps.length?snaps.reduce((s,d)=>s+Number(d.total_income),0)/snaps.length:0
+  const avgExp=snaps.length?snaps.reduce((s,d)=>s+Number(d.total_expenses),0)/snaps.length:0
+  const lastSnap=snaps.length?snaps[snaps.length-1]:null
+  const prevSnap=snaps.length>1?snaps[snaps.length-2]:null
+  const spendChange=lastSnap&&prevSnap?Number(lastSnap.total_expenses)-Number(prevSnap.total_expenses):0
+  const incChange=lastSnap&&prevSnap?Number(lastSnap.total_income)-Number(prevSnap.total_income):0
+  const savingsRate=lastSnap?Math.round(((Number(lastSnap.total_income)-Number(lastSnap.total_expenses))/Number(lastSnap.total_income))*100):0
 
-  const tabs=[{id:'home',icon:'📊',l:'Home'},{id:'budget',icon:'🎯',l:'Budget'},{id:'debts',icon:'💳',l:'Debts'},{id:'subs',icon:'🔄',l:'Subs'},{id:'goals',icon:'🏖️',l:'Goals'},{id:'bills',icon:'📬',l:'Bills'},{id:'fella',icon:'🤖',l:'Fella'}]
+  if(loading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}><div style={{fontSize:48}}>💰</div><div style={{fontSize:24,fontWeight:700,color:'var(--orange)'}}>Finance Hub</div></div>
 
-  if(loading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
-    <div style={{fontSize:40}}>💰</div>
-    <div style={{fontSize:22,fontWeight:700,color:'var(--orange)'}}>Finance Hub</div>
-  </div>
+  return<div style={{minHeight:'100dvh',paddingBottom:100,background:'#000'}}>
+    <div style={{padding:'16px 20px 24px'}}><div style={{fontSize:13,color:'var(--t3)',marginBottom:4}}>Castelluccio Family</div><h1 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7,lineHeight:1.05}}>Finance Hub</h1><div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:8}}><span className="mono" style={{fontSize:28,fontWeight:700,color:nw>=0?'var(--orange)':'var(--red)'}}>{$(nw)}</span><span style={{fontSize:13,color:'var(--t3)'}}>net worth</span></div></div>
 
-  return<div style={{minHeight:'100dvh',paddingBottom:90,background:'#000'}}>
-    {/* Header */}
-    <div style={{padding:'16px 20px 24px'}}>
-      <div style={{fontSize:13,color:'var(--t3)',marginBottom:4}}>Castelluccio Family</div>
-      <h1 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7,lineHeight:1.05,color:'var(--t1)'}}>Finance Hub</h1>
-      <div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:8}}>
-        <span className="mono" style={{fontSize:28,fontWeight:700,color:'var(--orange)'}}>{$(nw)}</span>
-        <span style={{fontSize:13,color:'var(--t3)'}}>net worth</span>
-      </div>
-    </div>
+    {alerts.length>0&&tab==='home'&&<div style={{padding:'0 20px 16px',display:'flex',flexDirection:'column',gap:8}}>{alerts.slice(0,3).map((a,i)=><div key={a.id} className={`fu s${i+1}`} style={{padding:'12px 16px',borderRadius:12,fontSize:14,lineHeight:1.45,display:'flex',gap:10,alignItems:'flex-start',background:a.severity==='danger'?'var(--red-s)':a.severity==='warning'?'var(--orange-s)':a.severity==='success'?'var(--green-s)':'var(--blue-s)'}}><span style={{flex:1,color:'var(--t2)'}}>{a.message}</span><button onClick={()=>dismiss(a.id)} style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',fontSize:16,padding:0}}>✕</button></div>)}</div>}
 
-    {/* Alerts */}
-    {alerts.length>0&&tab==='home'&&<div style={{padding:'0 20px 16px',display:'flex',flexDirection:'column',gap:8}}>
-      {alerts.slice(0,3).map((a,i)=><div key={a.id} className={`fu s${i+1}`} style={{padding:'11px 14px',borderRadius:12,fontSize:14,lineHeight:1.45,display:'flex',gap:10,alignItems:'flex-start',background:a.severity==='danger'?'var(--red-s)':a.severity==='warning'?'var(--orange-s)':a.severity==='success'?'var(--green-s)':'var(--blue-s)'}}>
-        <span style={{flex:1,color:'var(--t2)'}}>{a.message}</span>
-        <button onClick={()=>dismiss(a.id)} style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',fontSize:16,padding:0}}>✕</button>
-      </div>)}
-    </div>}
-
-    {/* ═══ HOME ═══ */}
     {tab==='home'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:20}}>
-      {/* Accounts */}
-      <div className="fu s1">
-        <div className="sh">Accounts</div>
-        <div className="gc">
-          {accounts.map((a,i)=><div key={a.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)',marginLeft:0}:{}}>
-            <Ico bg={a.account_type==='credit'?'var(--purple)':a.account_type==='loan'?'var(--red)':a.account_type==='savings'?'var(--green)':'var(--blue)'} ch={a.account_type==='credit'?'💳':a.account_type==='loan'?'🏦':a.account_type==='savings'?'🐷':'💰'}/>
-            <div className="row-body">
-              <div className="row-title">{a.name}</div>
-              <div className="row-sub">{a.bank}</div>
-            </div>
-            <span className="mono row-right" style={{fontWeight:600,color:Number(a.balance)>=0?'var(--t1)':'var(--red)'}}>{$$(Number(a.balance))}</span>
-          </div>)}
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="fu s2" style={{display:'flex',gap:8}}>
-        {[['Income',$(mInc),'var(--green)'],[`Spent`,$(mSp),'var(--orange)'],['Recurring',$(mRec),'var(--purple)']].map(([l,v,c],i)=>
-          <div key={i} className="gc" style={{flex:1,padding:'14px 8px',textAlign:'center',overflow:'hidden'}}>
-            <div style={{fontSize:11,color:'var(--t3)',fontWeight:500,marginBottom:6}}>{l}</div>
-            <div className="mono" style={{fontSize:14,fontWeight:700,color:c as string,whiteSpace:'nowrap'}}>{v}</div>
-          </div>
-        )}
-      </div>
-
-      {/* Cash Flow */}
-      <div className="fu s3">
-        <div className="sh">Cash Flow</div>
-        <div className="gc" style={{padding:'16px 16px 12px'}}>
-          <div style={{display:'flex',gap:16,fontSize:12,color:'var(--t3)',marginBottom:12}}>
-            <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:6,height:6,borderRadius:3,background:'var(--orange)'}}/>Income</span>
-            <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:6,height:6,borderRadius:3,background:'var(--purple)'}}/>Expenses</span>
-          </div>
-          <div style={{display:'flex',alignItems:'flex-end',gap:6,height:100}}>
-            {snaps.map((d,i)=>{const mx=Math.max(...snaps.flatMap(s=>[s.total_income,s.total_expenses]),1);return<div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:5}}>
-              <div style={{display:'flex',gap:2,alignItems:'flex-end',height:80,width:'100%'}}>
-                <div style={{flex:1,borderRadius:4,height:`${(d.total_income/mx)*100}%`,background:'var(--orange)',opacity:0.85,transition:'height 0.8s'}}/>
-                <div style={{flex:1,borderRadius:4,height:`${(d.total_expenses/mx)*100}%`,background:'var(--purple)',opacity:0.5,transition:'height 0.8s'}}/>
-              </div>
-              <span style={{fontSize:10,color:'var(--t3)'}}>{new Date(d.month+'T00:00').toLocaleDateString('en-AU',{month:'short'})}</span>
-            </div>})}
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Transactions */}
-      <div className="fu s4">
-        <div className="sh">Recent Transactions</div>
-        <div className="gc">
-          {txs.slice(0,7).map((tx,i)=><div key={tx.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)',marginLeft:0}:{}}>
-            <div className="row-body">
-              <div className="row-title">{tx.description}</div>
-              <div className="row-sub">{tx.category} · {new Date(tx.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div>
-            </div>
-            <span className="mono row-right" style={{fontWeight:600,color:Number(tx.amount)>=0?'var(--green)':'var(--t1)'}}>{Number(tx.amount)>=0?'+':''}{$$(Number(tx.amount))}</span>
-          </div>)}
-        </div>
-      </div>
-
-      {/* Savings Callout */}
-      {flagged.length>0&&<div className="fu s5" style={{background:'var(--orange-s)',borderRadius:14,padding:16,display:'flex',alignItems:'center',gap:14}}>
-        <Ico bg="var(--orange)" ch="💡"/>
-        <div>
-          <div style={{fontSize:17,fontWeight:600,color:'var(--orange)'}}>Save {$(flagged.reduce((s,r)=>s+Number(r.amount),0)*12)}/yr</div>
-          <div style={{fontSize:13,color:'var(--t3)'}}>{flagged.length} flagged subscription{flagged.length>1?'s':''}</div>
-        </div>
-      </div>}
+      <div className="fu s1"><div className="sh">Accounts</div><div className="gc">{accounts.map((a,i)=><div key={a.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><Ico bg={a.account_type==='credit'?'var(--purple)':a.account_type==='loan'?'var(--red)':a.account_type==='savings'?'var(--green)':'var(--blue)'} ch={a.account_type==='credit'?'💳':a.account_type==='loan'?'🏦':a.account_type==='savings'?'🐷':'💰'}/><div className="rb"><div className="rt">{a.name}</div><div className="rs">{a.bank}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(a.balance)>=0?'var(--t1)':'var(--red)'}}>{$$(Number(a.balance))}</span></div>)}</div></div>
+      <div className="fu s2" style={{display:'flex',gap:10}}>{[['Income',$(mInc),'var(--green)'],['Spent',$(mSp),'var(--orange)'],['Recurring',$(mRec),'var(--purple)']].map(([l,v,c],i)=><div key={i} className="gc" style={{flex:1,padding:'14px 10px',textAlign:'center'}}><div style={{fontSize:11,color:'var(--t3)',fontWeight:500,marginBottom:6}}>{l}</div><div className="mono" style={{fontSize:14,fontWeight:700,color:c as string}}>{v}</div></div>)}</div>
+      <div className="fu s3"><div className="sh">Cash Flow</div><div className="gc" style={{padding:'16px 18px 14px'}}><div style={{display:'flex',gap:16,fontSize:12,color:'var(--t3)',marginBottom:14}}><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--orange)'}}/>Income</span><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--purple)'}}/>Expenses</span></div><div style={{display:'flex',alignItems:'flex-end',gap:8,height:110}}>{snaps.map((d,i)=>{const mx=Math.max(...snaps.flatMap(s=>[s.total_income,s.total_expenses]),1);return<div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:6}}><div style={{display:'flex',gap:3,alignItems:'flex-end',height:88,width:'100%'}}><div style={{flex:1,borderRadius:5,height:`${(d.total_income/mx)*100}%`,background:'var(--orange)',opacity:0.85,transition:'height 0.8s'}}/><div style={{flex:1,borderRadius:5,height:`${(d.total_expenses/mx)*100}%`,background:'var(--purple)',opacity:0.5,transition:'height 0.8s'}}/></div><span style={{fontSize:11,color:'var(--t3)'}}>{new Date(d.month+'T00:00').toLocaleDateString('en-AU',{month:'short'})}</span></div>})}</div></div></div>
+      <div className="fu s4"><div className="sh">Recent Transactions</div><div className="gc">{txs.slice(0,7).map((tx,i)=><div key={tx.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{tx.description}</div><div className="rs">{tx.category} · {new Date(tx.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(tx.amount)>=0?'var(--green)':'var(--t1)'}}>{Number(tx.amount)>=0?'+':''}{$$(Number(tx.amount))}</span></div>)}</div></div>
+      {flagged.length>0&&<div className="fu s5" style={{background:'var(--orange-s)',borderRadius:14,padding:'16px 18px',display:'flex',alignItems:'center',gap:14}}><Ico bg="var(--orange)" ch="💡"/><div><div style={{fontSize:17,fontWeight:600,color:'var(--orange)'}}>Save {$(flagged.reduce((s,r)=>s+Number(r.amount),0)*12)}/yr</div><div style={{fontSize:13,color:'var(--t3)'}}>{flagged.length} flagged subscription{flagged.length>1?'s':''}</div></div></div>}
     </div>}
 
-    {/* ═══ BUDGET ═══ */}
-    {tab==='budget'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
-      <div className="fu">
-        <h2 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7}}>Budgets</h2>
-        <div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>{$(mSp)} of {$(cats.reduce((s,c)=>s+Number(c.monthly_limit),0))} spent</div>
-      </div>
-      <div className="gc fu s1">
-        {byCat.map((c,i)=><div key={c.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)',marginLeft:0}:{}}>
-          <Ring value={c.spent} max={Number(c.monthly_limit)} size={40} sw={4} color={c.color}>
-            <span style={{fontSize:14}}>{c.icon}</span>
-          </Ring>
-          <div className="row-body">
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span className="row-title">{c.name}</span>
-              <span className={`pill ${c.pct>=90?'pill-r':c.pct>=75?'pill-o':'pill-g'}`}>{c.pct}%</span>
-            </div>
-            <div className="pbar" style={{marginTop:6}}><div className="pfill" style={{width:`${Math.min(c.pct,100)}%`,background:c.pct>90?'var(--red)':c.pct>75?'var(--orange)':c.color}}/></div>
-            <div style={{display:'flex',justifyContent:'space-between',marginTop:4,fontSize:12,color:'var(--t3)'}}>
-              <span>{$(c.spent)}</span><span>{$(Number(c.monthly_limit)-c.spent)} left</span>
-            </div>
-          </div>
-        </div>)}
-      </div>
+    {tab==='budget'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}><div className="fu"><h2 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7}}>Budgets</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>{$(mSp)} of {$(cats.reduce((s,c)=>s+Number(c.monthly_limit),0))} spent</div></div><div className="gc fu s1">{byCat.map((c,i)=><div key={c.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),gap:14}}><Ring value={c.spent} max={Number(c.monthly_limit)} size={44} sw={4} color={c.color}><span style={{fontSize:16}}>{c.icon}</span></Ring><div className="rb"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}><span className="rt">{c.name}</span><span className={`pill ${c.pct>=90?'pill-r':c.pct>=75?'pill-o':'pill-g'}`}>{c.pct}%</span></div><div className="pbar"><div className="pfill" style={{width:`${Math.min(c.pct,100)}%`,background:c.pct>90?'var(--red)':c.pct>75?'var(--orange)':c.color}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:6,fontSize:12,color:'var(--t3)'}}><span>{$(c.spent)}</span><span>{$(Number(c.monthly_limit)-c.spent)} left</span></div></div></div>)}</div></div>}
+
+    {tab==='debts'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}><div className="fu"><h2 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7}}>Debts</h2></div><div className="fu s1" style={{background:'var(--red-s)',borderRadius:14,padding:20,textAlign:'center'}}><div style={{fontSize:13,color:'var(--t3)',marginBottom:4}}>Total Remaining</div><div className="mono" style={{fontSize:34,fontWeight:800,color:'var(--red)'}}>{$(dbt)}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:6}}>{$(debts.reduce((s,d)=>s+Number(d.monthly_payment),0))}/mo repayments</div></div><div className="gc fu s2">{debts.map((d,i)=>{const paid=Number(d.original_amount)-Number(d.current_balance);const prog=pc(paid,Number(d.original_amount));return<div key={d.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><div><div style={{fontSize:17,fontWeight:500}}>{d.name}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{d.lender}{Number(d.interest_rate)>0?` · ${d.interest_rate}%`:''}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}%</span></div><div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:'var(--green)',borderRadius:3}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:10,fontSize:13,color:'var(--t3)'}}><span>Left <span className="mono" style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span></span><span><span className="mono" style={{fontWeight:600}}>{$$(Number(d.monthly_payment))}</span>/mo</span></div></div>})}</div></div>}
+
+    {tab==='trends'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}><div className="fu"><h2 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7}}>Trends</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>6-month financial overview</div></div>
+      <div className="fu s1" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}><div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:11,color:'var(--t3)',fontWeight:500,marginBottom:6}}>Savings Rate</div><div className="mono" style={{fontSize:28,fontWeight:800,color:savingsRate>0?'var(--green)':'var(--red)'}}>{savingsRate}%</div><div style={{fontSize:12,color:'var(--t3)',marginTop:4}}>of income saved</div></div><div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:11,color:'var(--t3)',fontWeight:500,marginBottom:6}}>Avg Monthly Spend</div><div className="mono" style={{fontSize:22,fontWeight:700,color:'var(--orange)'}}>{$(avgExp)}</div><div style={{fontSize:12,color:'var(--t3)',marginTop:4}}>over 6 months</div></div></div>
+      <div className="fu s2"><div className="sh">Month over Month</div><div className="gc"><div className="row"><Ico bg={spendChange<=0?'var(--green)':'var(--red)'} ch={spendChange<=0?'📉':'📈'}/><div className="rb"><div className="rt">Spending</div><div className="rs">vs last month</div></div><span className="mono rr" style={{fontWeight:600,color:spendChange<=0?'var(--green)':'var(--red)'}}>{spendChange<=0?'':'+'}${Math.abs(spendChange).toLocaleString()}</span></div><div className="row" style={{borderTop:'0.33px solid var(--sep)'}}><Ico bg={incChange>=0?'var(--green)':'var(--red)'} ch={incChange>=0?'📈':'📉'}/><div className="rb"><div className="rt">Income</div><div className="rs">vs last month</div></div><span className="mono rr" style={{fontWeight:600,color:incChange>=0?'var(--green)':'var(--red)'}}>{incChange>=0?'+':''}${Math.abs(incChange).toLocaleString()}</span></div><div className="row" style={{borderTop:'0.33px solid var(--sep)'}}><Ico bg="var(--blue)" ch="💵"/><div className="rb"><div className="rt">Avg Income</div><div className="rs">6 month average</div></div><span className="mono rr" style={{fontWeight:600}}>{$(avgInc)}</span></div></div></div>
+      <div className="fu s3"><div className="sh">Income vs Expenses</div><div className="gc" style={{padding:'16px 18px 14px'}}><div style={{display:'flex',gap:16,fontSize:12,color:'var(--t3)',marginBottom:14}}><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--orange)'}}/>Income</span><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--purple)'}}/>Expenses</span><span style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:4,background:'var(--green)'}}/>Saved</span></div><div style={{display:'flex',flexDirection:'column',gap:8}}>{snaps.map((d,i)=>{const mx=Math.max(...snaps.map(s=>Number(s.total_income)),1);const saved=Number(d.total_income)-Number(d.total_expenses);return<div key={i} style={{display:'flex',alignItems:'center',gap:10}}><span style={{fontSize:12,color:'var(--t3)',width:32,textAlign:'right',flexShrink:0}}>{new Date(d.month+'T00:00').toLocaleDateString('en-AU',{month:'short'})}</span><div style={{flex:1,display:'flex',flexDirection:'column',gap:3}}><div style={{height:16,borderRadius:4,width:`${(Number(d.total_income)/mx)*100}%`,background:'var(--orange)',opacity:0.8}}/><div style={{display:'flex',gap:2}}><div style={{height:16,borderRadius:4,width:`${(Number(d.total_expenses)/mx)*100}%`,background:'var(--purple)',opacity:0.5}}/>{saved>0&&<div style={{height:16,borderRadius:4,width:`${(saved/mx)*100}%`,background:'var(--green)',opacity:0.6}}/>}</div></div><span className="mono" style={{fontSize:11,color:saved>=0?'var(--green)':'var(--red)',width:55,textAlign:'right',flexShrink:0,fontWeight:600}}>{saved>=0?'+':''}{$(saved)}</span></div>})}</div></div></div>
+      <div className="fu s4"><div className="sh">Top Spending This Month</div><div className="gc">{byCat.filter(c=>c.spent>0).slice(0,5).map((c,i,arr)=>{const maxSp=Math.max(...arr.map(x=>x.spent),1);return<div key={c.id} style={{padding:'14px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}><span style={{fontSize:15,fontWeight:500}}>{c.icon} {c.name}</span><span className="mono" style={{fontSize:14,fontWeight:600}}>{$(c.spent)}</span></div><div className="pbar" style={{height:8,borderRadius:4}}><div className="pfill" style={{width:`${(c.spent/maxSp)*100}%`,background:c.color,borderRadius:4}}/></div></div>})}</div></div>
+      <div className="fu s5"><div className="sh">Net Cash Flow</div><div className="gc">{snaps.map((d,i)=>{const net=Number(d.total_income)-Number(d.total_expenses);return<div key={i} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{new Date(d.month+'T00:00').toLocaleDateString('en-AU',{month:'long',year:'numeric'})}</div></div><span className="mono rr" style={{fontWeight:600,color:net>=0?'var(--green)':'var(--red)'}}>{net>=0?'+':''}{$(net)}</span></div>})}</div></div>
     </div>}
 
-    {/* ═══ DEBTS ═══ */}
-    {tab==='debts'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
-      <div className="fu">
-        <h2 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7}}>Debts</h2>
-      </div>
-      <div className="fu s1" style={{background:'var(--red-s)',borderRadius:14,padding:20,textAlign:'center'}}>
-        <div style={{fontSize:13,color:'var(--t3)',marginBottom:4}}>Total Remaining</div>
-        <div className="mono" style={{fontSize:34,fontWeight:800,color:'var(--red)'}}>{$(dbt)}</div>
-        <div style={{fontSize:13,color:'var(--t3)',marginTop:6}}>{$(debts.reduce((s,d)=>s+Number(d.monthly_payment),0))}/mo repayments</div>
-      </div>
-      <div className="gc fu s2">
-        {debts.map((d,i)=>{const paid=Number(d.original_amount)-Number(d.current_balance);const prog=pc(paid,Number(d.original_amount));return<div key={d.id} style={{padding:16,...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-            <div><div style={{fontSize:17,fontWeight:500}}>{d.name}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:1}}>{d.lender}{Number(d.interest_rate)>0?` · ${d.interest_rate}%`:''}</div></div>
-            <span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}%</span>
-          </div>
-          <div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:'var(--green)',borderRadius:3}}/></div>
-          <div style={{display:'flex',justifyContent:'space-between',marginTop:8,fontSize:13,color:'var(--t3)'}}>
-            <span>Remaining <span className="mono" style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span></span>
-            <span><span className="mono" style={{fontWeight:600}}>{$$(Number(d.monthly_payment))}</span>/mo</span>
-          </div>
-        </div>})}
-      </div>
-    </div>}
+    {tab==='subs'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}><div className="fu"><h2 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7}}>Subscriptions</h2></div><div className="fu s1" style={{display:'flex',gap:10}}><div className="gc" style={{flex:1,padding:16,textAlign:'center'}}><div style={{fontSize:11,color:'var(--t3)',marginBottom:6}}>Monthly</div><div className="mono" style={{fontSize:22,fontWeight:700}}>{$(mRec)}</div></div><div className="gc" style={{flex:1,padding:16,textAlign:'center'}}><div style={{fontSize:11,color:'var(--t3)',marginBottom:6}}>Annual</div><div className="mono" style={{fontSize:22,fontWeight:700,color:'var(--orange)'}}>{$(mRec*12)}</div></div></div>{flagged.length>0&&<><div className="sh" style={{color:'var(--red)'}}>{'\u26A0'} Review</div><div className="gc fu s2">{flagged.map((s,i)=><div key={s.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{fontSize:17,fontWeight:500}}>{s.name}</span><div style={{display:'flex',alignItems:'center',gap:8}}><span className="mono" style={{fontSize:15,fontWeight:600}}>{$$(Number(s.amount))}</span><span className="pill pill-r">{s.status==='duplicate'?'Duplicate':'Review'}</span></div></div>{s.notes&&<div style={{fontSize:13,color:'var(--t3)',marginTop:8,lineHeight:1.5}}>{s.notes}</div>}</div>)}</div></>}<div className="sh">Active</div><div className="gc fu s3">{recs.filter(r=>r.status==='active').map((s,i)=><div key={s.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{s.name}</div><div className="rs">{s.category} · {s.frequency}</div></div><span className="mono rr" style={{fontWeight:600}}>{$$(Number(s.amount))}</span></div>)}</div></div>}
 
-    {/* ═══ SUBS ═══ */}
-    {tab==='subs'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
-      <div className="fu"><h2 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7}}>Subscriptions</h2></div>
-      <div className="fu s1" style={{display:'flex',gap:10}}>
-        <div className="gc" style={{flex:1,padding:16,textAlign:'center'}}>
-          <div style={{fontSize:11,color:'var(--t3)',marginBottom:6}}>Monthly</div>
-          <div className="mono" style={{fontSize:22,fontWeight:700}}>{$(mRec)}</div>
-        </div>
-        <div className="gc" style={{flex:1,padding:16,textAlign:'center'}}>
-          <div style={{fontSize:11,color:'var(--t3)',marginBottom:6}}>Annual</div>
-          <div className="mono" style={{fontSize:22,fontWeight:700,color:'var(--orange)'}}>{$(mRec*12)}</div>
-        </div>
-      </div>
-      {flagged.length>0&&<>
-        <div className="sh" style={{color:'var(--red)'}}>⚠ Review</div>
-        <div className="gc fu s2">
-          {flagged.map((s,i)=><div key={s.id} style={{padding:16,...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span style={{fontSize:17,fontWeight:500}}>{s.name}</span>
-              <div style={{display:'flex',alignItems:'center',gap:8}}>
-                <span className="mono" style={{fontSize:15,fontWeight:600}}>{$$(Number(s.amount))}</span>
-                <span className="pill pill-r">{s.status==='duplicate'?'Duplicate':'Review'}</span>
-              </div>
-            </div>
-            {s.notes&&<div style={{fontSize:13,color:'var(--t3)',marginTop:6}}>{s.notes}</div>}
-          </div>)}
-        </div>
-      </>}
-      <div className="sh">Active</div>
-      <div className="gc fu s3">
-        {recs.filter(r=>r.status==='active').map((s,i,arr)=><div key={s.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)',marginLeft:0}:{}}>
-          <div className="row-body">
-            <div className="row-title">{s.name}</div>
-            <div className="row-sub">{s.category} · {s.frequency}</div>
-          </div>
-          <span className="mono row-right" style={{fontWeight:600}}>{$$(Number(s.amount))}</span>
-        </div>)}
-      </div>
-    </div>}
+    {tab==='goals'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}><div className="fu"><h2 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7}}>Goals</h2></div>{goals.map((g,i)=>{const prog=pc(Number(g.current_amount),Number(g.target_amount));const rem=Number(g.target_amount)-Number(g.current_amount);const dl=new Date(g.deadline);const ml=Math.max(1,(dl.getFullYear()-now.getFullYear())*12+dl.getMonth()-now.getMonth());const pm=rem/ml;const pw=pm/4.33;return<div key={g.id} className={`gc fu s${i+1}`} style={{padding:20}}><div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}><Ring value={Number(g.current_amount)} max={Number(g.target_amount)} size={52} sw={5} color={g.color}><span style={{fontSize:20}}>{g.icon}</span></Ring><div style={{flex:1}}><div style={{fontSize:17,fontWeight:600}}>{g.name}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{$(Number(g.target_amount))} by {dl.toLocaleDateString('en-AU',{month:'short',year:'numeric'})}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}%</span></div><div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:g.color,borderRadius:3}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:8,fontSize:13,color:'var(--t3)'}}><span>Saved <span className="mono" style={{color:'var(--green)',fontWeight:600}}>{$(Number(g.current_amount))}</span></span><span>Left <span className="mono" style={{fontWeight:600}}>{$(rem)}</span></span></div><div style={{marginTop:12,background:'var(--orange-s)',borderRadius:10,padding:'10px 14px',fontSize:14}}>Save <span className="mono" style={{fontWeight:700,color:'var(--orange)'}}>{$(pw)}/wk</span> or <span className="mono" style={{fontWeight:700,color:'var(--orange)'}}>{$(pm)}/mo</span></div></div>})}</div>}
 
-    {/* ═══ GOALS ═══ */}
-    {tab==='goals'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
-      <div className="fu"><h2 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7}}>Goals</h2></div>
-      {goals.map((g,i)=>{const prog=pc(Number(g.current_amount),Number(g.target_amount));const rem=Number(g.target_amount)-Number(g.current_amount);const dl=new Date(g.deadline);const ml=Math.max(1,(dl.getFullYear()-now.getFullYear())*12+dl.getMonth()-now.getMonth());const pm=rem/ml;const pw=pm/4.33
-      return<div key={g.id} className={`gc fu s${i+1}`} style={{padding:20}}>
-        <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}>
-          <Ring value={Number(g.current_amount)} max={Number(g.target_amount)} size={52} sw={5} color={g.color}>
-            <span style={{fontSize:20}}>{g.icon}</span>
-          </Ring>
-          <div style={{flex:1}}>
-            <div style={{fontSize:17,fontWeight:600}}>{g.name}</div>
-            <div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{$(Number(g.target_amount))} by {dl.toLocaleDateString('en-AU',{month:'short',year:'numeric'})}</div>
-          </div>
-          <span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}%</span>
-        </div>
-        <div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:g.color,borderRadius:3}}/></div>
-        <div style={{display:'flex',justifyContent:'space-between',marginTop:8,fontSize:13,color:'var(--t3)'}}>
-          <span>Saved <span className="mono" style={{color:'var(--green)',fontWeight:600}}>{$(Number(g.current_amount))}</span></span>
-          <span>Left <span className="mono" style={{fontWeight:600}}>{$(rem)}</span></span>
-        </div>
-        <div style={{marginTop:12,background:'var(--orange-s)',borderRadius:10,padding:'10px 14px',fontSize:14}}>
-          Save <span className="mono" style={{fontWeight:700,color:'var(--orange)'}}>{$(pw)}/wk</span> or <span className="mono" style={{fontWeight:700,color:'var(--orange)'}}>{$(pm)}/mo</span>
-        </div>
-      </div>})}
-    </div>}
+    {tab==='bills'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}><div className="fu"><h2 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7}}>Bills</h2></div><div className="gc fu s1" style={{padding:24,textAlign:'center',cursor:'pointer'}}><span style={{fontSize:40}}>📸</span><div style={{fontSize:17,fontWeight:500,marginTop:10}}>Snap a Bill</div><div style={{fontSize:13,color:'var(--t3)',marginTop:4}}>Fella reads it automatically</div></div><div className="sh">From Email</div><div className="gc fu s2">{ebills.map((b,i)=><div key={b.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><Ico bg={b.status==='paid'?'var(--green)':b.status==='confirmed'?'var(--blue)':'var(--orange)'} ch={b.status==='paid'?'✓':b.status==='confirmed'?'📋':'🆕'}/><div className="rb"><div className="rt">{b.vendor}</div><div className="rs">Due {new Date(b.due_date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div></div><span className="mono rr" style={{fontWeight:600}}>{$$(Number(b.amount))}</span></div>)}</div></div>}
 
-    {/* ═══ BILLS ═══ */}
-    {tab==='bills'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
-      <div className="fu"><h2 style={{fontSize:34,fontWeight:800,letterSpacing:-0.7}}>Bills</h2></div>
-      <div className="gc fu s1" style={{padding:20,textAlign:'center',cursor:'pointer'}}>
-        <span style={{fontSize:28}}>📸</span>
-        <div style={{fontSize:17,fontWeight:500,marginTop:8}}>Snap a Bill</div>
-        <div style={{fontSize:13,color:'var(--t3)',marginTop:4}}>Fella reads it automatically</div>
-      </div>
-      <div className="sh">From Email</div>
-      <div className="gc fu s2">
-        {ebills.map((b,i)=><div key={b.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)',marginLeft:0}:{}}>
-          <Ico bg={b.status==='paid'?'var(--green)':b.status==='confirmed'?'var(--blue)':'var(--orange)'} ch={b.status==='paid'?'✓':b.status==='confirmed'?'📋':'🆕'}/>
-          <div className="row-body">
-            <div className="row-title">{b.vendor}</div>
-            <div className="row-sub">Due {new Date(b.due_date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div>
-          </div>
-          <span className="mono row-right" style={{fontWeight:600}}>{$$(Number(b.amount))}</span>
-        </div>)}
-      </div>
-    </div>}
+    {tab==='fella'&&<div style={{display:'flex',flexDirection:'column',height:'calc(100dvh - 110px)',padding:'0 20px'}}><div className="fu" style={{display:'flex',alignItems:'center',gap:14,marginBottom:20}}><Ico bg="var(--orange)" ch="🤖" size={48}/><div><div style={{fontSize:24,fontWeight:800}}>Fella</div><div style={{fontSize:13,color:'var(--t3)'}}>Voice + Text · Your money brain</div></div></div><div style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:10,paddingBottom:8}}>{chat.map((m,i)=><div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start'}}><div className={m.role==='user'?'cb-u':'cb-a'}>{m.text}</div></div>)}{sending&&<div style={{display:'flex'}}><div className="cb-a" style={{color:'var(--t3)'}}>Thinking...</div></div>}{chat.length===1&&!sending&&<div style={{display:'flex',flexDirection:'column',gap:10,marginTop:16}}><div style={{fontSize:13,color:'var(--t3)',fontWeight:600,marginBottom:2}}>Try asking...</div>{[{icon:'🏖️',q:"Can we afford a week in Byron Bay for the wedding in October? What do we need to save each week?"},{icon:'💸',q:"Where are we wasting money? Find any subscriptions or spending we should cut"},{icon:'📊',q:"We just spent $350 on the kids' school camp. How does that affect our budget this month?"}].map((ex,i)=><button key={i} onClick={()=>setCI(ex.q)} style={{display:'flex',alignItems:'flex-start',gap:14,padding:'16px 18px',background:'var(--card)',border:'none',borderRadius:14,cursor:'pointer',textAlign:'left'}}><span style={{fontSize:26,flexShrink:0,marginTop:1}}>{ex.icon}</span><span style={{fontSize:15,color:'var(--t2)',lineHeight:1.45}}>{ex.q}</span></button>)}</div>}<div ref={chatEnd}/></div><div style={{display:'flex',gap:10,padding:'12px 0'}}><button onClick={voice} style={{width:48,height:48,borderRadius:24,border:'none',background:listening?'var(--red-s)':'var(--card)',color:listening?'var(--red)':'var(--t3)',cursor:'pointer',fontSize:22,display:'flex',alignItems:'center',justifyContent:'center'}}>{listening?'⏹':'🎙'}</button><input value={chatIn} onChange={e=>setCI(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask Fella..." style={{flex:1,padding:'0 18px',height:48,borderRadius:24,border:'none',background:'var(--card)',color:'var(--t1)',fontSize:16,outline:'none',fontFamily:'inherit'}}/><button onClick={send} disabled={sending} style={{width:48,height:48,borderRadius:24,border:'none',background:'var(--orange)',color:'#000',cursor:'pointer',fontSize:20,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>↑</button></div></div>}
 
-    {/* ═══ FELLA ═══ */}
-    {tab==='fella'&&<div style={{display:'flex',flexDirection:'column',height:'calc(100dvh - 100px)',padding:'0 20px'}}>
-      <div className="fu" style={{display:'flex',alignItems:'center',gap:14,marginBottom:20}}>
-        <Ico bg="var(--orange)" ch="🤖"/>
-        <div>
-          <div style={{fontSize:22,fontWeight:800}}>Fella</div>
-          <div style={{fontSize:13,color:'var(--t3)'}}>Voice + Text · Your money brain</div>
-        </div>
-      </div>
-      <div style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:8,paddingBottom:8}}>
-        {chat.map((m,i)=><div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start'}}>
-          <div className={m.role==='user'?'cb-u':'cb-a'}>{m.text}</div>
-        </div>)}
-        {sending&&<div style={{display:'flex'}}><div className="cb-a" style={{color:'var(--t3)'}}>Thinking...</div></div>}
-        {/* Example prompts - only show when chat has just the welcome message */}
-        {chat.length===1&&!sending&&<div style={{display:'flex',flexDirection:'column',gap:8,marginTop:12}}>
-          <div style={{fontSize:13,color:'var(--t3)',fontWeight:600,marginBottom:4}}>Try asking...</div>
-          {[
-            {icon:'🏖️',text:'Can we afford a week in Byron Bay for the wedding in October? What do we need to save each week?'},
-            {icon:'💸',text:'Where are we wasting money? Find any subscriptions or spending we should cut'},
-            {icon:'📊',text:'We just spent $350 on the kids\' school camp. How does that affect our budget this month?'},
-          ].map((ex,i)=><button key={i} onClick={()=>{setCI(ex.text);setTimeout(()=>{const el=document.querySelector('input[placeholder="Ask Fella..."]') as HTMLInputElement;if(el){el.focus()}},100)}} style={{display:'flex',alignItems:'flex-start',gap:12,padding:'14px 16px',background:'var(--card)',border:'1px solid var(--sep)',borderRadius:14,cursor:'pointer',textAlign:'left',transition:'background 0.15s'}}>
-            <span style={{fontSize:20,flexShrink:0,marginTop:1}}>{ex.icon}</span>
-            <span style={{fontSize:15,color:'var(--t2)',lineHeight:1.4}}>{ex.text}</span>
-          </button>)}
-        </div>}
-        <div ref={chatEnd}/>
-      </div>
-      <div style={{display:'flex',gap:8,padding:'12px 0'}}>
-        <button onClick={voice} style={{width:44,height:44,borderRadius:22,border:'none',background:listening?'var(--red-s)':'var(--card)',color:listening?'var(--red)':'var(--t3)',cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>{listening?'⏹':'🎙'}</button>
-        <input value={chatIn} onChange={e=>setCI(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask Fella..." style={{flex:1,padding:'0 16px',height:44,borderRadius:22,border:'none',background:'var(--card)',color:'var(--t1)',fontSize:16,outline:'none',fontFamily:'inherit'}}/>
-        <button onClick={send} disabled={sending} style={{width:44,height:44,borderRadius:22,border:'none',background:'var(--orange)',color:'#000',cursor:'pointer',fontSize:18,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>↑</button>
-      </div>
-    </div>}
+    {more&&<div className="overlay" onClick={()=>setMore(false)}><div className="more-menu" onClick={e=>e.stopPropagation()}><div className="more-handle"/>{[{icon:'📈',label:'Trends',color:'var(--orange)',id:'trends'},{icon:'🔄',label:'Subscriptions',color:'var(--purple)',id:'subs'},{icon:'🏖️',label:'Savings Goals',color:'var(--green)',id:'goals'},{icon:'📬',label:'Bills & Invoices',color:'var(--blue)',id:'bills'}].map(item=><div key={item.id} className="more-item" onClick={()=>{setTab(item.id);setMore(false)}}><Ico bg={item.color} ch={item.icon} size={42}/><span style={{fontSize:20,fontWeight:500}}>{item.label}</span></div>)}<div className="more-item" onClick={()=>setMore(false)} style={{justifyContent:'center',padding:'20px 24px'}}><span style={{fontSize:17,color:'var(--t3)'}}>Cancel</span></div></div></div>}
 
-    {/* Tab Bar */}
-    <nav className="tbar">
-      {tabs.map(t=><button key={t.id} onClick={()=>setTab(t.id)} className={`tab ${tab===t.id?'tab-on':'tab-off'}`}>
-        <span style={{fontSize:28,lineHeight:1}}>{t.icon}</span>
-        <span style={{fontSize:10,fontWeight:600,marginTop:2,whiteSpace:'nowrap'}}>{t.l}</span>
-      </button>)}
-    </nav>
+    <nav className="tbar">{[{id:'home',icon:'📊',l:'Home'},{id:'budget',icon:'🎯',l:'Budget'},{id:'debts',icon:'💳',l:'Debts'},{id:'fella',icon:'🤖',l:'Fella'},{id:'more',icon:'⚙️',l:'More'}].map(t=><button key={t.id} onClick={()=>t.id==='more'?setMore(true):setTab(t.id)} className={`tab ${(tab===t.id||(t.id==='more'&&['subs','goals','bills','trends'].includes(tab)))?'tab-on':'tab-off'}`}><span className="tab-icon">{t.icon}</span><span className="tab-label">{t.l}</span></button>)}</nav>
   </div>
 }
