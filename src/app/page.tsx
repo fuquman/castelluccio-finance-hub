@@ -248,7 +248,7 @@ export default function App(){
   )
 
   // ── Loading ──
-  if(loading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:24,background:'#000'}}>
+  if(loading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:24,background:'#000',maxWidth:430,margin:'0 auto'}}>
     <div style={{fontSize:100}}>💰</div>
     <div style={{fontSize:48,fontWeight:800,color:'var(--orange)',letterSpacing:-1}}>Ca$ter</div>
     <div className="brand-bar"/>
@@ -260,7 +260,7 @@ export default function App(){
     </div>
   </div>
 
-  return<div style={{minHeight:'100dvh',paddingBottom:120,background:'#000'}}>
+  return<div style={{minHeight:'100dvh',paddingBottom:120,background:'#000',maxWidth:430,margin:'0 auto',position:'relative'}}>
     {/* Welcome / Onboarding */}
     {showWelcome&&<div className="overlay" style={{zIndex:200}} onClick={()=>setShowWelcome(false)}>
       <div style={{background:'var(--card)',borderRadius:24,margin:'10vh 20px',padding:32,maxWidth:400,marginLeft:'auto',marginRight:'auto'}} onClick={e=>e.stopPropagation()}>
