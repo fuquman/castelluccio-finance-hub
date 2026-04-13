@@ -4,9 +4,9 @@ import { supabase } from '@/lib/supabase'
 
 // ── Types ──
 type Acc={id:string;name:string;bank:string;account_type:string;balance:number}
-type Tx={id:string;date:string;description:string;amount:number;category:string}
+type Tx={id:string;date:string;description:string;amount:number;category:string;tags?:string[]}
 type Cat={id:string;name:string;icon:string;color:string;monthly_limit:number}
-type Rec={id:string;name:string;amount:number;frequency:string;category:string;status:string;notes:string;next_due_date:string;owner:string;previous_amount:number|null;price_changed_at:string|null}
+type Rec={id:string;name:string;amount:number;frequency:string;category:string;status:string;notes:string;next_due_date:string;owner:string;previous_amount:number|null;price_changed_at:string|null;tags?:string[]}
 type Dbt={id:string;name:string;type:string;original_amount:number;current_balance:number;interest_rate:number;monthly_payment:number;lender:string}
 type Goal={id:string;name:string;icon:string;color:string;target_amount:number;current_amount:number;deadline:string;notes:string}
 type Inc={id:string;name:string;type:string;amount:number;frequency:string}
@@ -138,6 +138,8 @@ export default function App(){
 
   // ── CRUD ──
   const save=async(table:string,data:any,id?:string)=>{
+    // Convert tags string to array if present
+    if(typeof data.tags==='string'){data.tags=data.tags.split(',').map((t:string)=>t.trim()).filter(Boolean)}
     setSaving(true)
     try{if(id){await supabase.from(table).update(data).eq('id',id)}else{await supabase.from(table).insert(data)}
       await load();setShowForm(null);setEditItem(null);setFd({})}catch(e){console.error(e)}
@@ -242,9 +244,10 @@ export default function App(){
           <Input placeholder="What was it?" value={fd.description||''} onChange={e=>setFd({...fd,description:e.target.value})}/>
           <div style={{display:'flex',gap:8}}><Input placeholder="Amount (-ve for expense)" type="number" value={fd.amount??''} onChange={e=>setFd({...fd,amount:e.target.value})} style={{flex:1,marginBottom:8}}/><Input type="date" value={fd.date||new Date().toISOString().split('T')[0]} onChange={e=>setFd({...fd,date:e.target.value})} style={{width:140,marginBottom:8}}/></div>
           <Select value={fd.category||''} onChange={e=>setFd({...fd,category:e.target.value})}><option value="">Category...</option>{cats.map(c=><option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}<option value="Income">Income</option></Select>
-          <Btn onClick={()=>save('transactions',{description:fd.description,amount:parseFloat(fd.amount)||0,category:fd.category||'Uncategorised',date:fd.date||new Date().toISOString().split('T')[0],logged_by:'manual'})} disabled={saving} style={{width:'100%'}}>{saving?'Saving...':'Add'}</Btn>
+          <Input placeholder="Tags (comma separated, e.g. essential, kids)" value={fd.tags||''} onChange={e=>setFd({...fd,tags:e.target.value})}/>
+          <Btn onClick={()=>save('transactions',{description:fd.description,amount:parseFloat(fd.amount)||0,category:fd.category||'Uncategorised',date:fd.date||new Date().toISOString().split('T')[0],logged_by:'manual',tags:fd.tags?fd.tags.split(',').map((t:string)=>t.trim()).filter(Boolean):[]})} disabled={saving} style={{width:'100%'}}>{saving?'Saving...':'Add'}</Btn>
         </div>}
-        <div className="gc">{(dateFrom||dateTo?txs.filter(t=>(!dateFrom||t.date>=dateFrom)&&(!dateTo||t.date<=dateTo)):txs).slice(0,20).map((tx,i)=><div key={tx.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{tx.description}</div><div className="rs">{tx.category} · {new Date(tx.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(tx.amount)>=0?'var(--green)':'var(--t1)'}}>{Number(tx.amount)>=0?'+':''}{$$(Number(tx.amount))}</span></div>)}</div>
+        <div className="gc">{(dateFrom||dateTo?txs.filter(t=>(!dateFrom||t.date>=dateFrom)&&(!dateTo||t.date<=dateTo)):txs).slice(0,20).map((tx,i)=><div key={tx.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{tx.description}</div><div className="rs">{tx.category} · {new Date(tx.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}{tx.tags&&tx.tags.length>0&&<> · {tx.tags.map((tag:string,ti:number)=><span key={ti} style={{background:'var(--blue-s)',color:'var(--blue)',padding:'1px 6px',borderRadius:4,fontSize:10,fontWeight:600,marginLeft:4}}>{tag}</span>)}</>}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(tx.amount)>=0?'var(--green)':'var(--t1)'}}>{Number(tx.amount)>=0?'+':''}{$$(Number(tx.amount))}</span></div>)}</div>
       </div>
 
       {/* Savings callout */}
@@ -313,7 +316,7 @@ export default function App(){
       {flagged.length>0&&<><div className="sh" style={{color:'var(--red)'}}>⚠ Review</div><div className="gc fu s2">{flagged.map((s,i)=><div key={s.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{fontSize:17,fontWeight:500}}>{s.name}</span><div style={{display:'flex',alignItems:'center',gap:8}}><span className="mono" style={{fontSize:15,fontWeight:600}}>{$$(Number(s.amount))}</span><span className="pill pill-r">{s.status==='duplicate'?'Duplicate':'Review'}</span></div></div>{s.notes&&<div style={{fontSize:13,color:'var(--t3)',marginTop:8}}>{s.notes}</div>}<div style={{fontSize:12,color:'var(--t3)',marginTop:4}}>{s.owner==='ben'?'👨 Ben':s.owner==='sarah'?'👩 Sarah':'👨‍👩‍👧‍👦 Family'}</div></div>)}</div></>}
 
       <div className="sh">Active Subscriptions</div>
-      <div className="gc fu s3">{recs.filter(r=>r.status==='active').map((s,i)=><div key={s.id} style={{padding:'14px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',alignItems:'center',gap:12}}><div style={{flex:1}}><div style={{fontSize:17,fontWeight:500}}>{s.name}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{s.category} · {s.frequency} · <span style={{color:s.owner==='ben'?'var(--blue)':s.owner==='sarah'?'var(--pink, #ff375f)':'var(--green)'}}>{s.owner==='ben'?'👨 Ben':s.owner==='sarah'?'👩 Sarah':'👨‍👩‍👧‍👦 Family'}</span></div></div><span className="mono" style={{fontSize:15,fontWeight:600,marginRight:8}}>{$$(Number(s.amount))}</span>
+      <div className="gc fu s3">{recs.filter(r=>r.status==='active').map((s,i)=><div key={s.id} style={{padding:'14px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',alignItems:'center',gap:12}}><div style={{flex:1}}><div style={{fontSize:17,fontWeight:500}}>{s.name}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{s.category} · {s.frequency} · <span style={{color:s.owner==='ben'?'var(--blue)':s.owner==='sarah'?'var(--pink, #ff375f)':'var(--green)'}}>{s.owner==='ben'?'👨 Ben':s.owner==='sarah'?'👩 Sarah':'👨‍👩‍👧‍👦 Family'}</span>{s.tags&&s.tags.length>0&&s.tags.map((tag:string,ti:number)=><span key={ti} style={{background:'var(--orange-s)',color:'var(--orange)',padding:'1px 6px',borderRadius:4,fontSize:10,fontWeight:600,marginLeft:4}}>{tag}</span>)}</div></div><span className="mono" style={{fontSize:15,fontWeight:600,marginRight:8}}>{$$(Number(s.amount))}</span>
         <button onClick={async()=>{await supabase.from('recurring_payments').update({status:'flagged'}).eq('id',s.id);await load()}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'var(--orange-s)',color:'var(--orange)',fontSize:12,fontWeight:600,cursor:'pointer'}}>Flag</button>
         <button onClick={async()=>{if(confirm('Cancel '+s.name+'?')){await supabase.from('recurring_payments').update({status:'cancelled'}).eq('id',s.id);await load()}}} style={{padding:'6px 12px',borderRadius:8,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:12,fontWeight:600,cursor:'pointer',marginLeft:4}}>Cancel</button>
       </div></div>)}</div>
@@ -341,10 +344,37 @@ export default function App(){
 
     {/* ═══════ KIDS ═══════ */}
     {tab==='kids'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
-      <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Kids</h2></div>
-      <div className="fu s1" style={{display:'flex',gap:10,overflowX:'auto'}}>{ccs.map(cc=><button key={cc.id} onClick={()=>setSelectedKid(selectedKid===cc.id?null:cc.id)} style={{padding:'12px 20px',borderRadius:12,border:'none',background:selectedKid===cc.id?'var(--orange)':'var(--card)',color:selectedKid===cc.id?'#000':'var(--t2)',fontSize:16,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>{cc.icon} {cc.name}</button>)}</div>
-      {selectedKid&&<div className="gc fu s2">{ccis.filter(i=>i.cost_centre_id===selectedKid).slice(0,15).map((item,i)=><div key={item.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{item.description}</div><div className="rs">{item.category} · {new Date(item.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div></div><span className="mono rr" style={{fontWeight:600}}>{$$(Number(item.amount))}</span></div>)}</div>}
-      {selectedKid&&<div className="gc fu s3" style={{padding:20,textAlign:'center'}}><div style={{fontSize:15,color:'var(--t3)',marginBottom:4}}>Total for {ccs.find(c=>c.id===selectedKid)?.name}</div><div className="mono" style={{fontSize:32,fontWeight:700,color:'var(--orange)'}}>{$(ccis.filter(i=>i.cost_centre_id===selectedKid).reduce((s,i)=>s+Number(i.amount),0))}</div></div>}
+      <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Cost Centres</h2><button onClick={()=>newRow('cost_centres',{name:'',icon:'👤',color:'#ff9f0a',type:'child'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
+
+      {showForm==='cost_centres'&&<EditForm table="cost_centres" fields={[{key:'name',label:'Name (e.g. child name)'},{key:'icon',label:'Icon emoji'},{key:'type',label:'Type',options:[{v:'child',l:'Child'},{v:'household',l:'Household'},{v:'custom',l:'Custom'}]}]}/>}
+
+      {/* Cost Centre selector */}
+      <div className="fu s1" style={{display:'flex',gap:10,overflowX:'auto',flexWrap:'wrap'}}>{ccs.map(cc=><button key={cc.id} onClick={()=>setSelectedKid(selectedKid===cc.id?null:cc.id)} style={{padding:'12px 20px',borderRadius:12,border:'none',background:selectedKid===cc.id?'var(--orange)':'var(--card)',color:selectedKid===cc.id?'#000':'var(--t2)',fontSize:16,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>{cc.icon} {cc.name}</button>)}
+      </div>
+
+      {/* Edit/Delete selected cost centre */}
+      {selectedKid&&<div style={{display:'flex',gap:8}}>
+        <button onClick={()=>{const cc=ccs.find(c=>c.id===selectedKid);if(cc)editRow('cost_centres',cc,{name:cc.name,icon:cc.icon,color:cc.color,type:'child'})}} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--card)',color:'var(--t2)',fontSize:13,fontWeight:600,cursor:'pointer'}}>✏️ Edit</button>
+        <button onClick={async()=>{if(confirm('Delete this cost centre and all its items?')){await supabase.from('cost_centre_items').delete().eq('cost_centre_id',selectedKid);await del('cost_centres',selectedKid);setSelectedKid(null)}}} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:13,fontWeight:600,cursor:'pointer'}}>🗑 Delete</button>
+      </div>}
+
+      {/* Add expense to cost centre */}
+      {selectedKid&&<>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><div className="sh" style={{margin:0}}>Expenses</div><button onClick={()=>setShowForm(showForm==='cci'?null:'cci')} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>{showForm==='cci'?'Cancel':'+ Add'}</button></div>
+        {showForm==='cci'&&<div className="gc" style={{padding:18}}>
+          <Input placeholder="What was it?" value={fd.description||''} onChange={e=>setFd({...fd,description:e.target.value})}/>
+          <Input placeholder="Amount" type="number" value={fd.cci_amount??''} onChange={e=>setFd({...fd,cci_amount:e.target.value})}/>
+          <Input type="date" value={fd.cci_date||new Date().toISOString().split('T')[0]} onChange={e=>setFd({...fd,cci_date:e.target.value})}/>
+          <Select value={fd.cci_category||'Other'} onChange={e=>setFd({...fd,cci_category:e.target.value})}><option value="School Fees">School Fees</option><option value="Sports">Sports</option><option value="Clothing">Clothing</option><option value="Medical">Medical</option><option value="Activities">Activities</option><option value="Food">Food</option><option value="Other">Other</option></Select>
+          <Btn onClick={async()=>{if(!fd.description||!fd.cci_amount)return;setSaving(true);await supabase.from('cost_centre_items').insert({cost_centre_id:selectedKid,description:fd.description,amount:parseFloat(fd.cci_amount)||0,date:fd.cci_date||new Date().toISOString().split('T')[0],category:fd.cci_category||'Other'});await load();setFd({});setShowForm(null);setSaving(false)}} disabled={saving} style={{width:'100%'}}>{saving?'Saving...':'Add Expense'}</Btn>
+        </div>}
+
+        {/* Items list */}
+        <div className="gc fu s2">{ccis.filter(i=>i.cost_centre_id===selectedKid).slice(0,20).map((item,i)=><div key={item.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{item.description}</div><div className="rs">{item.category} · {new Date(item.date).toLocaleDateString('en-AU',{day:'numeric',month:'short'})}</div></div><div style={{display:'flex',alignItems:'center',gap:8}}><span className="mono rr" style={{fontWeight:600}}>{$$(Number(item.amount))}</span><button onClick={()=>del('cost_centre_items',item.id)} style={{padding:'4px 8px',borderRadius:6,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:11,cursor:'pointer'}}>✕</button></div></div>)}</div>
+
+        {/* Total */}
+        <div className="gc fu s3" style={{padding:20,textAlign:'center'}}><div style={{fontSize:15,color:'var(--t3)',marginBottom:4}}>Total for {ccs.find(c=>c.id===selectedKid)?.name}</div><div className="mono" style={{fontSize:32,fontWeight:700,color:'var(--orange)'}}>{$(ccis.filter(i=>i.cost_centre_id===selectedKid).reduce((s,i)=>s+Number(i.amount),0))}</div></div>
+      </>}
     </div>}
 
 
@@ -465,8 +495,10 @@ export default function App(){
       {/* Recurring */}
       {settingsSection==='recurring'&&<div className="fu s2">
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Recurring Payments</div><button onClick={()=>newRow('recurring_payments',{name:'',amount:0,frequency:'monthly',category:'',status:'active',owner:'family'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:14,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
-        {showForm==='recurring_payments'&&<EditForm table="recurring_payments" fields={[{key:'name',label:'Name'},{key:'amount',label:'Amount',type:'number'},{key:'frequency',label:'Frequency',options:[{v:'weekly',l:'Weekly'},{v:'fortnightly',l:'Fortnightly'},{v:'monthly',l:'Monthly'},{v:'quarterly',l:'Quarterly'},{v:'yearly',l:'Yearly'}]},{key:'category',label:'Category'},{key:'status',label:'Status',options:[{v:'active',l:'Active'},{v:'flagged',l:'Flagged'},{v:'duplicate',l:'Duplicate'},{v:'cancelled',l:'Cancelled'},{v:'paused',l:'Paused'}]},{key:'owner',label:'Who',options:[{v:'family',l:'👨‍👩‍👧‍👦 Family'},{v:'ben',l:'👨 Ben'},{v:'sarah',l:'👩 Sarah'}]}]}/>}
-        <div className="gc">{recs.map((r,i)=><div key={r.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('recurring_payments',r,{name:r.name,amount:Number(r.amount),frequency:r.frequency,category:r.category,status:r.status,owner:r.owner||'family'})}><Ico bg={r.status==='active'?'var(--green)':r.status==='flagged'||r.status==='duplicate'?'var(--red)':'var(--t3)'} ch="🔄"/><div className="rb"><div className="rt">{r.name}</div><div className="rs">{r.category} · {r.frequency} · {r.status} · {r.owner==='ben'?'👨':'👩‍👧‍👦'}</div></div><span className="mono rr" style={{fontWeight:600}}>{$$(Number(r.amount))}</span></div>)}</div>
+        {showForm==='recurring_payments'&&<EditForm table="recurring_payments" fields={[{key:'name',label:'Name'},{key:'amount',label:'Amount',type:'number'},{key:'frequency',label:'Frequency',options:[{v:'weekly',l:'Weekly'},{v:'fortnightly',l:'Fortnightly'},{v:'monthly',l:'Monthly'},{v:'quarterly',l:'Quarterly'},{v:'yearly',l:'Yearly'}]},{key:'category',label:'Category'},{key:'status',label:'Status',options:[{v:'active',l:'Active'},{v:'flagged',l:'Flagged'},{v:'duplicate',l:'Duplicate'},{v:'cancelled',l:'Cancelled'},{v:'paused',l:'Paused'}]},{key:'owner',label:'Who',options:[{v:'family',l:'👨‍👩‍👧‍👦 Family'},{v:'ben',l:'👨 Ben'},{v:'sarah',l:'👩 Sarah'}]}]}>
+          <Input placeholder="Tags (comma separated)" value={Array.isArray(fd.tags)?fd.tags.join(', '):fd.tags||''} onChange={e=>setFd({...fd,tags:e.target.value})} style={{marginBottom:0}}/>
+        </EditForm>}
+        <div className="gc">{recs.map((r,i)=><div key={r.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('recurring_payments',r,{name:r.name,amount:Number(r.amount),frequency:r.frequency,category:r.category,status:r.status,owner:r.owner||'family',tags:r.tags?r.tags.join(', '):''})}><Ico bg={r.status==='active'?'var(--green)':r.status==='flagged'||r.status==='duplicate'?'var(--red)':'var(--t3)'} ch="🔄"/><div className="rb"><div className="rt">{r.name}</div><div className="rs">{r.category} · {r.frequency} · {r.status} · {r.owner==='ben'?'👨':'👩‍👧‍👦'}</div></div><span className="mono rr" style={{fontWeight:600}}>{$$(Number(r.amount))}</span></div>)}</div>
       </div>}
     </div>}
 
