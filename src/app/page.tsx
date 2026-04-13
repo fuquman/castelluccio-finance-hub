@@ -35,11 +35,6 @@ function Ico({bg,ch,size=50}:{bg:string;ch:string;size?:number}){
 }
 
 export default function App(){
-  const[session,setSess]=useState<any>(null)
-  const[authLoading,setAuthLoading]=useState(true)
-  const[authEmail,setAuthEmail]=useState('')
-  const[authSent,setAuthSent]=useState(false)
-  const[authError,setAuthError]=useState('')
   const[tab,setTab]=useState('home')
   const[more,setMore]=useState(false)
   const[accounts,setA]=useState<Acc[]>([])
@@ -60,48 +55,6 @@ export default function App(){
   const[billMenu,setBillMenu]=useState<string|null>(null)
   const chatEnd=useRef<HTMLDivElement>(null)
 
-  // Auth: check session on mount + listen for changes
-  useEffect(()=>{
-    supabase.auth.getSession().then(({data:{session}})=>{setSess(session);setAuthLoading(false)})
-    const{data:{subscription}}=supabase.auth.onAuthStateChange((_,session)=>{setSess(session)})
-    return()=>subscription.unsubscribe()
-  },[])
-
-  // Magic link login
-  const handleLogin=async()=>{
-    if(!authEmail.trim())return
-    setAuthError('')
-    const{error}=await supabase.auth.signInWithOtp({email:authEmail.trim(),options:{emailRedirectTo:window.location.origin}})
-    if(error){setAuthError(error.message)}else{setAuthSent(true)}
-  }
-
-  const handleLogout=async()=>{await supabase.auth.signOut();setSess(null)}
-
-  // Auth loading
-  if(authLoading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16,background:'#000',color:'#fff'}}><div style={{fontSize:48}}>💰</div><div style={{fontSize:24,fontWeight:700,color:'var(--orange)'}}>Finance Hub</div></div>
-
-  // Login screen
-  if(!session)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',padding:20,background:'#000',color:'#fff',fontFamily:"'DM Sans',-apple-system,system-ui,sans-serif"}}>
-    <div style={{width:'100%',maxWidth:380,textAlign:'center'}}>
-      <div style={{fontSize:64,marginBottom:16}}>💰</div>
-      <h1 style={{fontSize:34,fontWeight:800,letterSpacing:-0.5,marginBottom:4}}>Finance Hub</h1>
-      <p style={{fontSize:15,color:'rgba(255,255,255,0.4)',marginBottom:40}}>Castelluccio Family</p>
-      {!authSent?<>
-        <input value={authEmail} onChange={e=>setAuthEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleLogin()} placeholder="Enter your email" type="email" autoComplete="email" style={{width:'100%',padding:'16px 20px',borderRadius:14,border:'none',background:'#1c1c1e',color:'#fff',fontSize:18,outline:'none',fontFamily:'inherit',marginBottom:12,textAlign:'center'}}/>
-        <button onClick={handleLogin} style={{width:'100%',padding:'16px 20px',borderRadius:14,border:'none',background:'#ff9f0a',color:'#000',fontSize:18,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Sign In with Magic Link</button>
-        {authError&&<p style={{color:'#ff453a',fontSize:14,marginTop:12}}>{authError}</p>}
-        <p style={{fontSize:13,color:'rgba(255,255,255,0.3)',marginTop:20,lineHeight:1.5}}>We'll send you a sign-in link — no password needed.<br/>Works for both Ben and Sarah.</p>
-      </>:<>
-        <div style={{background:'#1c1c1e',borderRadius:16,padding:24,marginBottom:16}}>
-          <div style={{fontSize:40,marginBottom:12}}>📬</div>
-          <div style={{fontSize:20,fontWeight:700,marginBottom:8}}>Check your email</div>
-          <div style={{fontSize:15,color:'rgba(255,255,255,0.5)',lineHeight:1.5}}>We sent a magic link to <span style={{color:'#ff9f0a',fontWeight:600}}>{authEmail}</span>. Tap the link to sign in.</div>
-        </div>
-        <button onClick={()=>{setAuthSent(false);setAuthEmail('')}} style={{background:'none',border:'none',color:'#ff9f0a',fontSize:16,cursor:'pointer',fontFamily:'inherit',fontWeight:600}}>Use a different email</button>
-      </>}
-    </div>
-  </div>
-
   useEffect(()=>{(async()=>{
     const[a,t,c,r,d,g,i,al,eb,sn]=await Promise.all([
       supabase.from('bank_accounts').select('*').order('bank'),
@@ -119,6 +72,7 @@ export default function App(){
     setD(d.data||[]);setG(g.data||[]);setI(i.data||[]);setAl(al.data||[])
     setE(eb.data||[]);setS(sn.data||[]);setL(false)
   })()},[])
+
   useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:'smooth'})},[chat])
 
   const bal=accounts.reduce((s,a)=>s+Number(a.balance),0)
@@ -217,8 +171,7 @@ export default function App(){
       </div></div>
 
       <div className="fu s5"><div className="sh">Account</div><div className="gc">
-        <div className="row"><Ico bg="var(--green)" ch="👤"/><div className="rb"><div className="rt">Signed In</div><div className="rs">{session?.user?.email}</div></div></div>
-        <div className="row" style={{borderTop:'0.33px solid var(--sep)',cursor:'pointer'}} onClick={handleLogout}><Ico bg="var(--red)" ch="🚪"/><div className="rb"><div className="rt" style={{color:'var(--red)'}}>Sign Out</div></div></div>
+        <div className="row"><Ico bg="var(--green)" ch="👤"/><div className="rb"><div className="rt">ben@castelluccio.com.au</div></div></div>
       </div></div>
     </div>}
 
