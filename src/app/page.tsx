@@ -215,7 +215,7 @@ export default function App(){
   )
 
   // ── Loading ──
-  if(loading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}><div style={{fontSize:48}}>💰</div><div style={{fontSize:24,fontWeight:700,color:'var(--orange)'}}>Ca$ter</div></div>
+  if(loading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:24}}><div style={{fontSize:120}}>💰</div><div style={{fontSize:52,fontWeight:800,color:'var(--orange)',letterSpacing:-1}}>Ca$ter</div><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>Loading your finances...</div></div>
 
   return<div style={{minHeight:'100dvh',paddingBottom:100,background:'#000'}}>
     <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handlePhoto}/>
