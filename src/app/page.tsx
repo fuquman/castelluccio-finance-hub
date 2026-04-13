@@ -14,7 +14,7 @@ type Alrt={id:string;type:string;message:string;severity:string}
 type EBill={id:string;vendor:string;amount:number;due_date:string;category:string;status:string;subject:string}
 type Snap={month:string;total_income:number;total_expenses:number}
 type Msg={role:'user'|'assistant';text:string}
-type CC={id:string;name:string;icon:string;color:string}
+type CC={id:string;name:string;icon:string;color:string;type:string}
 type CCI={id:string;cost_centre_id:string;date:string;description:string;amount:number;category:string}
 
 // ── Helpers ──
