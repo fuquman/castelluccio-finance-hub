@@ -86,6 +86,9 @@ export default function App(){
   const[billMenu,setBillMenu]=useState<string|null>(null)
   const[selectedKid,setSelectedKid]=useState<string|null>(null)
   const[settingsSection,setSettingsSection]=useState('connections')
+  const[reportFrom,setReportFrom]=useState(new Date(now.getFullYear(),0,1).toISOString().split('T')[0])
+  const[reportTo,setReportTo]=useState(now.toISOString().split('T')[0])
+  const[reportTab,setReportTab]=useState('summary')
   const fileRef=useRef<HTMLInputElement>(null)
 
   // ── Data Loading ──
@@ -314,6 +317,87 @@ export default function App(){
       {selectedKid&&<div className="gc fu s3" style={{padding:20,textAlign:'center'}}><div style={{fontSize:15,color:'var(--t3)',marginBottom:4}}>Total for {ccs.find(c=>c.id===selectedKid)?.name}</div><div className="mono" style={{fontSize:32,fontWeight:700,color:'var(--orange)'}}>{$(ccis.filter(i=>i.cost_centre_id===selectedKid).reduce((s,i)=>s+Number(i.amount),0))}</div></div>}
     </div>}
 
+
+    {/* ═══════ REPORTS & EXPORT ═══════ */}
+    {tab==='reports'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16,paddingBottom:20}}>
+      <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Reports</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>View & export your financial data</div></div>
+
+      {/* Date Range Picker */}
+      <div className="gc fu s1" style={{padding:18}}>
+        <div style={{fontSize:15,fontWeight:600,marginBottom:12}}>Date Range</div>
+        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+          <div style={{flex:1}}><div style={{fontSize:12,color:'var(--t3)',marginBottom:4}}>From</div><Input type="date" value={reportFrom} onChange={e=>setReportFrom(e.target.value)} style={{marginBottom:0}}/></div>
+          <div style={{flex:1}}><div style={{fontSize:12,color:'var(--t3)',marginBottom:4}}>To</div><Input type="date" value={reportTo} onChange={e=>setReportTo(e.target.value)} style={{marginBottom:0}}/></div>
+        </div>
+        <div style={{display:'flex',gap:8,marginTop:12,flexWrap:'wrap'}}>
+          {[{l:'This Month',f:()=>{const s=new Date(now.getFullYear(),now.getMonth(),1);setReportFrom(s.toISOString().split('T')[0]);setReportTo(now.toISOString().split('T')[0])}},
+            {l:'Last Month',f:()=>{const s=new Date(now.getFullYear(),now.getMonth()-1,1);const e=new Date(now.getFullYear(),now.getMonth(),0);setReportFrom(s.toISOString().split('T')[0]);setReportTo(e.toISOString().split('T')[0])}},
+            {l:'This Quarter',f:()=>{const q=Math.floor(now.getMonth()/3)*3;const s=new Date(now.getFullYear(),q,1);setReportFrom(s.toISOString().split('T')[0]);setReportTo(now.toISOString().split('T')[0])}},
+            {l:'YTD',f:()=>{setReportFrom(new Date(now.getFullYear(),0,1).toISOString().split('T')[0]);setReportTo(now.toISOString().split('T')[0])}},
+            {l:'All Time',f:()=>{setReportFrom('2020-01-01');setReportTo(now.toISOString().split('T')[0])}}
+          ].map(p=><button key={p.l} onClick={p.f} style={{padding:'8px 14px',borderRadius:10,border:'none',background:'var(--card2)',color:'var(--t2)',fontSize:13,fontWeight:600,cursor:'pointer'}}>{p.l}</button>)}
+        </div>
+      </div>
+
+      {/* Report Tabs */}
+      <div className="fu s2" style={{display:'flex',gap:6,overflowX:'auto'}}>
+        {[{id:'summary',l:'Summary'},{id:'spending',l:'Spending'},{id:'income_r',l:'Income'},{id:'debts_r',l:'Debts'},{id:'txlist',l:'Transactions'}].map(t=>
+          <button key={t.id} onClick={()=>setReportTab(t.id)} style={{padding:'10px 16px',borderRadius:12,border:'none',background:reportTab===t.id?'var(--orange)':'var(--card)',color:reportTab===t.id?'#000':'var(--t2)',fontSize:15,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{t.l}</button>
+        )}
+      </div>
+
+      {(()=>{
+        const rTx=txs.filter(t=>{const d=t.date;return d>=reportFrom&&d<=reportTo})
+        const rIncome=rTx.filter(t=>Number(t.amount)>0).reduce((s,t)=>s+Number(t.amount),0)
+        const rExpense=rTx.filter(t=>Number(t.amount)<0).reduce((s,t)=>s+Math.abs(Number(t.amount)),0)
+        const rNet=rIncome-rExpense
+        const rByCat=cats.map(c=>{const sp=rTx.filter(t=>t.category===c.name&&Number(t.amount)<0).reduce((s,t)=>s+Math.abs(Number(t.amount)),0);return{...c,spent:sp}}).filter(c=>c.spent>0).sort((a,b)=>b.spent-a.spent)
+
+        return<>
+          {/* SUMMARY */}
+          {reportTab==='summary'&&<div className="fu s3" style={{display:'flex',flexDirection:'column',gap:12}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+              <div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:4}}>Income</div><div className="mono" style={{fontSize:24,fontWeight:700,color:'var(--green)'}}>{$(rIncome)}</div></div>
+              <div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:4}}>Expenses</div><div className="mono" style={{fontSize:24,fontWeight:700,color:'var(--orange)'}}>{$(rExpense)}</div></div>
+              <div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:4}}>Net</div><div className="mono" style={{fontSize:24,fontWeight:700,color:rNet>=0?'var(--green)':'var(--red)'}}>{$(rNet)}</div></div>
+              <div className="gc" style={{padding:18,textAlign:'center'}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:4}}>Transactions</div><div className="mono" style={{fontSize:24,fontWeight:700}}>{rTx.length}</div></div>
+            </div>
+            <div className="gc" style={{padding:18}}>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:12}}>Top Categories</div>
+              {rByCat.slice(0,6).map((c,i)=><div key={c.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><span style={{fontSize:15}}>{c.icon} {c.name}</span><span className="mono" style={{fontSize:15,fontWeight:600}}>{$(c.spent)}</span></div>)}
+            </div>
+            <div className="gc" style={{padding:18}}>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:12}}>Debts Snapshot</div>
+              {debts.map((d,i)=>{const prog=pc(Number(d.original_amount)-Number(d.current_balance),Number(d.original_amount));return<div key={d.id} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><span style={{fontSize:15}}>{d.name}</span><span className="mono" style={{fontSize:15}}><span style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span> <span style={{color:'var(--green)',fontSize:12}}>{prog}%</span></span></div>})}
+            </div>
+            <div className="gc" style={{padding:18}}>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:12}}>Goals Progress</div>
+              {goals.map((g,i)=>{const prog=pc(Number(g.current_amount),Number(g.target_amount));return<div key={g.id} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><span style={{fontSize:15}}>{g.icon} {g.name}</span><span className="mono" style={{fontSize:15}}>{$(Number(g.current_amount))} <span style={{color:'var(--t3)',fontSize:12}}>/ {$(Number(g.target_amount))}</span></span></div>})}
+            </div>
+          </div>}
+
+          {/* SPENDING */}
+          {reportTab==='spending'&&<div className="fu s3"><div className="gc">{rByCat.map((c,i)=>{const maxSp=Math.max(...rByCat.map(x=>x.spent),1);return<div key={c.id} style={{padding:'14px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}><span style={{fontSize:15,fontWeight:500}}>{c.icon} {c.name}</span><span className="mono" style={{fontSize:14,fontWeight:600}}>{$(c.spent)}</span></div><div className="pbar" style={{height:8,borderRadius:4}}><div className="pfill" style={{width:`${(c.spent/maxSp)*100}%`,background:c.color,borderRadius:4}}/></div></div>})}</div></div>}
+
+          {/* INCOME */}
+          {reportTab==='income_r'&&<div className="fu s3"><div className="gc">{incs.map((inc,i)=><div key={inc.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><Ico bg="var(--green)" ch="💰"/><div className="rb"><div className="rt">{inc.name}</div><div className="rs">{inc.type.replace('_',' ')} · {inc.frequency}</div></div><span className="mono rr" style={{fontWeight:600,color:'var(--green)'}}>{$$(Number(inc.amount))}</span></div>)}</div>
+            <div className="gc" style={{padding:18,textAlign:'center',marginTop:12}}><div style={{fontSize:14,color:'var(--t3)',marginBottom:4}}>Period Income</div><div className="mono" style={{fontSize:28,fontWeight:700,color:'var(--green)'}}>{$(rIncome)}</div></div>
+          </div>}
+
+          {/* DEBTS */}
+          {reportTab==='debts_r'&&<div className="fu s3"><div className="gc">{debts.map((d,i)=>{const paid=Number(d.original_amount)-Number(d.current_balance);const prog=pc(paid,Number(d.original_amount));return<div key={d.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}><div><div style={{fontSize:17,fontWeight:500}}>{d.name}</div><div style={{fontSize:13,color:'var(--t3)',marginTop:2}}>{d.lender}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`}>{prog}% paid</span></div><div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:'var(--green)',borderRadius:3}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:8,fontSize:13,color:'var(--t3)'}}><span>Remaining: <span className="mono" style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span></span><span>{$$(Number(d.monthly_payment))}/mo</span></div></div>})}</div></div>}
+
+          {/* TRANSACTION LIST */}
+          {reportTab==='txlist'&&<div className="fu s3"><div className="gc">{rTx.length===0?<div style={{padding:20,textAlign:'center',color:'var(--t3)'}}>No transactions in this period</div>:rTx.map((tx,i)=><div key={tx.id} className="row" style={i>0?{borderTop:'0.33px solid var(--sep)'}:{}}><div className="rb"><div className="rt">{tx.description}</div><div className="rs">{tx.category} · {new Date(tx.date).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(tx.amount)>=0?'var(--green)':'var(--t1)'}}>{Number(tx.amount)>=0?'+':''}{$$(Number(tx.amount))}</span></div>)}</div></div>}
+
+          {/* PRINT / EXPORT */}
+          <div className="fu s4" style={{display:'flex',gap:10}}>
+            <button onClick={()=>window.print()} style={{flex:1,padding:'16px',borderRadius:14,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:700,cursor:'pointer'}}>🖨️ Print / Save as PDF</button>
+          </div>
+          <div style={{fontSize:13,color:'var(--t3)',textAlign:'center'}}>Use your browser's print dialog to save as PDF. On iPhone: Share → Print → pinch-to-zoom the preview → Share → Save to Files</div>
+        </>
+      })()}
+    </div>}
     {/* ═══════ SETTINGS ═══════ */}
     {tab==='settings'&&<div style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16,paddingBottom:20}}>
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Settings</h2></div>
@@ -361,11 +445,11 @@ export default function App(){
       {icon:'🔄',label:'Subs & Bills',color:'var(--purple)',id:'subs'},
       {icon:'🏖️',label:'Goals',color:'var(--green)',id:'goals'},
       {icon:'👶',label:'Kids',color:'var(--pink, #ff375f)',id:'kids'},
-      {icon:'⚙️',label:'Settings',color:'var(--gray2, #555)',id:'settings'},
+      {icon:'📊',label:'Reports & Export',color:'var(--blue)',id:'reports'},{icon:'⚙️',label:'Settings',color:'var(--gray2, #555)',id:'settings'},
     ].map(item=><div key={item.id} className="more-item" onClick={()=>{setTab(item.id);setMore(false)}}><Ico bg={item.color} ch={item.icon} size={56}/><span style={{fontSize:22,fontWeight:500}}>{item.label}</span></div>)}
     <div className="more-item" onClick={()=>setMore(false)} style={{justifyContent:'center',padding:'20px 24px'}}><span style={{fontSize:20,color:'var(--t3)'}}>Cancel</span></div></div></div>}
 
     {/* ── Tab Bar ── */}
-    <nav className="tbar">{[{id:'home',icon:'📊',l:'Home'},{id:'budget',icon:'🎯',l:'Budget'},{id:'debts',icon:'💳',l:'Debts'},{id:'fella',icon:'🤖',l:'Fella'},{id:'more',icon:'⚙️',l:'More'}].map(t=><button key={t.id} onClick={()=>t.id==='more'?setMore(true):setTab(t.id)} className={`tab ${(tab===t.id||(t.id==='more'&&['subs','goals','kids','settings'].includes(tab)))?'tab-on':'tab-off'}`}><span className="tab-icon">{t.icon}</span><span className="tab-label">{t.l}</span></button>)}</nav>
+    <nav className="tbar">{[{id:'home',icon:'📊',l:'Home'},{id:'budget',icon:'🎯',l:'Budget'},{id:'debts',icon:'💳',l:'Debts'},{id:'fella',icon:'🤖',l:'Fella'},{id:'more',icon:'⚙️',l:'More'}].map(t=><button key={t.id} onClick={()=>t.id==='more'?setMore(true):setTab(t.id)} className={`tab ${(tab===t.id||(t.id==='more'&&['subs','goals','kids','settings','reports'].includes(tab)))?'tab-on':'tab-off'}`}><span className="tab-icon">{t.icon}</span><span className="tab-label">{t.l}</span></button>)}</nav>
   </div>
 }
