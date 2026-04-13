@@ -881,6 +881,7 @@ export default function App(){
           <strong>Desktop:</strong> Bookmark or Chrome → Install App
         </div>
       </div>
+    </>}
     </div>}
 
 {/* ── More Menu ── */}
