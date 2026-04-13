@@ -572,7 +572,7 @@ export default function App(){
       </div>
 
       {/* HOME */}
-      <div className="gc fu s2" style={{padding:0,overflow:'hidden'}}>
+      <div id="guide-home" className="gc fu s2" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'24px 24px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontSize:28,fontWeight:800,letterSpacing:-0.3}}>🏠 Home</div><button onClick={()=>setTab('home')} style={{padding:'10px 20px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:15,fontWeight:600,cursor:'pointer'}}>Open →</button></div>
         <div style={{padding:'0 24px 8px',fontSize:17,color:'var(--t3)',lineHeight:1.6}}>Your financial dashboard at a glance.</div>
         <div style={{padding:'8px 24px 24px',display:'flex',flexDirection:'column',gap:16}}>
@@ -589,7 +589,7 @@ export default function App(){
       </div>
 
       {/* BUDGET */}
-      <div className="gc fu s3" style={{padding:0,overflow:'hidden'}}>
+      <div id="guide-budget" className="gc fu s3" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'24px 24px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontSize:28,fontWeight:800,letterSpacing:-0.3}}>📈 Budget</div><button onClick={()=>setTab('budget')} style={{padding:'10px 20px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:15,fontWeight:600,cursor:'pointer'}}>Open →</button></div>
         <div style={{padding:'0 24px 8px',fontSize:17,color:'var(--t3)',lineHeight:1.6}}>Track spending against monthly limits by category.</div>
         <div style={{padding:'8px 24px 24px',display:'flex',flexDirection:'column',gap:16}}>
@@ -602,7 +602,7 @@ export default function App(){
       </div>
 
       {/* DEBTS */}
-      <div className="gc fu s4" style={{padding:0,overflow:'hidden'}}>
+      <div id="guide-debts" className="gc fu s4" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'24px 24px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontSize:28,fontWeight:800,letterSpacing:-0.3}}>🏦 Debts</div><button onClick={()=>setTab('debts')} style={{padding:'10px 20px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:15,fontWeight:600,cursor:'pointer'}}>Open →</button></div>
         <div style={{padding:'0 24px 8px',fontSize:17,color:'var(--t3)',lineHeight:1.6}}>Track and pay down everything you owe.</div>
         <div style={{padding:'8px 24px 24px',display:'flex',flexDirection:'column',gap:16}}>
@@ -615,7 +615,7 @@ export default function App(){
       </div>
 
       {/* FELLA */}
-      <div className="gc fu s5" style={{padding:0,overflow:'hidden'}}>
+      <div id="guide-fella" className="gc fu s5" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'24px 24px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontSize:28,fontWeight:800,letterSpacing:-0.3}}>💬 Fella</div><button onClick={()=>setTab('fella')} style={{padding:'10px 20px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:15,fontWeight:600,cursor:'pointer'}}>Open →</button></div>
         <div style={{padding:'0 24px 8px',fontSize:17,color:'var(--t3)',lineHeight:1.6}}>Your AI finance assistant. Named after Rockefeller.</div>
         <div style={{padding:'8px 24px 24px',display:'flex',flexDirection:'column',gap:16}}>
@@ -628,7 +628,7 @@ export default function App(){
       </div>
 
       {/* SUBS & BILLS */}
-      <div className="gc fu s6" style={{padding:0,overflow:'hidden'}}>
+      <div id="guide-subs" className="gc fu s6" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'24px 24px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontSize:28,fontWeight:800,letterSpacing:-0.3}}>🔄 Subs & Bills</div><button onClick={()=>setTab('subs')} style={{padding:'10px 20px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:15,fontWeight:600,cursor:'pointer'}}>Open →</button></div>
         <div style={{padding:'0 24px 8px',fontSize:17,color:'var(--t3)',lineHeight:1.6}}>All recurring costs and incoming bills in one place.</div>
         <div style={{padding:'8px 24px 24px',display:'flex',flexDirection:'column',gap:16}}>
@@ -645,7 +645,7 @@ export default function App(){
       </div>
 
       {/* GOALS */}
-      <div className="gc fu s7" style={{padding:0,overflow:'hidden'}}>
+      <div id="guide-goals" className="gc fu s7" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'24px 24px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontSize:28,fontWeight:800,letterSpacing:-0.3}}>🏖️ Goals</div><button onClick={()=>setTab('goals')} style={{padding:'10px 20px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:15,fontWeight:600,cursor:'pointer'}}>Open →</button></div>
         <div style={{padding:'0 24px 8px',fontSize:17,color:'var(--t3)',lineHeight:1.6}}>Set savings targets and track progress.</div>
         <div style={{padding:'8px 24px 24px',display:'flex',flexDirection:'column',gap:16}}>
@@ -658,7 +658,7 @@ export default function App(){
       </div>
 
       {/* KIDS / COST CENTRES */}
-      <div className="gc fu s8" style={{padding:0,overflow:'hidden'}}>
+      <div id="guide-kids" className="gc fu s8" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'24px 24px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontSize:28,fontWeight:800,letterSpacing:-0.3}}>👶 Cost Centres</div><button onClick={()=>setTab('kids')} style={{padding:'10px 20px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:15,fontWeight:600,cursor:'pointer'}}>Open →</button></div>
         <div style={{padding:'0 24px 8px',fontSize:17,color:'var(--t3)',lineHeight:1.6}}>Track spending per child, pet, or custom category.</div>
         <div style={{padding:'8px 24px 24px',display:'flex',flexDirection:'column',gap:16}}>
@@ -671,7 +671,7 @@ export default function App(){
       </div>
 
       {/* REPORTS */}
-      <div className="gc fu s9" style={{padding:0,overflow:'hidden'}}>
+      <div id="guide-reports" className="gc fu s9" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'24px 24px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontSize:28,fontWeight:800,letterSpacing:-0.3}}>📊 Reports</div><button onClick={()=>setTab('reports')} style={{padding:'10px 20px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:15,fontWeight:600,cursor:'pointer'}}>Open →</button></div>
         <div style={{padding:'0 24px 8px',fontSize:17,color:'var(--t3)',lineHeight:1.6}}>Generate reports and export your data.</div>
         <div style={{padding:'8px 24px 24px',display:'flex',flexDirection:'column',gap:16}}>
@@ -684,7 +684,7 @@ export default function App(){
       </div>
 
       {/* SETTINGS */}
-      <div className="gc fu s10" style={{padding:0,overflow:'hidden'}}>
+      <div id="guide-settings" className="gc fu s10" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'24px 24px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontSize:28,fontWeight:800,letterSpacing:-0.3}}>⚙️ Settings</div><button onClick={()=>setTab('settings')} style={{padding:'10px 20px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:15,fontWeight:600,cursor:'pointer'}}>Open →</button></div>
         <div style={{padding:'0 24px 8px',fontSize:17,color:'var(--t3)',lineHeight:1.6}}>Manage your data and connections.</div>
         <div style={{padding:'8px 24px 24px',display:'flex',flexDirection:'column',gap:16}}>
@@ -698,7 +698,7 @@ export default function App(){
       </div>
 
       {/* COMING SOON */}
-      <div className="gc fu" style={{padding:24}}>
+      <div id="guide-soon" className="gc fu" style={{padding:24}}>
         <div style={{fontSize:28,fontWeight:800,letterSpacing:-0.3,marginBottom:16}}>🚀 Coming Soon</div>
         {[{t:'Basiq Bank Feeds',d:'Live transactions from ME Bank, ING, and Amex. Auto-detects subscriptions.'},
           {t:'Gmail Bill Scanner',d:'Auto-reads bills from email with amount, due date, and vendor.'},
