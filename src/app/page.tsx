@@ -245,13 +245,13 @@ export default function App(){
 
     {/* ── Alerts ── */}
     {alerts.length>0&&tab==='home'&&<div style={{padding:'0 20px 16px'}}>
-        <div ref={carouselRef} style={{display:'flex',gap:12,overflowX:'auto',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch',scrollbarWidth:'none',msOverflowStyle:'none',paddingBottom:8}} onScroll={(e)=>{const el=e.currentTarget;const idx=Math.round(el.scrollLeft/(el.offsetWidth*0.85+12));setInsightIdx(idx)}}>
-          {alerts.map((a,i)=><div key={a.id} style={{minWidth:'85%',flexShrink:0,scrollSnapAlign:'start',padding:'16px 18px',borderRadius:16,fontSize:16,lineHeight:1.5,display:'flex',gap:12,alignItems:'flex-start',background:a.severity==='danger'?'var(--red-s)':a.severity==='warning'?'var(--orange-s)':a.severity==='success'?'var(--green-s)':'var(--blue-s)',border:`1px solid ${a.severity==='danger'?'rgba(255,69,58,0.15)':a.severity==='warning'?'rgba(255,159,10,0.15)':a.severity==='success'?'rgba(48,209,88,0.15)':'rgba(10,132,255,0.15)'}`}}>
+        <div ref={carouselRef} style={{display:'flex',overflowX:'auto',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch',scrollbarWidth:'none',msOverflowStyle:'none',paddingBottom:8}} onScroll={(e)=>{const el=e.currentTarget;const cardW=el.offsetWidth;const idx=Math.round(el.scrollLeft/cardW);setInsightIdx(idx)}}>
+          {alerts.map((a,i)=><div key={a.id} style={{width:'100%',minWidth:'100%',flexShrink:0,scrollSnapAlign:'start',padding:'16px 20px',borderRadius:16,fontSize:17,lineHeight:1.55,display:'flex',gap:12,alignItems:'flex-start',background:a.severity==='danger'?'var(--red-s)':a.severity==='warning'?'var(--orange-s)':a.severity==='success'?'var(--green-s)':'var(--blue-s)',border:`1px solid ${a.severity==='danger'?'rgba(255,69,58,0.15)':a.severity==='warning'?'rgba(255,159,10,0.15)':a.severity==='success'?'rgba(48,209,88,0.15)':'rgba(10,132,255,0.15)'}`}}>
             <span style={{flex:1,color:'var(--t1)',fontWeight:500}}>{a.message}</span>
             <button onClick={()=>dismiss(a.id)} style={{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',fontSize:18,padding:'0 2px',lineHeight:1,flexShrink:0}}>✕</button>
           </div>)}
         </div>
-        {alerts.length>1&&<div style={{display:'flex',justifyContent:'center',gap:6,marginTop:8}}>{alerts.map((_,i)=><div key={i} style={{width:insightIdx===i?20:6,height:6,borderRadius:3,background:insightIdx===i?'var(--orange)':'rgba(255,255,255,0.15)',transition:'all 0.3s ease'}}/>)}</div>}
+        {alerts.length>1&&<div style={{display:'flex',justifyContent:'center',gap:6,marginTop:10}}>{alerts.map((_,i)=><div key={i} style={{width:insightIdx===i?20:6,height:6,borderRadius:3,background:insightIdx===i?'var(--orange)':'rgba(255,255,255,0.15)',transition:'all 0.3s ease'}}/>)}</div>}
       </div>}
 
     {/* ═══════ HOME ═══════ */}
