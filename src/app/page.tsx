@@ -461,11 +461,16 @@ export default function App(){
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Reports</h2><div style={{fontSize:15,color:'var(--t3)',marginTop:4}}>View & export your financial data</div></div>
 
       {/* Date Range Picker */}
-      <div className="gc fu s1" style={{padding:18}}>
-        <div style={{fontSize:15,fontWeight:600,marginBottom:12}}>Date Range</div>
-        <div style={{display:'flex',gap:10,alignItems:'center'}}>
-          <div style={{flex:1}}><div style={{fontSize:12,color:'var(--t3)',marginBottom:4}}>From</div><Input type="date" value={reportFrom} onChange={e=>setReportFrom(e.target.value)} style={{marginBottom:0}}/></div>
-          <div style={{flex:1}}><div style={{fontSize:12,color:'var(--t3)',marginBottom:4}}>To</div><Input type="date" value={reportTo} onChange={e=>setReportTo(e.target.value)} style={{marginBottom:0}}/></div>
+      <div className="fu s1">
+        <div style={{display:'flex',gap:10,marginBottom:10}}>
+          <div style={{flex:1,background:'var(--card)',borderRadius:14,padding:'12px 16px',border:'1px solid var(--sep, rgba(255,255,255,0.08))'}}>
+            <div style={{fontSize:12,color:'var(--t3)',fontWeight:600,marginBottom:6}}>From</div>
+            <input type="date" value={reportFrom} onChange={e=>setReportFrom(e.target.value)} style={{width:'100%',padding:'8px 0',border:'none',background:'transparent',color:'var(--t1)',fontSize:16,outline:'none',fontFamily:'inherit'}}/>
+          </div>
+          <div style={{flex:1,background:'var(--card)',borderRadius:14,padding:'12px 16px',border:'1px solid var(--sep, rgba(255,255,255,0.08))'}}>
+            <div style={{fontSize:12,color:'var(--t3)',fontWeight:600,marginBottom:6}}>To</div>
+            <input type="date" value={reportTo} onChange={e=>setReportTo(e.target.value)} style={{width:'100%',padding:'8px 0',border:'none',background:'transparent',color:'var(--t1)',fontSize:16,outline:'none',fontFamily:'inherit'}}/>
+          </div>
         </div>
         <div style={{display:'flex',gap:8,marginTop:12,flexWrap:'wrap'}}>
           {[{l:'This Month',f:()=>{const s=new Date(now.getFullYear(),now.getMonth(),1);setReportFrom(s.toISOString().split('T')[0]);setReportTo(now.toISOString().split('T')[0])}},
@@ -530,9 +535,10 @@ export default function App(){
 
           {/* PRINT / EXPORT */}
           <div className="fu s4" style={{display:'flex',gap:10}}>
-            <button onClick={()=>window.print()} style={{flex:1,padding:'16px',borderRadius:14,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:700,cursor:'pointer'}}>🖨️ Print / Save as PDF</button>
+            <button onClick={()=>{const filtered=txs.filter(t=>t.date>=reportFrom&&t.date<=reportTo);const csv='Date,Description,Amount,Category\n'+filtered.map(t=>t.date+',"'+t.description+'",'+t.amount+',"'+(t.category||'')+'"').join('\n');const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='caster-report-'+reportFrom+'-to-'+reportTo+'.csv';a.click();URL.revokeObjectURL(url);showToast('CSV downloaded!','success')}} style={{flex:1,padding:'16px',borderRadius:14,border:'none',background:'var(--card)',color:'var(--t1)',fontSize:16,fontWeight:700,cursor:'pointer'}} className="btn-press">📥 Export CSV</button>
+            <button onClick={()=>window.print()} style={{flex:1,padding:'16px',borderRadius:14,border:'none',background:'var(--orange)',color:'#000',fontSize:16,fontWeight:700,cursor:'pointer'}} className="btn-press">🖨️ Print / PDF</button>
           </div>
-          <div style={{fontSize:13,color:'var(--t3)',textAlign:'center'}}>Use your browser's print dialog to save as PDF. On iPhone: Share → Print → pinch-to-zoom the preview → Share → Save to Files</div>
+          <div style={{fontSize:13,color:'var(--t3)',textAlign:'center',lineHeight:1.5}}>CSV exports filtered transactions. Print saves the current view as PDF.</div>
         </>
       })()}
     </div>}
