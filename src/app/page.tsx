@@ -273,18 +273,16 @@ export default function App(){
             <button onClick={()=>setShowForm(showForm==='tx'?null:'tx')} style={{padding:'10px 14px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:13,fontWeight:600,cursor:'pointer'}}>{showForm==='tx'?'Cancel':'+ Add'}</button>
           </div>
         </div>
-        <div className="gc" style={{padding:'12px 14px',marginBottom:12}}>
-          <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            <div style={{flex:1}}>
-              <div style={{fontSize:11,color:'var(--t3)',marginBottom:4}}>From</div>
-              <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{width:'100%',padding:'10px 12px',borderRadius:10,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:14,outline:'none',fontFamily:'inherit'}}/>
-            </div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:11,color:'var(--t3)',marginBottom:4}}>To</div>
-              <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} style={{width:'100%',padding:'10px 12px',borderRadius:10,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:14,outline:'none',fontFamily:'inherit'}}/>
-            </div>
-            {(dateFrom||dateTo)&&<div><div style={{fontSize:11,color:'transparent',marginBottom:4}}>.</div><button onClick={()=>{setDateFrom('');setDateTo('')}} style={{padding:'10px 14px',borderRadius:10,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:13,fontWeight:700,cursor:'pointer'}}>✕</button></div>}
+        <div style={{display:'flex',gap:10,marginBottom:12}}>
+          <div style={{flex:1,background:'var(--card)',borderRadius:14,padding:'12px 16px',border:'1px solid var(--sep, rgba(255,255,255,0.08))'}}>
+            <div style={{fontSize:12,color:'var(--t3)',fontWeight:600,marginBottom:6}}>From</div>
+            <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{width:'100%',padding:'8px 0',borderRadius:0,border:'none',background:'transparent',color:'var(--t1)',fontSize:16,outline:'none',fontFamily:'inherit'}}/>
           </div>
+          <div style={{flex:1,background:'var(--card)',borderRadius:14,padding:'12px 16px',border:'1px solid var(--sep, rgba(255,255,255,0.08))'}}>
+            <div style={{fontSize:12,color:'var(--t3)',fontWeight:600,marginBottom:6}}>To</div>
+            <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} style={{width:'100%',padding:'8px 0',borderRadius:0,border:'none',background:'transparent',color:'var(--t1)',fontSize:16,outline:'none',fontFamily:'inherit'}}/>
+          </div>
+          {(dateFrom||dateTo)&&<button onClick={()=>{setDateFrom('');setDateTo('')}} style={{padding:'12px 16px',borderRadius:14,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:15,fontWeight:700,cursor:'pointer',alignSelf:'stretch',display:'flex',alignItems:'center'}}>✕</button>}
         </div>
         {showForm==='tx'&&<div className="gc" style={{padding:18,marginTop:10,marginBottom:4}}>
           <Input placeholder="What was it?" value={fd.description||''} onChange={e=>setFd({...fd,description:e.target.value})}/>
