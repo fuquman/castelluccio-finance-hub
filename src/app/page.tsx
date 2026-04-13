@@ -13,6 +13,7 @@ type Alrt={id:string;type:string;title:string;message:string;severity:string;cre
 type EBill={id:string;vendor:string;amount:number;due_date:string;category:string;status:string;subject:string}
 type Snap={month:string;total_income:number;total_expenses:number;net_cashflow:number}
 type Msg={role:'user'|'assistant';text:string}
+type User={id:string;email?:string}
 
 const $=(n:number)=>new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD',minimumFractionDigits:0,maximumFractionDigits:0}).format(n)
 const $$=(n:number)=>new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(n)
@@ -35,6 +36,11 @@ function Ico({bg,ch,size=50}:{bg:string;ch:string;size?:number}){
 }
 
 export default function App(){
+  const[user,setUser]=useState<User|null>(null)
+  const[authLoading,setAuthLoading]=useState(true)
+  const[authEmail,setAuthEmail]=useState('')
+  const[authSent,setAuthSent]=useState(false)
+  const[authError,setAuthError]=useState('')
   const[tab,setTab]=useState('home')
   const[more,setMore]=useState(false)
   const[accounts,setA]=useState<Acc[]>([])
@@ -54,6 +60,52 @@ export default function App(){
   const[listening,setLi]=useState(false)
   const[billMenu,setBillMenu]=useState<string|null>(null)
   const chatEnd=useRef<HTMLDivElement>(null)
+
+  // Auth: check session and listen for changes
+  useEffect(()=>{
+    supabase.auth.getSession().then(({data:{session}})=>{
+      setUser(session?.user ? {id:session.user.id,email:session.user.email} : null)
+      setAuthLoading(false)
+    })
+    const{data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{
+      setUser(session?.user ? {id:session.user.id,email:session.user.email} : null)
+      setAuthLoading(false)
+    })
+    return()=>subscription.unsubscribe()
+  },[])
+
+  // Sign in with magic link
+  const signIn=async()=>{
+    setAuthError('')
+    const{error}=await supabase.auth.signInWithOtp({email:authEmail,options:{emailRedirectTo:window.location.origin}})
+    if(error){setAuthError(error.message)}else{setAuthSent(true)}
+  }
+
+  // Sign out
+  const signOut=async()=>{await supabase.auth.signOut();setUser(null)}
+
+  // Auth loading screen
+  if(authLoading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16,background:'#000',color:'#fff'}}><div style={{fontSize:48}}>💰</div><div style={{fontSize:24,fontWeight:700,color:'var(--orange)'}}>Finance Hub</div></div>
+
+  // Login screen
+  if(!user)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',background:'#000',color:'#fff',padding:20}}>
+    <div style={{width:'100%',maxWidth:380,textAlign:'center'}}>
+      <div style={{fontSize:64,marginBottom:16}}>💰</div>
+      <h1 style={{fontSize:34,fontWeight:800,marginBottom:8}}>Finance Hub</h1>
+      <div style={{fontSize:15,color:'var(--t3)',marginBottom:40}}>Castelluccio Family</div>
+      {authSent?<div style={{padding:24}}>
+        <div style={{fontSize:48,marginBottom:16}}>📬</div>
+        <div style={{fontSize:20,fontWeight:600,marginBottom:8}}>Check your email</div>
+        <div style={{fontSize:15,color:'var(--t3)',lineHeight:1.5,marginBottom:20}}>We sent a magic link to <span style={{color:'var(--orange)',fontWeight:600}}>{authEmail}</span></div>
+        <button onClick={()=>setAuthSent(false)} style={{background:'none',border:'none',color:'var(--orange)',fontSize:15,fontWeight:600,cursor:'pointer',padding:8}}>Try a different email</button>
+      </div>:<div>
+        <input value={authEmail} onChange={e=>setAuthEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&signIn()} placeholder="your@email.com" type="email" style={{width:'100%',padding:'16px 20px',borderRadius:14,border:'none',background:'var(--card, #1c1c1e)',color:'#fff',fontSize:18,outline:'none',fontFamily:'inherit',marginBottom:12,textAlign:'center'}}/>
+        <button onClick={signIn} style={{width:'100%',padding:'16px 20px',borderRadius:14,border:'none',background:'var(--orange, #ff9f0a)',color:'#000',fontSize:18,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>Send Magic Link</button>
+        {authError&&<div style={{marginTop:12,padding:'10px 14px',borderRadius:10,background:'var(--red-s, rgba(255,69,58,0.15))',color:'var(--red, #ff453a)',fontSize:14}}>{authError}</div>}
+        <div style={{marginTop:24,fontSize:13,color:'var(--t3, rgba(255,255,255,0.35))'}}>Only authorised Castelluccio emails can sign in</div>
+      </div>}
+    </div>
+  </div>
 
   useEffect(()=>{(async()=>{
     const[a,t,c,r,d,g,i,al,eb,sn]=await Promise.all([
