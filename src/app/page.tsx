@@ -84,6 +84,7 @@ export default function App(){
   const[guideSearch,setGuideSearch]=useState('')
   const[importResult,setImportResult]=useState<any>(null)
   const[importing,setImporting]=useState(false)
+  const[importBank,setImportBank]=useState('auto')
   const csvRef=useRef<HTMLInputElement>(null)
   const[editItem,setEditItem]=useState<any>(null)
   const[fd,setFd]=useState<any>({})
@@ -195,7 +196,7 @@ export default function App(){
     setImporting(true);setImportResult(null)
     try{
       const text=await file.text()
-      const bankName=file.name.replace(/\.csv$/i,'')
+      const bankName=importBank==='auto'?file.name.replace(/\.csv$/i,''):importBank
       const res=await fetch('/api/import-csv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({csvText:text,bankName})})
       const data=await res.json()
       if(res.ok){
