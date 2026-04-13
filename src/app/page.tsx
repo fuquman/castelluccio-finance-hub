@@ -148,11 +148,11 @@ export default function App(){
       </div>
 
       {/* Quick Stats */}
-      <div className="fu s2" style={{display:'flex',gap:10}}>
+      <div className="fu s2" style={{display:'flex',gap:8}}>
         {[['Income',$(mInc),'var(--green)'],[`Spent`,$(mSp),'var(--orange)'],['Recurring',$(mRec),'var(--purple)']].map(([l,v,c],i)=>
-          <div key={i} className="gc" style={{flex:1,padding:14,textAlign:'center'}}>
+          <div key={i} className="gc" style={{flex:1,padding:'14px 8px',textAlign:'center',overflow:'hidden'}}>
             <div style={{fontSize:11,color:'var(--t3)',fontWeight:500,marginBottom:6}}>{l}</div>
-            <div className="mono" style={{fontSize:16,fontWeight:700,color:c as string}}>{v}</div>
+            <div className="mono" style={{fontSize:14,fontWeight:700,color:c as string,whiteSpace:'nowrap'}}>{v}</div>
           </div>
         )}
       </div>
@@ -364,8 +364,8 @@ export default function App(){
     {/* Tab Bar */}
     <nav className="tbar">
       {tabs.map(t=><button key={t.id} onClick={()=>setTab(t.id)} className={`tab ${tab===t.id?'tab-on':'tab-off'}`}>
-        <span style={{fontSize:22,lineHeight:1}}>{t.icon}</span>
-        <span style={{fontSize:10,fontWeight:500}}>{t.l}</span>
+        <span style={{fontSize:28,lineHeight:1}}>{t.icon}</span>
+        <span style={{fontSize:10,fontWeight:600,marginTop:2,whiteSpace:'nowrap'}}>{t.l}</span>
       </button>)}
     </nav>
   </div>
