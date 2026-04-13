@@ -62,25 +62,30 @@ body{font-family:'DM Sans',-apple-system,'SF Pro Text',system-ui,sans-serif;back
 /* Tab bar — big tappable targets */
 .tbar{
   position:fixed;bottom:0;left:0;right:0;
-  background:rgba(28,28,30,0.94);
+  background:rgba(0,0,0,0.92);
   backdrop-filter:blur(30px) saturate(180%);
   -webkit-backdrop-filter:blur(30px) saturate(180%);
   border-top:0.33px solid rgba(255,255,255,0.08);
   display:flex;justify-content:space-around;align-items:center;
-  padding:10px 12px 0;
-  padding-bottom:env(safe-area-inset-bottom,24px);
+  padding:6px 12px;
+  padding-bottom:max(6px, env(safe-area-inset-bottom));
   z-index:100;
-}
+  height:auto;min-height:70px}
 .tab{
   display:flex;flex-direction:column;align-items:center;gap:4px;
   background:none;border:none;cursor:pointer;
   padding:6px 10px;min-width:56px;
   transition:color 0.15s;
 }
-.tab-on{color:var(--orange)}
-.tab-off{color:var(--gray2)}
-.tab-icon{font-size:38px;line-height:1}
-.tab-label{font-size:13px;font-weight:600;letter-spacing:0.1px}
+.tab-on .tab-bg{background:var(--orange);transform:scale(1)}
+.tab-on .tab-icon{filter:brightness(0)}
+.tab-on .tab-label{color:var(--orange)}
+.tab-off .tab-bg{background:transparent;transform:scale(0.9)}
+.tab-off .tab-icon{filter:none}
+.tab-off .tab-label{color:var(--gray2)}
+.tab-bg{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;transition:all 0.25s cubic-bezier(0.16,1,0.3,1)}
+.tab-icon{font-size:22px;line-height:1;transition:filter 0.2s}
+.tab-label{font-size:11px;font-weight:600;letter-spacing:0.2px;transition:color 0.2s}
 
 .cb-u{max-width:80%;padding:12px 16px;font-size:18px;line-height:1.4;background:var(--orange);color:#000;border-radius:20px 20px 6px 20px;font-weight:500;word-break:break-word}
 .cb-a{max-width:80%;padding:12px 16px;font-size:18px;line-height:1.4;background:var(--card);color:var(--t1);border-radius:20px 20px 20px 6px;word-break:break-word;white-space:pre-wrap}
