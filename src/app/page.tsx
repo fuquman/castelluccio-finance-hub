@@ -86,8 +86,8 @@ export default function App(){
   const[billMenu,setBillMenu]=useState<string|null>(null)
   const[selectedKid,setSelectedKid]=useState<string|null>(null)
   const[settingsSection,setSettingsSection]=useState('connections')
-  const[reportFrom,setReportFrom]=useState(new Date(now.getFullYear(),0,1).toISOString().split('T')[0])
-  const[reportTo,setReportTo]=useState(now.toISOString().split('T')[0])
+  const[reportFrom,setReportFrom]=useState(new Date(new Date().getFullYear(),0,1).toISOString().split('T')[0])
+  const[reportTo,setReportTo]=useState(new Date().toISOString().split('T')[0])
   const[reportTab,setReportTab]=useState('summary')
   const fileRef=useRef<HTMLInputElement>(null)
 
