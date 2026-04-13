@@ -37,8 +37,7 @@ function Ico({bg,ch,size=50}:{bg:string;ch:string;size?:number}){
 
 export default function App(){
   const[user,setUser]=useState<User|null>({id:'ben',email:'ben@castelluccio.com.au'})
-  const[authLoading,setAuthLoading]=useState(false)
-        const[tab,setTab]=useState('home')
+          const[tab,setTab]=useState('home')
   const[more,setMore]=useState(false)
   const[accounts,setA]=useState<Acc[]>([])
   const[txs,setT]=useState<Tx[]>([])
@@ -58,49 +57,34 @@ export default function App(){
   const[billMenu,setBillMenu]=useState<string|null>(null)
   const chatEnd=useRef<HTMLDivElement>(null)
 
-  // Auth: check session and listen for changes
+  // Load all data from Supabase
   useEffect(()=>{
-    // Step 1: Clean any error hashes (expired magic links etc)
-    const hash=window.location.hash||''
-    if(hash.includes('error=')){
-      window.history.replaceState(null,'',window.location.pathname)
-      setAuthLoading(false)
-      return
-    }
-    // Step 2: If hash has access_token, manually process magic link
-    if(hash.includes('access_token')){
-      const params=new URLSearchParams(hash.substring(1))
-      const accessToken=params.get('access_token')
-      const refreshToken=params.get('refresh_token')
-      if(accessToken&&refreshToken){
-        supabase.auth.setSession({access_token:accessToken,refresh_token:refreshToken}).then(({data:{session}})=>{
-          setUser(session?.user?{id:session.user.id,email:session.user.email}:null)
-          window.history.replaceState(null,'',window.location.pathname)
-          setAuthLoading(false)
-        }).catch(()=>{setAuthLoading(false)})
-        return
-      }
-    }
-    // Step 3: Normal session check
-    const{data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
-      if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION'){
-        setUser(session?.user?{id:session.user.id,email:session.user.email}:null)
-      }
-      if(event==='SIGNED_OUT'){setUser(null)}
-      setAuthLoading(false)
-    })
-    const checkSession=async()=>{
+    // Clear any error hashes from URL
+    if(window.location.hash) window.history.replaceState(null,'',window.location.pathname)
+    const load=async()=>{
       try{
-        const{data:{session}}=await supabase.auth.getSession()
-        setUser(session?.user?{id:session.user.id,email:session.user.email}:null)
-      }catch(e){}
-      setAuthLoading(false)
+        const[a,t,c,r,d,g,i,al,eb,sn]=await Promise.all([
+          supabase.from('bank_accounts').select('*').order('bank'),
+          supabase.from('transactions').select('*').order('date',{ascending:false}).limit(50),
+          supabase.from('budget_categories').select('*').order('name'),
+          supabase.from('recurring_payments').select('*').order('name'),
+          supabase.from('debts').select('*').eq('is_active',true).order('current_balance',{ascending:false}),
+          supabase.from('savings_goals').select('*').eq('is_active',true).order('priority'),
+          supabase.from('income_sources').select('*').eq('is_active',true),
+          supabase.from('finance_alerts').select('*').eq('is_dismissed',false).order('created_at',{ascending:false}),
+          supabase.from('email_bills').select('*').order('due_date'),
+          supabase.from('monthly_snapshots').select('*').order('month'),
+        ])
+        setAcc(a.data||[]);setTx(t.data||[]);setCat(c.data||[])
+        setRec(r.data||[]);setDeb(d.data||[]);setGo(g.data||[])
+        setInc(i.data||[]);setAl(al.data||[]);setE(eb.data||[])
+        setSnap(sn.data||[])
+      }catch(e){console.error('Data load error:',e)}
+      setL(false)
     }
-    checkSession()
-    return()=>{try{subscription?.unsubscribe()}catch(e){}}
+    load()
   },[])
 
-  // Sign in with magic link
       const bal=accounts.reduce((s,a)=>s+Number(a.balance),0)
   const dbt=debts.reduce((s,d)=>s+Number(d.current_balance),0)
   const nw=bal-dbt
