@@ -82,6 +82,9 @@ export default function App(){
   const[showForm,setShowForm]=useState<string|null>(null)
   const[showWelcome,setShowWelcome]=useState(false)
   const[guideSearch,setGuideSearch]=useState('')
+  const[importResult,setImportResult]=useState<any>(null)
+  const[importing,setImporting]=useState(false)
+  const csvRef=useRef<HTMLInputElement>(null)
   const[editItem,setEditItem]=useState<any>(null)
   const[fd,setFd]=useState<any>({})
   const[saving,setSaving]=useState(false)
@@ -187,6 +190,27 @@ export default function App(){
     URL.revokeObjectURL(url)
   }
 
+  const handleCSVImport=async(e:React.ChangeEvent<HTMLInputElement>)=>{
+    const file=e.target.files?.[0];if(!file)return
+    setImporting(true);setImportResult(null)
+    try{
+      const text=await file.text()
+      const bankName=file.name.replace(/\.csv$/i,'')
+      const res=await fetch('/api/import-csv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({csvText:text,bankName})})
+      const data=await res.json()
+      if(res.ok){
+        setImportResult(data)
+        await load()
+        showToast(data.imported+' transactions imported!','success')
+      }else{
+        setImportResult({error:data.error})
+        showToast(data.error||'Import failed','error')
+      }
+    }catch(err){showToast('Failed to read file','error')}
+    setImporting(false)
+    if(csvRef.current)csvRef.current.value=''
+  }
+
   const assignCostCentre=async(txId:string,ccId:string)=>{
     await supabase.from('transactions').update({cost_centre_id:ccId}).eq('id',txId)
     // Also add to cost_centre_items for tracking
@@ -283,6 +307,7 @@ export default function App(){
     <div className={`toast ${toast?'toast-show':''} ${toast?.type==='success'?'toast-success':toast?.type==='error'?'toast-error':'toast-info'}`}>{toast?.msg}</div>
 
     <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handlePhoto}/>
+    <input ref={csvRef} type="file" accept=".csv,.CSV" style={{display:'none'}} onChange={handleCSVImport}/>
 
     {/* ── Header ── */}
     <div style={{padding:scrolled?'10px 20px 12px':'16px 20px 24px',cursor:'pointer',transition:'padding 0.3s ease'}} onDoubleClick={pullRefresh}>{!scrolled&&<div style={{fontSize:18,color:'var(--t3)',marginBottom:4}}>Castelluccio Family</div>}<h1 style={{fontSize:scrolled?28:42,fontWeight:800,letterSpacing:-0.7,lineHeight:1.05,transition:'font-size 0.3s ease'}}>Ca$ter</h1><div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:8}}><span className="mono" style={{fontSize:scrolled?22:34,fontWeight:700,color:nw>=0?'var(--orange)':'var(--red)',transition:'font-size 0.3s ease'}}>{$(nw)}</span><span style={{fontSize:18,color:'var(--t3)'}}>net worth</span></div>{!scrolled&&<div className="brand-bar"/>}</div>
@@ -647,8 +672,38 @@ export default function App(){
 
       {/* Connections */}
       {settingsSection==='connections'&&<div className="fu s2">
+        <div className="sh">Import Bank Data</div>
+        <div className="gc" style={{padding:20,marginBottom:16}}>
+          <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:16}}>
+            <span style={{fontSize:40}}>📥</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:20,fontWeight:700}}>Import CSV</div>
+              <div style={{fontSize:16,color:'var(--t3)',marginTop:4}}>Upload a bank statement CSV from ME Bank, ING, or Amex</div>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={()=>csvRef.current?.click()} disabled={importing} style={{flex:1,padding:'16px',borderRadius:14,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:700,cursor:'pointer'}} className="btn-press">{importing?'Importing...':'Choose CSV File'}</button>
+          </div>
+          {importResult&&<div style={{marginTop:16,padding:16,borderRadius:12,background:importResult.error?'var(--red-s)':'var(--green-s)'}}>
+            {importResult.error?<div style={{fontSize:16,color:'var(--red)'}}>{importResult.error}</div>:
+            <div>
+              <div style={{fontSize:18,fontWeight:700,color:'var(--green)',marginBottom:4}}>Import Complete!</div>
+              <div style={{fontSize:16,color:'var(--t2)'}}>
+                {importResult.imported} new transactions imported<br/>
+                {importResult.duplicates>0&&<>{importResult.duplicates} duplicates skipped<br/></>}
+                Total in file: {importResult.total}
+              </div>
+            </div>}
+          </div>}
+          <div style={{marginTop:12,fontSize:14,color:'var(--t3)',lineHeight:1.6}}>
+            How to export:<br/>
+            <strong>ME Bank:</strong> Transactions → Export → CSV<br/>
+            <strong>ING:</strong> Activity → Download → CSV<br/>
+            <strong>Amex:</strong> Statements → Download → CSV
+          </div>
+        </div>
         <div className="sh">Data Sources</div>
-        <div className="gc">{[{n:'Basiq (Bank Feeds)',s:'Not connected',c:'var(--red)',i:'🏦',d:'ME Bank, ING, Amex live feeds'},{n:'Gmail (Bills)',s:'Not connected',c:'var(--red)',i:'📬',d:'Auto-scan email for bills'},{n:'Photo OCR',s:'Ready',c:'var(--green)',i:'📸',d:'Snap bills → Fella reads them'},{n:'Fella AI',s:'Needs API key',c:'var(--orange)',i:'🤖',d:'Add ANTHROPIC_API_KEY in Vercel'},{n:'Manual Entry',s:'Active',c:'var(--green)',i:'✏️',d:'Add via Settings or Home tab'}].map((ds,i)=><div key={i} style={{padding:'16px 20px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',alignItems:'center',gap:14}}><Ico bg={ds.c} ch={ds.i}/><div style={{flex:1}}><div style={{fontSize:18,fontWeight:600}}>{ds.n}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{ds.d}</div></div><span style={{fontSize:18,color:ds.c,fontWeight:600,flexShrink:0}}>{ds.s}</span></div></div>)}</div>
+        <div className="gc">{[{n:'Basiq (Bank Feeds)',s:'Not connected',c:'var(--red)',i:'🏦',d:'ME Bank, ING, Amex live feeds'},{n:'Gmail (Bills)',s:'Not connected',c:'var(--red)',i:'📬',d:'Auto-scan email for bills'},{n:'Photo OCR',s:'Ready',c:'var(--green)',i:'📸',d:'Snap bills → Fella reads them'},{n:'Fella AI',s:'Needs API key',c:'var(--orange)',i:'🤖',d:'Add ANTHROPIC_API_KEY in Vercel'},{n:'Manual Entry',s:'Active',c:'var(--green)',i:'✏️',d:'Add manually or import CSV from bank'}].map((ds,i)=><div key={i} style={{padding:'16px 20px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{})}}><div style={{display:'flex',alignItems:'center',gap:14}}><Ico bg={ds.c} ch={ds.i}/><div style={{flex:1}}><div style={{fontSize:18,fontWeight:600}}>{ds.n}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{ds.d}</div></div><span style={{fontSize:18,color:ds.c,fontWeight:600,flexShrink:0}}>{ds.s}</span></div></div>)}</div>
 
         <div className="sh" style={{marginTop:20}}>Notifications</div>
         <div className="gc"><div style={{padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div><div style={{fontSize:18,fontWeight:600}}>Bill Reminders</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>Get alerts before bills are due</div></div><button onClick={async()=>{if('Notification' in window){const p=await Notification.requestPermission();alert(p==='granted'?'Notifications enabled!':'Blocked — enable in browser settings')}else{alert('Not supported in this browser')}}} style={{padding:'10px 18px',borderRadius:10,border:'none',background:'var(--blue)',color:'#fff',fontSize:18,fontWeight:600,cursor:'pointer'}}>Enable</button></div></div>
