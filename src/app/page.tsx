@@ -81,6 +81,7 @@ export default function App(){
   // Forms
   const[showForm,setShowForm]=useState<string|null>(null)
   const[showWelcome,setShowWelcome]=useState(false)
+  const[guideSearch,setGuideSearch]=useState('')
   const[editItem,setEditItem]=useState<any>(null)
   const[fd,setFd]=useState<any>({})
   const[saving,setSaving]=useState(false)
@@ -618,17 +619,55 @@ export default function App(){
     {tab==='guide'&&<div className="tab-content" style={{padding:'0 20px 40px',display:'flex',flexDirection:'column',gap:24}}>
       <div className="fu"><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>User Guide</h2><div style={{fontSize:17,color:'var(--t3)',marginTop:4}}>Everything Ca$ter can do</div></div>
 
+      {/* Search */}
+      <div style={{position:'relative'}}>
+        <input value={guideSearch} onChange={e=>setGuideSearch(e.target.value)} placeholder="Search features..." style={{width:'100%',padding:'14px 16px 14px 44px',borderRadius:14,border:'1px solid var(--sep, rgba(255,255,255,0.08))',background:'var(--card)',color:'var(--t1)',fontSize:16,outline:'none',fontFamily:'inherit'}} onFocus={e=>{e.currentTarget.style.borderColor='var(--orange)';e.currentTarget.style.boxShadow='0 0 0 3px rgba(255,159,10,0.15)'}} onBlur={e=>{e.currentTarget.style.borderColor='var(--sep, rgba(255,255,255,0.08))';e.currentTarget.style.boxShadow='none'}}/>
+        <span style={{position:'absolute',left:16,top:'50%',transform:'translateY(-50%)',fontSize:18,opacity:0.4}}>🔍</span>
+        {guideSearch&&<button onClick={()=>setGuideSearch('')} style={{position:'absolute',right:14,top:'50%',transform:'translateY(-50%)',background:'var(--card2)',border:'none',color:'var(--t3)',width:24,height:24,borderRadius:12,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>}
+      </div>
+
+
+      {/* Search Results */}
+      {guideSearch&&<div className="gc" style={{padding:20}}>
+        <div style={{fontSize:18,fontWeight:700,marginBottom:16}}>Results for "{guideSearch}"</div>
+        {(()=>{
+          const q=guideSearch.toLowerCase()
+          const allItems=[
+            {s:'🏠 Home',t:'home',items:[{t:'Net Worth',d:'Total across all accounts minus all debts.'},{t:'Account Cards',d:'Each bank account with current balance.'},{t:'Income / Spent / Recurring',d:'Monthly summary cards.'},{t:'Cash Flow Chart',d:'6-month income vs expenses bar chart.'},{t:'+ Add Transaction',d:'Quick-add form for manual transactions.'},{t:'Date Filter',d:'From/To date pickers to filter transactions.'},{t:'CSV Export',d:'Downloads filtered transactions as CSV.'},{t:'Tags',d:'Comma-separated tags on transactions.'}]},
+            {s:'📈 Budget',t:'budget',items:[{t:'Ring Charts',d:'Donut rings for each category showing spend vs limit.'},{t:'+ Add Category',d:'Create budget categories with name, icon, limit.'},{t:'Tap to Edit',d:'Tap any category to change name, icon, or limit.'}]},
+            {s:'🏦 Debts',t:'debts',items:[{t:'Total Remaining',d:'Total debt across credit cards, loans, BNPL, fines.'},{t:'Progress Bars',d:'Percentage paid off vs original amount.'},{t:'+ Add Debt',d:'Credit card, car loan, mortgage, BNPL, fine.'}]},
+            {s:'💬 Fella',t:'fella',items:[{t:'Text Chat',d:'Ask about budgets, savings, spending patterns.'},{t:'Voice Input',d:'Tap mic and speak to Fella.'},{t:'Photo Upload',d:'Snap a bill photo for OCR processing.'},{t:'API Key Required',d:'Needs ANTHROPIC_API_KEY in Vercel env vars.'}]},
+            {s:'🔄 Subs & Bills',t:'subs',items:[{t:'Monthly & Annual Totals',d:'Combined subscription costs.'},{t:'Price Changes',d:'Detects when a subscription changes price.'},{t:'Ownership Labels',d:'Ben, Sarah, or Family tags.'},{t:'Quick Actions',d:'Flag or cancel subscriptions with one tap.'},{t:'Mark as Paid',d:'Email bills have a paid button.'}]},
+            {s:'🏖️ Goals',t:'goals',items:[{t:'Ring Progress',d:'Donut ring with percentage complete.'},{t:'Save Per Week/Month',d:'Calculates how much to save to hit target.'},{t:'+ Add Goal',d:'Name, emoji, target, saved, deadline.'}]},
+            {s:'👶 Cost Centres',t:'kids',items:[{t:'+ Add Cost Centre',d:'Create centres for kids, household, custom.'},{t:'+ Add Expense',d:'Log expenses against a cost centre.'},{t:'Tap Transaction to Assign',d:'Tap any transaction on Home to assign a cost centre.'}]},
+            {s:'📊 Reports',t:'reports',items:[{t:'Date Range',d:'Filter reports by date period.'},{t:'Quick Presets',d:'This Month, Last Month, Quarter, YTD, All Time.'},{t:'CSV Export',d:'Download filtered transactions as CSV.'},{t:'Print / PDF',d:'Save reports as PDF via print dialog.'}]},
+            {s:'⚙️ Settings',t:'settings',items:[{t:'Connections',d:'Basiq bank feeds, Gmail, Photo OCR, Fella AI status.'},{t:'Accounts',d:'Add edit delete bank accounts.'},{t:'Income',d:'Salary, side hustles, freelance sources.'},{t:'Recurring',d:'Manage subscription payments, owner, tags.'},{t:'Clear All Data',d:'Reset and start fresh.'}]},
+          ]
+          const results=allItems.flatMap(section=>
+            section.items.filter(item=>item.t.toLowerCase().includes(q)||item.d.toLowerCase().includes(q)||section.s.toLowerCase().includes(q))
+              .map(item=>({...item,section:section.s,tab:section.t}))
+          )
+          return results.length===0?
+            <div className="empty-state"><div className="empty-icon">🔍</div><div className="empty-title">No results</div><div className="empty-desc">Try a different search term</div></div>:
+            results.map((r,i)=><div key={i} style={{paddingLeft:20,borderLeft:'3px solid var(--orange)',marginBottom:16,cursor:'pointer'}} onClick={()=>{setGuideSearch('');setTab(r.tab)}}>
+              <div style={{fontSize:12,color:'var(--orange)',fontWeight:600,marginBottom:4}}>{r.section}</div>
+              <div style={{fontSize:18,fontWeight:700}}>{r.t}</div>
+              <div style={{fontSize:16,color:'var(--t3)',marginTop:4,lineHeight:1.55}}>{r.d}</div>
+            </div>)
+        })()}
+      </div>}
+
       {/* Quick Jump */}
-      <div className="gc fu s1" style={{padding:20}}>
+      {!guideSearch&&<div className="gc fu s1" style={{padding:20}}>
         <div style={{fontSize:20,fontWeight:700,marginBottom:14}}>Quick Jump</div>
         <div style={{display:'flex',flexWrap:'wrap',gap:10}}>
           {[{l:'🏠 Home',id:'guide-home'},{l:'📈 Budget',id:'guide-budget'},{l:'🏦 Debts',id:'guide-debts'},{l:'💬 Fella',id:'guide-fella'},{l:'🔄 Subs & Bills',id:'guide-subs'},{l:'🏖️ Goals',id:'guide-goals'},{l:'👶 Kids',id:'guide-kids'},{l:'📊 Reports',id:'guide-reports'},{l:'⚙️ Settings',id:'guide-settings'},{l:'🚀 Coming Soon',id:'guide-soon'}].map(q=>
             <button key={q.id} onClick={()=>document.getElementById(q.id)?.scrollIntoView({behavior:'smooth',block:'start'})} style={{padding:'14px 20px',borderRadius:14,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:17,fontWeight:600,cursor:'pointer'}}>{q.l}</button>
           )}
         </div>
-      </div>
+      </div>}
 
-      {/* HOME */}
+      {!guideSearch&&<>{/* HOME */}
       <div id="guide-home" className="gc fu s2" style={{padding:0,overflow:'hidden'}}>
         <div style={{padding:'24px 24px 12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontSize:28,fontWeight:800,letterSpacing:-0.3}}>🏠 Home</div><button onClick={()=>setTab('home')} style={{padding:'10px 20px',borderRadius:12,border:'none',background:'var(--orange)',color:'#000',fontSize:15,fontWeight:600,cursor:'pointer'}}>Open →</button></div>
         <div style={{padding:'0 24px 8px',fontSize:17,color:'var(--t3)',lineHeight:1.6}}>Your financial dashboard at a glance.</div>
