@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { PDFParse } from 'pdf-parse'
+import heicConvert from 'heic-convert'
 
 type ClaudeContentBlock = {
   type: string
@@ -15,8 +15,16 @@ type ExtractedTransaction = {
 
 type ImportedTransaction = ExtractedTransaction & {
   category: string
-  logged_by: 'pdf_import'
+  logged_by: 'screenshot_import'
 }
+
+const SUPPORTED_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+])
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,28 +33,22 @@ export async function POST(req: NextRequest) {
     const bankName = String(formData.get('bankName') || 'Unknown')
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: 'No PDF file uploaded' }, { status: 400 })
+      return NextResponse.json({ error: 'No image file uploaded' }, { status: 400 })
     }
 
-    if (file.type && file.type !== 'application/pdf') {
-      return NextResponse.json({ error: 'Uploaded file must be a PDF' }, { status: 400 })
+    const originalType = getImageType(file)
+    if (!SUPPORTED_IMAGE_TYPES.has(originalType)) {
+      return NextResponse.json({ error: 'Uploaded file must be a JPG, PNG, WEBP, or HEIC image' }, { status: 400 })
     }
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json({ error: 'ANTHROPIC_API_KEY is not configured' }, { status: 500 })
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const parser = new PDFParse({ data: buffer })
-    const parsedPdf = await parser.getText()
-    await parser.destroy()
-    const extractedText = parsedPdf.text.trim()
-
-    if (!extractedText) {
-      return NextResponse.json({ error: 'Could not extract text from PDF' }, { status: 400 })
-    }
-
-    const prompt = `Extract all bank transactions from this ${bankName} bank statement. Return ONLY a JSON array, no other text. Each item: {"date":"YYYY-MM-DD","description":"string","amount":number}. Negative amounts for debits/expenses, positive for credits/deposits. Bank statement text:\n\n${extractedText}`
+    const { buffer, mediaType } = await prepareImage(file, originalType)
+    const base64Image = buffer.toString('base64')
+    const todayDate = new Date().toISOString().split('T')[0]
+    const prompt = `Extract all bank transactions visible in this screenshot/photo. Return ONLY a JSON array, no other text. Each item: {"date":"YYYY-MM-DD","description":"string","amount":number}. Negative amounts for debits/expenses, positive for credits/deposits. If date is not visible use today as ${todayDate}. Bank: ${bankName}`
 
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -58,7 +60,20 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 8192,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mediaType,
+                data: base64Image,
+              },
+            },
+            { type: 'text', text: prompt },
+          ],
+        }],
       }),
     })
 
@@ -79,11 +94,11 @@ export async function POST(req: NextRequest) {
       ...t,
       description: t.description.trim(),
       category: guessCategory(t.description),
-      logged_by: 'pdf_import',
+      logged_by: 'screenshot_import',
     }))
 
     if (transactions.length === 0) {
-      return NextResponse.json({ error: 'Could not parse any transactions from PDF' }, { status: 400 })
+      return NextResponse.json({ error: 'Could not parse any transactions from image' }, { status: 400 })
     }
 
     const supabase = createClient(
@@ -112,8 +127,32 @@ export async function POST(req: NextRequest) {
       transactions: newTx,
     })
   } catch (e: unknown) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : 'Failed to process PDF' }, { status: 500 })
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Failed to process image' }, { status: 500 })
   }
+}
+
+function getImageType(file: File): string {
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  const fileType = file.type.toLowerCase()
+  if (fileType === 'image/jpg') return 'image/jpeg'
+  if (fileType) return fileType
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg'
+  if (ext === 'png') return 'image/png'
+  if (ext === 'webp') return 'image/webp'
+  if (ext === 'heic') return 'image/heic'
+  if (ext === 'heif') return 'image/heif'
+  return ''
+}
+
+async function prepareImage(file: File, imageType: string): Promise<{ buffer: Buffer; mediaType: string }> {
+  const buffer = Buffer.from(await file.arrayBuffer())
+
+  if (imageType === 'image/heic' || imageType === 'image/heif') {
+    const converted = await heicConvert({ buffer, format: 'JPEG', quality: 0.9 })
+    return { buffer: Buffer.from(converted), mediaType: 'image/jpeg' }
+  }
+
+  return { buffer, mediaType: imageType }
 }
 
 function parseClaudeTransactions(contentText: string): ExtractedTransaction[] {

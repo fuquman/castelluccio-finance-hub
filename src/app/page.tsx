@@ -133,6 +133,7 @@ export default function App(){
   const[importBank,setImportBank]=useState('auto')
   const csvRef=useRef<HTMLInputElement>(null)
   const pdfRef=useRef<HTMLInputElement>(null)
+  const screenshotRef=useRef<HTMLInputElement>(null)
   const[editItem,setEditItem]=useState<any>(null)
   const[formInitialValues,setFormInitialValues]=useState<FormValues>({})
   const[saving,setSaving]=useState(false)
@@ -311,6 +312,29 @@ export default function App(){
     if(pdfRef.current)pdfRef.current.value=''
   }
 
+  const handleScreenshotImport=async(e:React.ChangeEvent<HTMLInputElement>)=>{
+    const file=e.target.files?.[0];if(!file)return
+    setImporting(true);setImportResult(null)
+    try{
+      const bankName=importBank==='auto'?file.name.replace(/\.(jpe?g|png|webp|heic|heif)$/i,''):importBank
+      const formData=new FormData()
+      formData.append('file',file)
+      formData.append('bankName',bankName)
+      const res=await fetch('/api/import-screenshot',{method:'POST',body:formData})
+      const data=await res.json()
+      if(res.ok){
+        setImportResult(data)
+        await load()
+        showToast(data.imported+' transactions imported!','success')
+      }else{
+        setImportResult({error:data.error})
+        showToast(data.error||'Screenshot import failed','error')
+      }
+    }catch(err){showToast('Failed to import screenshot','error')}
+    setImporting(false)
+    if(screenshotRef.current)screenshotRef.current.value=''
+  }
+
   const assignCostCentre=async(txId:string,ccId:string)=>{
     await supabase.from('transactions').update({cost_centre_id:ccId}).eq('id',txId)
     setTxMenu(null)
@@ -390,6 +414,7 @@ export default function App(){
     <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handlePhoto}/>
     <input ref={csvRef} type="file" accept=".csv,.CSV" style={{display:'none'}} onChange={handleCSVImport}/>
     <input ref={pdfRef} type="file" accept=".pdf,application/pdf" style={{display:'none'}} onChange={handlePDFImport}/>
+    <input ref={screenshotRef} type="file" accept="image/*,.heic,.HEIC,.heif,.HEIF" style={{display:'none'}} onChange={handleScreenshotImport}/>
 
     {/* ── Header ── */}
     <div style={{padding:scrolled?'10px 20px 12px':'16px 20px 24px',cursor:'pointer',transition:'padding 0.3s ease'}} onDoubleClick={pullRefresh}>{!scrolled&&<div style={{fontSize:18,color:'var(--t3)',marginBottom:4}}>Castelluccio Family</div>}<h1 style={{fontSize:scrolled?28:42,fontWeight:800,letterSpacing:-0.7,lineHeight:1.05,transition:'font-size 0.3s ease'}}>Ca$ter</h1><div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:8}}><span className="mono" style={{fontSize:scrolled?22:34,fontWeight:700,color:nw>=0?'var(--orange)':'var(--red)',transition:'font-size 0.3s ease'}}>{$(nw)}</span><span style={{fontSize:18,color:'var(--t3)'}}>net worth</span></div>{!scrolled&&<div className="brand-bar"/>}</div>
@@ -761,6 +786,15 @@ export default function App(){
                 <div style={{fontSize:16,color:'var(--t3)',marginTop:4}}>Upload a PDF bank statement and let Claude extract transactions</div>
               </div>
               <button onClick={()=>pdfRef.current?.click()} disabled={importing} style={{padding:'12px 14px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,fontWeight:700,cursor:'pointer',flexShrink:0}} className="btn-press">{importing?'Importing...':'Choose PDF'}</button>
+            </div>
+            <div style={{height:1,background:'var(--sep)'}}/>
+            <div style={{display:'flex',alignItems:'center',gap:16}}>
+              <span style={{fontSize:40}}>📸</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:20,fontWeight:700}}>Import Screenshot</div>
+                <div style={{fontSize:16,color:'var(--t3)',marginTop:4}}>Take a photo or screenshot of your bank app</div>
+              </div>
+              <button onClick={()=>screenshotRef.current?.click()} disabled={importing} style={{padding:'12px 14px',borderRadius:12,border:'none',background:'var(--card2)',color:'var(--t1)',fontSize:16,fontWeight:700,cursor:'pointer',flexShrink:0}} className="btn-press">{importing?'Importing...':'Choose Image'}</button>
             </div>
           </div>
           {importResult&&<div style={{marginTop:16,padding:16,borderRadius:12,background:importResult.error?'var(--red-s)':'var(--green-s)'}}>

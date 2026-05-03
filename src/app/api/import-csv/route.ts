@@ -106,7 +106,12 @@ export async function POST(req: NextRequest) {
     // Check for duplicates (same date + description + amount)
     const { data: existing } = await supabase.from('transactions').select('date,description,amount')
     const existingSet = new Set((existing || []).map(t => `${t.date}|${t.description}|${t.amount}`))
-    const newTx = transactions.filter(t => !existingSet.has(`${t.date}|${t.description}|${t.amount}`))
+    const newTx = transactions.filter(t => {
+      const key = `${t.date}|${t.description}|${t.amount}`
+      if (existingSet.has(key)) return false
+      existingSet.add(key)
+      return true
+    })
     const dupes = transactions.length - newTx.length
 
     if (newTx.length > 0) {
