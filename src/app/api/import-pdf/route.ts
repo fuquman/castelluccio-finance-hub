@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { PDFParse } from 'pdf-parse'
 
 type ClaudeContentBlock = {
   type: string
@@ -37,16 +36,9 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())
-    const parser = new PDFParse({ data: buffer })
-    const parsedPdf = await parser.getText()
-    await parser.destroy()
-    const extractedText = parsedPdf.text.trim()
+    const base64PDF = buffer.toString('base64')
 
-    if (!extractedText) {
-      return NextResponse.json({ error: 'Could not extract text from PDF' }, { status: 400 })
-    }
-
-    const prompt = `Extract all bank transactions from this ${bankName} bank statement. Return ONLY a JSON array, no other text. Each item: {"date":"YYYY-MM-DD","description":"string","amount":number}. Negative amounts for debits/expenses, positive for credits/deposits. Bank statement text:\n\n${extractedText}`
+    const prompt = `Extract all bank transactions from this ${bankName} bank statement PDF. Return ONLY a JSON array, no other text. Each item: {"date":"YYYY-MM-DD","description":"string","amount":number}. Negative amounts for debits/expenses, positive for credits/deposits.`
 
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -54,11 +46,25 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'pdfs-2024-09-25',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 8192,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'document',
+              source: {
+                type: 'base64',
+                media_type: 'application/pdf',
+                data: base64PDF,
+              },
+            },
+            { type: 'text', text: prompt },
+          ],
+        }],
       }),
     })
 
