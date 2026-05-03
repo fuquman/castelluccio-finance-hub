@@ -15,6 +15,7 @@ type ExtractedTransaction = {
 
 type ImportedTransaction = ExtractedTransaction & {
   category: string
+  account_id: string
   logged_by: 'screenshot_import'
 }
 
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData()
     const file = formData.get('file')
     const bankName = String(formData.get('bankName') || 'Unknown')
+    const accountId = String(formData.get('accountId') || '')
 
     if (!(file instanceof File)) {
       return NextResponse.json({ error: 'No image file uploaded' }, { status: 400 })
@@ -94,6 +96,7 @@ export async function POST(req: NextRequest) {
       ...t,
       description: t.description.trim(),
       category: guessCategory(t.description),
+      account_id: accountId,
       logged_by: 'screenshot_import',
     }))
 

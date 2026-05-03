@@ -6,12 +6,16 @@ type ImportedTransaction = {
   description: string
   amount: number
   category: string
+  account_id: string
   logged_by: 'csv_import'
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { csvText, bankName } = await req.json()
+    const formData = await req.formData()
+    const csvText = String(formData.get('csvText') || '')
+    const bankName = String(formData.get('bankName') || 'Unknown')
+    const accountId = formData.get('accountId') as string
     
     if (!csvText) {
       return NextResponse.json({ error: 'No CSV data' }, { status: 400 })
@@ -52,7 +56,7 @@ export async function POST(req: NextRequest) {
         const category = catIdx >= 0 ? (row[catIdx] || '').trim() : guessCategory(description)
         
         if (description && !isNaN(amount) && date) {
-          transactions.push({ date, description, amount, category, logged_by: 'csv_import' })
+          transactions.push({ date, description, amount, category, account_id: accountId, logged_by: 'csv_import' })
         }
       }
     } else if (header.includes('debit') && header.includes('credit')) {
@@ -75,7 +79,7 @@ export async function POST(req: NextRequest) {
         const amount = credit > 0 ? credit : -debit
         
         if (description && date && (debit > 0 || credit > 0)) {
-          transactions.push({ date, description, amount, category: guessCategory(description), logged_by: 'csv_import' })
+          transactions.push({ date, description, amount, category: guessCategory(description), account_id: accountId, logged_by: 'csv_import' })
         }
       }
     } else {
@@ -94,7 +98,7 @@ export async function POST(req: NextRequest) {
         }
         
         if (date && description && amount !== 0) {
-          transactions.push({ date, description, amount, category: guessCategory(description), logged_by: 'csv_import' })
+          transactions.push({ date, description, amount, category: guessCategory(description), account_id: accountId, logged_by: 'csv_import' })
         }
       }
     }

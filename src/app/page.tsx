@@ -131,6 +131,7 @@ export default function App(){
   const[importResult,setImportResult]=useState<any>(null)
   const[importing,setImporting]=useState(false)
   const[importBank,setImportBank]=useState('auto')
+  const[importAccountId,setImportAccountId]=useState('')
   const csvRef=useRef<HTMLInputElement>(null)
   const pdfRef=useRef<HTMLInputElement>(null)
   const screenshotRef=useRef<HTMLInputElement>(null)
@@ -270,11 +271,16 @@ export default function App(){
 
   const handleCSVImport=async(e:React.ChangeEvent<HTMLInputElement>)=>{
     const file=e.target.files?.[0];if(!file)return
+    if(!importAccountId){showToast('Please select an account first','error');if(csvRef.current)csvRef.current.value='';return}
     setImporting(true);setImportResult(null)
     try{
       const text=await file.text()
       const bankName=importBank==='auto'?file.name.replace(/\.csv$/i,''):importBank
-      const res=await fetch('/api/import-csv',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({csvText:text,bankName})})
+      const formData=new FormData()
+      formData.append('csvText',text)
+      formData.append('bankName',bankName)
+      formData.append('accountId',importAccountId)
+      const res=await fetch('/api/import-csv',{method:'POST',body:formData})
       const data=await res.json()
       if(res.ok){
         setImportResult(data)
@@ -291,12 +297,14 @@ export default function App(){
 
   const handlePDFImport=async(e:React.ChangeEvent<HTMLInputElement>)=>{
     const file=e.target.files?.[0];if(!file)return
+    if(!importAccountId){showToast('Please select an account first','error');if(pdfRef.current)pdfRef.current.value='';return}
     setImporting(true);setImportResult(null)
     try{
       const bankName=importBank==='auto'?file.name.replace(/\.pdf$/i,''):importBank
       const formData=new FormData()
       formData.append('file',file)
       formData.append('bankName',bankName)
+      formData.append('accountId',importAccountId)
       const res=await fetch('/api/import-pdf',{method:'POST',body:formData})
       const data=await res.json()
       if(res.ok){
@@ -314,12 +322,14 @@ export default function App(){
 
   const handleScreenshotImport=async(e:React.ChangeEvent<HTMLInputElement>)=>{
     const file=e.target.files?.[0];if(!file)return
+    if(!importAccountId){showToast('Please select an account first','error');if(screenshotRef.current)screenshotRef.current.value='';return}
     setImporting(true);setImportResult(null)
     try{
       const bankName=importBank==='auto'?file.name.replace(/\.(jpe?g|png|webp|heic|heif)$/i,''):importBank
       const formData=new FormData()
       formData.append('file',file)
       formData.append('bankName',bankName)
+      formData.append('accountId',importAccountId)
       const res=await fetch('/api/import-screenshot',{method:'POST',body:formData})
       const data=await res.json()
       if(res.ok){
@@ -769,6 +779,10 @@ export default function App(){
       {settingsSection==='connections'&&<div className="fu s2">
         <div className="sh">Import Bank Data</div>
         <div className="gc" style={{padding:20,marginBottom:16}}>
+          <Select value={importAccountId} onChange={e=>setImportAccountId(e.target.value)}>
+            <option value="">Select account...</option>
+            {accounts.map(account=><option key={account.id} value={account.id}>{account.bank} — {account.name}</option>)}
+          </Select>
           <div style={{display:'flex',flexDirection:'column',gap:14,marginBottom:16}}>
             <div style={{display:'flex',alignItems:'center',gap:16}}>
               <span style={{fontSize:40}}>📥</span>
