@@ -51,6 +51,52 @@ function Btn({children,variant='primary',...props}:React.ButtonHTMLAttributes<HT
   return<button {...props} style={{padding:'14px 20px',borderRadius:12,border:'none',fontSize:18,fontWeight:600,cursor:'pointer',...styles[variant],...(props.style||{})}}>{children}</button>
 }
 
+type FormValue=string|number|string[]|null|undefined
+type FormValues=Record<string,FormValue>
+type FormField={key:string;label:string;type?:string;options?:{v:string;l:string}[]}
+type FormSetter=React.Dispatch<React.SetStateAction<FormValues>>
+
+function FormModal({fields,initialValues,onSave,onClose,onDelete,saving,children}:{table:string;fields:FormField[];initialValues:FormValues;onSave:(data:FormValues)=>void;onClose:()=>void;onDelete?:()=>void;saving:boolean;children?:(fd:FormValues,setFd:FormSetter)=>React.ReactNode}){
+  const[fd,setFd]=useState<FormValues>(initialValues||{})
+  return<div className="gc" style={{padding:20,marginBottom:12}}>
+    <div style={{fontSize:18,fontWeight:600,marginBottom:16}}>{onDelete?'Edit':'Add New'}</div>
+    {fields.map(f=>f.options?
+      <Select key={f.key} value={fd[f.key]||''} onChange={e=>setFd(p=>({...p,[f.key]:e.target.value}))}>
+        {f.options.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
+      </Select>:
+      <Input key={f.key} placeholder={f.label} type={f.type||'text'} value={fd[f.key]??''} onChange={e=>setFd(p=>({...p,[f.key]:f.type==='number'?parseFloat(e.target.value)||0:e.target.value}))}/>
+    )}
+    {children?.(fd,setFd)}
+    <div style={{display:'flex',gap:10,marginTop:6}}>
+      <Btn onClick={()=>onSave(fd)} disabled={saving} style={{flex:1}}>{saving?'⏳ Saving...':'Save'}</Btn>
+      <Btn variant="secondary" onClick={onClose}>Cancel</Btn>
+      {onDelete&&<Btn variant="danger" onClick={onDelete}>Delete</Btn>}
+    </div>
+  </div>
+}
+
+function TransactionForm({cats,saving,onSave}:{cats:Cat[];saving:boolean;onSave:(data:FormValues)=>void}){
+  const[fd,setFd]=useState<FormValues>({description:'',amount:'',category:'',date:new Date().toISOString().split('T')[0],tags:''})
+  return<div className="gc" style={{padding:18,marginTop:10,marginBottom:4}}>
+    <Input placeholder="What was it?" value={fd.description||''} onChange={e=>setFd(p=>({...p,description:e.target.value}))}/>
+    <div style={{display:'flex',gap:8}}><Input placeholder="Amount (-ve for expense)" type="number" value={fd.amount??''} onChange={e=>setFd(p=>({...p,amount:e.target.value}))} style={{flex:1,marginBottom:8}}/><Input type="date" value={fd.date||new Date().toISOString().split('T')[0]} onChange={e=>setFd(p=>({...p,date:e.target.value}))} style={{width:140,marginBottom:8}}/></div>
+    <Select value={fd.category||''} onChange={e=>setFd(p=>({...p,category:e.target.value}))}><option value="">Category...</option>{cats.map(c=><option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}<option value="Income">Income</option></Select>
+    <Input placeholder="Tags (comma separated, e.g. essential, kids)" value={fd.tags||''} onChange={e=>setFd(p=>({...p,tags:e.target.value}))}/>
+    <Btn onClick={()=>onSave({description:fd.description,amount:parseFloat(String(fd.amount||''))||0,category:fd.category||'Uncategorised',date:fd.date||new Date().toISOString().split('T')[0],logged_by:'manual',tags:fd.tags?String(fd.tags).split(',').map((t:string)=>t.trim()).filter(Boolean):[]})} disabled={saving} style={{width:'100%'}}>{saving?'⏳ Adding...':'Add'}</Btn>
+  </div>
+}
+
+function CostCentreExpenseForm({costCentreId,saving,onSave}:{costCentreId:string;saving:boolean;onSave:(data:FormValues)=>Promise<void>}){
+  const[fd,setFd]=useState<FormValues>({description:'',cci_amount:'',cci_date:new Date().toISOString().split('T')[0],cci_category:'Other'})
+  return<div style={{padding:'0 20px 16px'}}>
+    <Input placeholder="What was it?" value={fd.description||''} onChange={e=>setFd(p=>({...p,description:e.target.value}))}/>
+    <Input placeholder="Amount" type="number" value={fd.cci_amount??''} onChange={e=>setFd(p=>({...p,cci_amount:e.target.value}))}/>
+    <Input type="date" value={fd.cci_date||new Date().toISOString().split('T')[0]} onChange={e=>setFd(p=>({...p,cci_date:e.target.value}))}/>
+    <Select value={fd.cci_category||'Other'} onChange={e=>setFd(p=>({...p,cci_category:e.target.value}))}><option value="School Fees">School Fees</option><option value="Sports">Sports</option><option value="Clothing">Clothing</option><option value="Medical">Medical</option><option value="Activities">Activities</option><option value="Food">Food</option><option value="Other">Other</option></Select>
+    <Btn onClick={()=>{if(!fd.description||!fd.cci_amount)return;onSave({cost_centre_id:costCentreId,description:fd.description,amount:-Math.abs(parseFloat(String(fd.cci_amount||''))||0),date:fd.cci_date||new Date().toISOString().split('T')[0],category:fd.cci_category||'Other',logged_by:'manual'})}} disabled={saving} style={{width:'100%'}}>{saving?'Adding...':'Add Expense'}</Btn>
+  </div>
+}
+
 // ══════════════════════════════════════
 // ══  MAIN APP
 // ══════════════════════════════════════
@@ -87,7 +133,7 @@ export default function App(){
   const[importBank,setImportBank]=useState('auto')
   const csvRef=useRef<HTMLInputElement>(null)
   const[editItem,setEditItem]=useState<any>(null)
-  const[fd,setFd]=useState<any>({})
+  const[formInitialValues,setFormInitialValues]=useState<FormValues>({})
   const[saving,setSaving]=useState(false)
   const[billMenu,setBillMenu]=useState<string|null>(null)
   const[txMenu,setTxMenu]=useState<string|null>(null)
@@ -186,7 +232,7 @@ export default function App(){
     if(typeof data.tags==='string'){data.tags=data.tags.split(',').map((t:string)=>t.trim()).filter(Boolean)}
     setSaving(true)
     try{if(id){await supabase.from(table).update(data).eq('id',id)}else{await supabase.from(table).insert(data)}
-      await load();setShowForm(null);setEditItem(null);setFd({});showToast(id?'Updated!':'Added!','success')}catch(e){console.error(e);showToast('Something went wrong','error')}
+      await load();setShowForm(null);setEditItem(null);setFormInitialValues({});showToast(id?'Updated!':'Added!','success')}catch(e){console.error(e);showToast('Something went wrong','error')}
     setSaving(false)
   }
   const del=async(table:string,id:string)=>{
@@ -248,6 +294,15 @@ export default function App(){
     showToast('Cost centre assigned!','success')
   }
 
+  const saveCostCentreExpense=async(data:FormValues)=>{
+    setSaving(true)
+    await supabase.from('transactions').insert(data)
+    await load()
+    setShowForm(null)
+    setSaving(false)
+    showToast('Expense added!','success')
+  }
+
   // ── Chat ──
   const voice=()=>{const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;if(!SR)return;const r=new SR();r.lang='en-AU';r.interimResults=false;r.onstart=()=>setLi(true);r.onresult=(e:any)=>{setCI(e.results[0][0].transcript);setLi(false)};r.onerror=()=>setLi(false);r.onend=()=>setLi(false);r.start()}
   const sendChat=async()=>{
@@ -268,27 +323,10 @@ export default function App(){
   }
 
   // ── Edit helpers ──
-  const editRow=(table:string,item:any,fields:any)=>{setFd(fields);setEditItem({...item,_table:table});setShowForm(table)}
-  const newRow=(table:string,fields:any)=>{setFd(fields);setEditItem(null);setShowForm(table)}
-
-  // ── Form renderer ──
-  const EditForm=({table,fields,children}:{table:string;fields:{key:string;label:string;type?:string;options?:{v:string;l:string}[]}[];children?:React.ReactNode})=>(
-    <div className="gc" style={{padding:20,marginBottom:12}}>
-      <div style={{fontSize:18,fontWeight:600,marginBottom:16}}>{editItem?'Edit':'Add New'}</div>
-      {fields.map(f=>f.options?
-        <Select key={f.key} value={fd[f.key]||''} onChange={e=>setFd({...fd,[f.key]:e.target.value})}>
-          {f.options.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
-        </Select>:
-        <Input key={f.key} placeholder={f.label} type={f.type||'text'} value={fd[f.key]??''} onChange={e=>setFd({...fd,[f.key]:f.type==='number'?parseFloat(e.target.value)||0:e.target.value})}/>
-      )}
-      {children}
-      <div style={{display:'flex',gap:10,marginTop:6}}>
-        <Btn onClick={()=>save(table,fd,editItem?.id)} disabled={saving} style={{flex:1}}>{saving?'⏳ Saving...':'Save'}</Btn>
-        <Btn variant="secondary" onClick={()=>{setShowForm(null);setEditItem(null)}}>Cancel</Btn>
-        {editItem&&<Btn variant="danger" onClick={()=>{del(table,editItem.id);setShowForm(null);setEditItem(null)}}>Delete</Btn>}
-      </div>
-    </div>
-  )
+  const editRow=(table:string,item:any,fields:FormValues)=>{setFormInitialValues(fields);setEditItem({...item,_table:table});setShowForm(table)}
+  const newRow=(table:string,fields:FormValues)=>{setFormInitialValues(fields);setEditItem(null);setShowForm(table)}
+  const closeForm=()=>{setShowForm(null);setEditItem(null);setFormInitialValues({})}
+  const deleteFormItem=(table:string)=>{if(!editItem)return;del(table,editItem.id);closeForm()}
 
   // ── Loading ──
   if(loading)return<div style={{minHeight:'100dvh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:24,background:'#000',margin:'0 auto'}}>
@@ -372,13 +410,7 @@ export default function App(){
           </div>
           {(dateFrom||dateTo)&&<button onClick={()=>{setDateFrom('');setDateTo('')}} style={{padding:'12px 16px',borderRadius:14,border:'none',background:'var(--red-s)',color:'var(--red)',fontSize:18,fontWeight:700,cursor:'pointer',alignSelf:'stretch',display:'flex',alignItems:'center'}}>✕</button>}
         </div>
-        {showForm==='tx'&&<div className="gc" style={{padding:18,marginTop:10,marginBottom:4}}>
-          <Input placeholder="What was it?" value={fd.description||''} onChange={e=>setFd({...fd,description:e.target.value})}/>
-          <div style={{display:'flex',gap:8}}><Input placeholder="Amount (-ve for expense)" type="number" value={fd.amount??''} onChange={e=>setFd({...fd,amount:e.target.value})} style={{flex:1,marginBottom:8}}/><Input type="date" value={fd.date||new Date().toISOString().split('T')[0]} onChange={e=>setFd({...fd,date:e.target.value})} style={{width:140,marginBottom:8}}/></div>
-          <Select value={fd.category||''} onChange={e=>setFd({...fd,category:e.target.value})}><option value="">Category...</option>{cats.map(c=><option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}<option value="Income">Income</option></Select>
-          <Input placeholder="Tags (comma separated, e.g. essential, kids)" value={fd.tags||''} onChange={e=>setFd({...fd,tags:e.target.value})}/>
-          <Btn onClick={()=>save('transactions',{description:fd.description,amount:parseFloat(fd.amount)||0,category:fd.category||'Uncategorised',date:fd.date||new Date().toISOString().split('T')[0],logged_by:'manual',tags:fd.tags?fd.tags.split(',').map((t:string)=>t.trim()).filter(Boolean):[]})} disabled={saving} style={{width:'100%'}}>{saving?'⏳ Adding...':'Add'}</Btn>
-        </div>}
+        {showForm==='tx'&&<TransactionForm cats={cats} saving={saving} onSave={data=>save('transactions',data)}/>}
         <div className="gc">{(dateFrom||dateTo?txs.filter(t=>(!dateFrom||t.date>=dateFrom)&&(!dateTo||t.date<=dateTo)):txs).slice(0,20).map((tx,i)=><div key={tx.id} style={{position:'relative'}}>
           <div className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>setTxMenu(txMenu===tx.id?null:tx.id)}>
             <div className="rb">
@@ -407,7 +439,7 @@ export default function App(){
     {/* ═══════ BUDGET ═══════ */}
     {tab==='budget'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
       <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><div><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Budgets</h2><div style={{fontSize:18,color:'var(--t3)',marginTop:4}}>{$(mSp)} of {$(cats.reduce((s,c)=>s+Number(c.monthly_limit),0))} spent</div></div><button onClick={()=>newRow('budget_categories',{name:'',icon:'📁',color:'#ff9f0a',monthly_limit:0})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
-      {showForm==='budget_categories'&&<EditForm table="budget_categories" fields={[{key:'name',label:'Category name'},{key:'icon',label:'Icon emoji'},{key:'monthly_limit',label:'Monthly limit',type:'number'}]}/>}
+      {showForm==='budget_categories'&&<FormModal key={editItem?.id||'new_budget_categories'} table="budget_categories" fields={[{key:'name',label:'Category name'},{key:'icon',label:'Icon emoji'},{key:'monthly_limit',label:'Monthly limit',type:'number'}]} initialValues={formInitialValues} onSave={data=>save('budget_categories',data,editItem?.id)} onClose={closeForm} onDelete={editItem?()=>deleteFormItem('budget_categories'):undefined} saving={saving}/>}
       <div className="gc fu s1">{byCat.map((c,i)=><div key={c.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),gap:14,cursor:'pointer'}} onClick={()=>editRow('budget_categories',c,{name:c.name,icon:c.icon,color:c.color,monthly_limit:Number(c.monthly_limit)})}>
         <Ring value={c.spent} max={Number(c.monthly_limit)} size={52} sw={5} color={c.color}><span style={{fontSize:18}}>{c.icon}</span></Ring>
         <div className="rb"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}><span className="rt">{c.name}</span><span className={`pill ${c.pct>=90?'pill-r':c.pct>=75?'pill-o':'pill-g'}`} style={{fontSize:16,padding:'4px 12px',borderRadius:8}}>{c.pct}%</span></div><div className="pbar"><div className="pfill" style={{width:`${Math.min(c.pct,100)}%`,background:c.pct>90?'var(--red)':c.pct>75?'var(--orange)':c.color}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:6,fontSize:18,color:'var(--t3)'}}><span>{$(c.spent)}</span><span>{$(Number(c.monthly_limit)-c.spent)} left</span></div></div>
@@ -418,7 +450,7 @@ export default function App(){
     {tab==='debts'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
       <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Debts</h2><button onClick={()=>newRow('debts',{name:'',type:'other',original_amount:0,current_balance:0,interest_rate:0,monthly_payment:0,lender:''})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
       <div className="fu s1" style={{background:'var(--red-s)',borderRadius:14,padding:20,textAlign:'center'}}><div style={{fontSize:18,color:'var(--t3)',marginBottom:4}}>Total Remaining</div><div className="mono" style={{fontSize:42,fontWeight:800,color:'var(--red)'}}>{$(dbt)}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:6}}>{$(debts.reduce((s,d)=>s+Number(d.monthly_payment),0))}/mo repayments</div></div>
-      {showForm==='debts'&&<EditForm table="debts" fields={[{key:'name',label:'Name'},{key:'type',label:'Type',options:[{v:'credit_card',l:'Credit Card'},{v:'personal_loan',l:'Personal Loan'},{v:'car_loan',l:'Car Loan'},{v:'mortgage',l:'Mortgage'},{v:'bnpl',l:'BNPL'},{v:'fine',l:'Fine'},{v:'other',l:'Other'}]},{key:'original_amount',label:'Original amount',type:'number'},{key:'current_balance',label:'Current balance',type:'number'},{key:'interest_rate',label:'Interest rate %',type:'number'},{key:'monthly_payment',label:'Monthly payment',type:'number'},{key:'lender',label:'Lender'}]}/>}
+      {showForm==='debts'&&<FormModal key={editItem?.id||'new_debts'} table="debts" fields={[{key:'name',label:'Name'},{key:'type',label:'Type',options:[{v:'credit_card',l:'Credit Card'},{v:'personal_loan',l:'Personal Loan'},{v:'car_loan',l:'Car Loan'},{v:'mortgage',l:'Mortgage'},{v:'bnpl',l:'BNPL'},{v:'fine',l:'Fine'},{v:'other',l:'Other'}]},{key:'original_amount',label:'Original amount',type:'number'},{key:'current_balance',label:'Current balance',type:'number'},{key:'interest_rate',label:'Interest rate %',type:'number'},{key:'monthly_payment',label:'Monthly payment',type:'number'},{key:'lender',label:'Lender'}]} initialValues={formInitialValues} onSave={data=>save('debts',data,editItem?.id)} onClose={closeForm} onDelete={editItem?()=>deleteFormItem('debts'):undefined} saving={saving}/>}
       <div className="gc fu s2">{debts.length===0?<div className="empty-state"><div className="empty-icon">🎉</div><div className="empty-title">No debts!</div><div className="empty-desc">You're debt-free. Nice one!</div></div>:null}{debts.map((d,i)=>{const paid=Number(d.original_amount)-Number(d.current_balance);const prog=pc(paid,Number(d.original_amount));return<div key={d.id} style={{padding:'16px 18px',...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('debts',d,{name:d.name,type:d.type,original_amount:Number(d.original_amount),current_balance:Number(d.current_balance),interest_rate:Number(d.interest_rate),monthly_payment:Number(d.monthly_payment),lender:d.lender})}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><div><div style={{fontSize:20,fontWeight:700}}>{d.name}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{d.lender}{Number(d.interest_rate)>0?` · ${d.interest_rate}%`:''}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`} style={{fontSize:18,padding:'6px 14px',borderRadius:10}}>{prog}%</span></div><div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:'var(--green)',borderRadius:3}}/></div><div style={{display:'flex',justifyContent:'space-between',marginTop:10,fontSize:18,color:'var(--t3)'}}><span>Left <span className="mono" style={{color:'var(--red)',fontWeight:600}}>{$$(Number(d.current_balance))}</span></span><span><span className="mono" style={{fontWeight:600}}>{$$(Number(d.monthly_payment))}</span>/mo</span></div></div>})}</div>
     </div>}
 
@@ -499,7 +531,7 @@ export default function App(){
     {/* ═══════ GOALS ═══════ */}
     {tab==='goals'&&<div className="tab-content" style={{padding:'0 20px',display:'flex',flexDirection:'column',gap:16}}>
       <div className="fu" style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}><h2 style={{fontSize:42,fontWeight:800,letterSpacing:-0.7}}>Goals</h2><button onClick={()=>newRow('savings_goals',{name:'',icon:'🎯',color:'#30d158',target_amount:0,current_amount:0,deadline:'',notes:''})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
-      {showForm==='savings_goals'&&<EditForm table="savings_goals" fields={[{key:'name',label:'Goal name'},{key:'icon',label:'Icon emoji'},{key:'target_amount',label:'Target amount',type:'number'},{key:'current_amount',label:'Saved so far',type:'number'},{key:'deadline',label:'Deadline (YYYY-MM-DD)'},{key:'notes',label:'Notes'}]}/>}
+      {showForm==='savings_goals'&&<FormModal key={editItem?.id||'new_savings_goals'} table="savings_goals" fields={[{key:'name',label:'Goal name'},{key:'icon',label:'Icon emoji'},{key:'target_amount',label:'Target amount',type:'number'},{key:'current_amount',label:'Saved so far',type:'number'},{key:'deadline',label:'Deadline (YYYY-MM-DD)'},{key:'notes',label:'Notes'}]} initialValues={formInitialValues} onSave={data=>save('savings_goals',data,editItem?.id)} onClose={closeForm} onDelete={editItem?()=>deleteFormItem('savings_goals'):undefined} saving={saving}/>}
       {goals.length===0&&<div className="gc" style={{padding:0}}><div className="empty-state"><div className="empty-icon">🏖️</div><div className="empty-title">No goals yet</div><div className="empty-desc">Tap + Add to set your first savings target</div></div></div>}{goals.map((g,i)=>{const prog=pc(Number(g.current_amount),Number(g.target_amount));const rem=Number(g.target_amount)-Number(g.current_amount);const dl=new Date(g.deadline);const ml=Math.max(1,(dl.getFullYear()-now.getFullYear())*12+dl.getMonth()-now.getMonth());const pm=rem/ml;const pw=pm/4.33;return<div key={g.id} className={`gc fu s${i+1}`} style={{padding:20,cursor:'pointer'}} onClick={()=>editRow('savings_goals',g,{name:g.name,icon:g.icon,color:g.color,target_amount:Number(g.target_amount),current_amount:Number(g.current_amount),deadline:g.deadline,notes:g.notes})}>
         <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:14}}><Ring value={Number(g.current_amount)} max={Number(g.target_amount)} size={64} sw={6} color={g.color}><span style={{fontSize:26}}>{g.icon}</span></Ring><div style={{flex:1}}><div style={{fontSize:18,fontWeight:600}}>{g.name}</div><div style={{fontSize:18,color:'var(--t3)',marginTop:2}}>{$(Number(g.target_amount))} by {dl.toLocaleDateString('en-AU',{month:'short',year:'numeric'})}</div></div><span className={`pill ${prog>70?'pill-g':prog>40?'pill-b':'pill-o'}`} style={{fontSize:18,padding:'6px 14px',borderRadius:10}}>{prog}%</span></div>
         <div className="pbar" style={{height:6,borderRadius:3}}><div className="pfill" style={{width:`${prog}%`,background:g.color,borderRadius:3}}/></div>
@@ -537,13 +569,7 @@ export default function App(){
               <button onClick={e=>{e.stopPropagation();setShowForm(showForm==='cci'?null:'cci')}} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}} className="btn-press">{showForm==='cci'?'Cancel':'+ Add'}</button>
             </div>
 
-            {showForm==='cci'&&<div style={{padding:'0 20px 16px'}}>
-              <Input placeholder="What was it?" value={fd.description||''} onChange={e=>setFd({...fd,description:e.target.value})}/>
-              <Input placeholder="Amount" type="number" value={fd.cci_amount??''} onChange={e=>setFd({...fd,cci_amount:e.target.value})}/>
-              <Input type="date" value={fd.cci_date||new Date().toISOString().split('T')[0]} onChange={e=>setFd({...fd,cci_date:e.target.value})}/>
-              <Select value={fd.cci_category||'Other'} onChange={e=>setFd({...fd,cci_category:e.target.value})}><option value="School Fees">School Fees</option><option value="Sports">Sports</option><option value="Clothing">Clothing</option><option value="Medical">Medical</option><option value="Activities">Activities</option><option value="Food">Food</option><option value="Other">Other</option></Select>
-              <Btn onClick={async()=>{if(!fd.description||!fd.cci_amount)return;setSaving(true);await supabase.from('transactions').insert({cost_centre_id:cc.id,description:fd.description,amount:-Math.abs(parseFloat(fd.cci_amount)||0),date:fd.cci_date||new Date().toISOString().split('T')[0],category:fd.cci_category||'Other',logged_by:'manual'});await load();setFd({});setShowForm(null);setSaving(false);showToast('Expense added!','success')}} disabled={saving} style={{width:'100%'}}>{saving?'Adding...':'Add Expense'}</Btn>
-            </div>}
+            {showForm==='cci'&&<CostCentreExpenseForm costCentreId={cc.id} saving={saving} onSave={saveCostCentreExpense}/>}
 
             {/* Expense list */}
             {items.length>0?items.slice(0,10).map((item,j)=><div key={item.id} style={{padding:'14px 20px',display:'flex',alignItems:'center',...(j>0||showForm==='cci'?{borderTop:'0.33px solid var(--sep)'}:{})}}>
@@ -687,7 +713,7 @@ export default function App(){
 
       <div className="fu s1" style={{display:'flex',gap:6,overflowX:'auto',paddingBottom:4}}>{[
         {id:'connections',l:'Connections',i:'🔗'},{id:'accounts',l:'Accounts',i:'🏦'},{id:'income',l:'Income',i:'💰'},{id:'recurring',l:'Recurring',i:'🔄'},{id:'costcentres',l:'Cost Centres',i:'📁'}
-      ].map(st=><button key={st.id} onClick={()=>{setSettingsSection(st.id);setShowForm(null);setEditItem(null)}} style={{padding:'10px 16px',borderRadius:12,border:'none',background:settingsSection===st.id?'var(--orange)':'var(--card)',color:settingsSection===st.id?'#000':'var(--t2)',fontSize:18,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{st.i} {st.l}</button>)}</div>
+      ].map(st=><button key={st.id} onClick={()=>{setSettingsSection(st.id);closeForm()}} style={{padding:'10px 16px',borderRadius:12,border:'none',background:settingsSection===st.id?'var(--orange)':'var(--card)',color:settingsSection===st.id?'#000':'var(--t2)',fontSize:18,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>{st.i} {st.l}</button>)}</div>
 
       {/* Connections */}
       {settingsSection==='connections'&&<div className="fu s2">
@@ -734,30 +760,30 @@ export default function App(){
       {/* Accounts */}
       {settingsSection==='accounts'&&<div className="fu s2">
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Bank Accounts</div><button onClick={()=>newRow('bank_accounts',{name:'',bank:'',account_type:'transaction',balance:0})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
-        {showForm==='bank_accounts'&&<EditForm table="bank_accounts" fields={[{key:'name',label:'Account name'},{key:'bank',label:'Bank'},{key:'account_type',label:'Type',options:[{v:'transaction',l:'Transaction'},{v:'savings',l:'Savings'},{v:'credit',l:'Credit Card'},{v:'loan',l:'Loan'},{v:'mortgage',l:'Mortgage'}]},{key:'balance',label:'Balance',type:'number'}]}/>}
+        {showForm==='bank_accounts'&&<FormModal key={editItem?.id||'new_bank_accounts'} table="bank_accounts" fields={[{key:'name',label:'Account name'},{key:'bank',label:'Bank'},{key:'account_type',label:'Type',options:[{v:'transaction',l:'Transaction'},{v:'savings',l:'Savings'},{v:'credit',l:'Credit Card'},{v:'loan',l:'Loan'},{v:'mortgage',l:'Mortgage'}]},{key:'balance',label:'Balance',type:'number'}]} initialValues={formInitialValues} onSave={data=>save('bank_accounts',data,editItem?.id)} onClose={closeForm} onDelete={editItem?()=>deleteFormItem('bank_accounts'):undefined} saving={saving}/>}
         <div className="gc">{accounts.map((a,i)=><div key={a.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('bank_accounts',a,{name:a.name,bank:a.bank,account_type:a.account_type,balance:Number(a.balance)})}><Ico bg="var(--blue)" ch="🏦"/><div className="rb"><div className="rt">{a.name}</div><div className="rs">{a.bank} · {a.account_type}</div></div><span className="mono rr" style={{fontWeight:600,color:Number(a.balance)>=0?'var(--green)':'var(--red)'}}>{$$(Number(a.balance))}</span></div>)}</div>
       </div>}
 
       {/* Income */}
       {settingsSection==='income'&&<div className="fu s2">
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Income Sources</div><button onClick={()=>newRow('income_sources',{name:'',type:'salary',amount:0,frequency:'monthly'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
-        {showForm==='income_sources'&&<EditForm table="income_sources" fields={[{key:'name',label:'Name'},{key:'type',label:'Type',options:[{v:'salary',l:'Salary'},{v:'side_hustle',l:'Side Hustle'},{v:'freelance',l:'Freelance'},{v:'investment',l:'Investment'},{v:'government',l:'Government'},{v:'other',l:'Other'}]},{key:'amount',label:'Amount',type:'number'},{key:'frequency',label:'Frequency',options:[{v:'weekly',l:'Weekly'},{v:'fortnightly',l:'Fortnightly'},{v:'monthly',l:'Monthly'},{v:'quarterly',l:'Quarterly'},{v:'yearly',l:'Yearly'},{v:'irregular',l:'Irregular'}]}]}/>}
+        {showForm==='income_sources'&&<FormModal key={editItem?.id||'new_income_sources'} table="income_sources" fields={[{key:'name',label:'Name'},{key:'type',label:'Type',options:[{v:'salary',l:'Salary'},{v:'side_hustle',l:'Side Hustle'},{v:'freelance',l:'Freelance'},{v:'investment',l:'Investment'},{v:'government',l:'Government'},{v:'other',l:'Other'}]},{key:'amount',label:'Amount',type:'number'},{key:'frequency',label:'Frequency',options:[{v:'weekly',l:'Weekly'},{v:'fortnightly',l:'Fortnightly'},{v:'monthly',l:'Monthly'},{v:'quarterly',l:'Quarterly'},{v:'yearly',l:'Yearly'},{v:'irregular',l:'Irregular'}]}]} initialValues={formInitialValues} onSave={data=>save('income_sources',data,editItem?.id)} onClose={closeForm} onDelete={editItem?()=>deleteFormItem('income_sources'):undefined} saving={saving}/>}
         <div className="gc">{incs.map((inc,i)=><div key={inc.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('income_sources',inc,{name:inc.name,type:inc.type,amount:Number(inc.amount),frequency:inc.frequency})}><Ico bg="var(--green)" ch="💰"/><div className="rb"><div className="rt">{inc.name}</div><div className="rs">{inc.type.replace('_',' ')} · {inc.frequency}</div></div><span className="mono rr" style={{fontWeight:600,color:'var(--green)'}}>{$$(Number(inc.amount))}</span></div>)}</div>
       </div>}
 
       {/* Recurring */}
       {settingsSection==='recurring'&&<div className="fu s2">
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Recurring Payments</div><button onClick={()=>newRow('recurring_payments',{name:'',amount:0,frequency:'monthly',category:'',status:'active',owner:'family'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
-        {showForm==='recurring_payments'&&<EditForm table="recurring_payments" fields={[{key:'name',label:'Name'},{key:'amount',label:'Amount',type:'number'},{key:'frequency',label:'Frequency',options:[{v:'weekly',l:'Weekly'},{v:'fortnightly',l:'Fortnightly'},{v:'monthly',l:'Monthly'},{v:'quarterly',l:'Quarterly'},{v:'yearly',l:'Yearly'}]},{key:'category',label:'Category'},{key:'status',label:'Status',options:[{v:'active',l:'Active'},{v:'flagged',l:'Flagged'},{v:'duplicate',l:'Duplicate'},{v:'cancelled',l:'Cancelled'},{v:'paused',l:'Paused'}]},{key:'owner',label:'Who',options:[{v:'family',l:'👨‍👩‍👧‍👦 Family'},{v:'ben',l:'👨 Ben'},{v:'sarah',l:'👩 Sarah'}]}]}>
-          <Input placeholder="Tags (comma separated)" value={Array.isArray(fd.tags)?fd.tags.join(', '):fd.tags||''} onChange={e=>setFd({...fd,tags:e.target.value})} style={{marginBottom:0}}/>
-        </EditForm>}
+        {showForm==='recurring_payments'&&<FormModal key={editItem?.id||'new_recurring_payments'} table="recurring_payments" fields={[{key:'name',label:'Name'},{key:'amount',label:'Amount',type:'number'},{key:'frequency',label:'Frequency',options:[{v:'weekly',l:'Weekly'},{v:'fortnightly',l:'Fortnightly'},{v:'monthly',l:'Monthly'},{v:'quarterly',l:'Quarterly'},{v:'yearly',l:'Yearly'}]},{key:'category',label:'Category'},{key:'status',label:'Status',options:[{v:'active',l:'Active'},{v:'flagged',l:'Flagged'},{v:'duplicate',l:'Duplicate'},{v:'cancelled',l:'Cancelled'},{v:'paused',l:'Paused'}]},{key:'owner',label:'Who',options:[{v:'family',l:'👨‍👩‍👧‍👦 Family'},{v:'ben',l:'👨 Ben'},{v:'sarah',l:'👩 Sarah'}]}]} initialValues={formInitialValues} onSave={data=>save('recurring_payments',data,editItem?.id)} onClose={closeForm} onDelete={editItem?()=>deleteFormItem('recurring_payments'):undefined} saving={saving}>
+          {(fd,setFd)=><Input placeholder="Tags (comma separated)" value={Array.isArray(fd.tags)?fd.tags.join(', '):fd.tags||''} onChange={e=>setFd(p=>({...p,tags:e.target.value}))} style={{marginBottom:0}}/>}
+        </FormModal>}
         <div className="gc">{recs.map((r,i)=><div key={r.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('recurring_payments',r,{name:r.name,amount:Number(r.amount),frequency:r.frequency,category:r.category,status:r.status,owner:r.owner||'family',tags:r.tags?r.tags.join(', '):''})}><Ico bg={r.status==='active'?'var(--green)':r.status==='flagged'||r.status==='duplicate'?'var(--red)':'var(--t3)'} ch="🔄"/><div className="rb"><div className="rt">{r.name}</div><div className="rs">{r.category} · {r.frequency} · {r.status} · {r.owner==='ben'?'👨':'👩‍👧‍👦'}</div></div><span className="mono rr" style={{fontWeight:600}}>{$$(Number(r.amount))}</span></div>)}</div>
       </div>}
 
       {/* Cost Centres */}
       {settingsSection==='costcentres'&&<div className="fu s2">
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Spending Cost Centres</div><button onClick={()=>newRow('cost_centres',{name:'',icon:'📁',color:'#ff9f0a',type:'spending'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
-        {showForm==='cost_centres'&&settingsSection==='costcentres'&&<EditForm table="cost_centres" fields={[{key:'name',label:'Name (e.g. Clothes, Sports)'},{key:'icon',label:'Icon emoji'},{key:'type',label:'Type',options:[{v:'spending',l:'💰 Spending'},{v:'household',l:'🏠 Household'},{v:'custom',l:'📁 Custom'},{v:'child',l:'👶 Child'}]}]}/>}
+        {showForm==='cost_centres'&&settingsSection==='costcentres'&&<FormModal key={editItem?.id||'new_cost_centres'} table="cost_centres" fields={[{key:'name',label:'Name (e.g. Clothes, Sports)'},{key:'icon',label:'Icon emoji'},{key:'type',label:'Type',options:[{v:'spending',l:'💰 Spending'},{v:'household',l:'🏠 Household'},{v:'custom',l:'📁 Custom'},{v:'child',l:'👶 Child'}]}]} initialValues={formInitialValues} onSave={data=>save('cost_centres',data,editItem?.id)} onClose={closeForm} onDelete={editItem?()=>deleteFormItem('cost_centres'):undefined} saving={saving}/>}
         <div className="gc">{ccs.filter(c=>c.type!=='child').map((cc,i)=><div key={cc.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('cost_centres',cc,{name:cc.name,icon:cc.icon,color:cc.color,type:cc.type||'spending'})}><Ico bg={cc.color||'var(--purple)'} ch={cc.icon}/><div className="rb"><div className="rt">{cc.name}</div><div className="rs" style={{fontSize:18}}>{cc.type}</div></div></div>)}</div>
         {ccs.filter(c=>c.type!=='child').length===0&&<div className="gc"><div className="empty-state"><div className="empty-icon">📁</div><div className="empty-title">No cost centres yet</div><div className="empty-desc">Add categories like Clothes, Sports, School to track spending</div></div></div>}
       </div>}
