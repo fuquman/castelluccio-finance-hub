@@ -1,10 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+type ImportedTransaction = {
+  date: string
+  description: string
+  amount: number
+  category: string
+  logged_by: 'csv_import'
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,26 +17,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No CSV data' }, { status: 400 })
     }
 
-    const lines = csvText.trim().split('\n')
-    if (lines.length < 2) {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const rows = parseCSV(csvText)
+    if (rows.length < 2) {
       return NextResponse.json({ error: 'CSV must have a header and at least one row' }, { status: 400 })
     }
 
     // Parse header to detect format
-    const header = lines[0].toLowerCase()
-    let transactions: any[] = []
+    const headerRow = rows[0]
+    const header = headerRow.join(',').toLowerCase()
+    const transactions: ImportedTransaction[] = []
 
     // Common Australian bank CSV formats
     if (header.includes('date') && header.includes('description') && header.includes('amount')) {
       // Standard format: Date, Description, Amount (ME Bank, generic)
-      const cols = lines[0].split(',').map((c: string) => c.trim().toLowerCase().replace(/"/g, ''))
+      const cols = headerRow.map((c: string) => c.trim().toLowerCase())
       const dateIdx = cols.findIndex((c: string) => c.includes('date'))
       const descIdx = cols.findIndex((c: string) => c.includes('description') || c.includes('narrative') || c.includes('details'))
       const amtIdx = cols.findIndex((c: string) => c.includes('amount') || c.includes('value'))
       const catIdx = cols.findIndex((c: string) => c.includes('category') || c.includes('type'))
       
-      for (let i = 1; i < lines.length; i++) {
-        const row = parseCSVRow(lines[i])
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i]
         if (row.length < 2) continue
         
         const rawDate = row[dateIdx] || ''
@@ -48,14 +57,14 @@ export async function POST(req: NextRequest) {
       }
     } else if (header.includes('debit') && header.includes('credit')) {
       // ING/Amex format: Date, Description, Debit, Credit
-      const cols = lines[0].split(',').map((c: string) => c.trim().toLowerCase().replace(/"/g, ''))
+      const cols = headerRow.map((c: string) => c.trim().toLowerCase())
       const dateIdx = cols.findIndex((c: string) => c.includes('date'))
       const descIdx = cols.findIndex((c: string) => c.includes('description') || c.includes('narrative') || c.includes('details'))
       const debitIdx = cols.findIndex((c: string) => c.includes('debit'))
       const creditIdx = cols.findIndex((c: string) => c.includes('credit'))
       
-      for (let i = 1; i < lines.length; i++) {
-        const row = parseCSVRow(lines[i])
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i]
         if (row.length < 2) continue
         
         const rawDate = row[dateIdx] || ''
@@ -71,8 +80,8 @@ export async function POST(req: NextRequest) {
       }
     } else {
       // Fallback: try to parse any CSV with at least date-like and number columns
-      for (let i = 1; i < lines.length; i++) {
-        const row = parseCSVRow(lines[i])
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i]
         if (row.length < 2) continue
         
         // Find a date-like field and a number field
@@ -96,8 +105,8 @@ export async function POST(req: NextRequest) {
 
     // Check for duplicates (same date + description + amount)
     const { data: existing } = await supabase.from('transactions').select('date,description,amount')
-    const existingSet = new Set((existing || []).map((t: any) => `${t.date}|${t.description}|${t.amount}`))
-    const newTx = transactions.filter((t: any) => !existingSet.has(`${t.date}|${t.description}|${t.amount}`))
+    const existingSet = new Set((existing || []).map(t => `${t.date}|${t.description}|${t.amount}`))
+    const newTx = transactions.filter(t => !existingSet.has(`${t.date}|${t.description}|${t.amount}`))
     const dupes = transactions.length - newTx.length
 
     if (newTx.length > 0) {
@@ -112,22 +121,52 @@ export async function POST(req: NextRequest) {
       bankName: bankName || 'Unknown'
     })
 
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Failed to process CSV' }, { status: 500 })
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Failed to process CSV' }, { status: 500 })
   }
 }
 
-function parseCSVRow(line: string): string[] {
-  const result: string[] = []
+function parseCSV(csvText: string): string[][] {
+  const rows: string[][] = []
+  let row: string[] = []
   let current = ''
   let inQuotes = false
-  for (const char of line) {
-    if (char === '"') { inQuotes = !inQuotes }
-    else if (char === ',' && !inQuotes) { result.push(current.trim()); current = '' }
-    else { current += char }
+
+  for (let i = 0; i < csvText.length; i++) {
+    const char = csvText[i]
+    const next = csvText[i + 1]
+
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        current += '"'
+        i++
+      } else {
+        inQuotes = !inQuotes
+      }
+    } else if (char === ',' && !inQuotes) {
+      row.push(current.trim())
+      current = ''
+    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      row.push(current.trim())
+      current = ''
+      if (row.some(field => field.length > 0)) rows.push(row)
+      row = []
+      if (char === '\r' && next === '\n') i++
+    } else {
+      current += char
+    }
   }
-  result.push(current.trim())
-  return result
+
+  if (inQuotes) {
+    throw new Error('Invalid CSV: unterminated quoted field')
+  }
+
+  row.push(current.trim())
+  if (row.some(field => field.length > 0)) {
+    rows.push(row)
+  }
+
+  return rows
 }
 
 function parseDate(str: string): string | null {

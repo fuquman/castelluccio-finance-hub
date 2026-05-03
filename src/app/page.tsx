@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
 // ── Types ──
@@ -15,7 +15,6 @@ type EBill={id:string;vendor:string;amount:number;due_date:string;category:strin
 type Snap={month:string;total_income:number;total_expenses:number}
 type Msg={role:'user'|'assistant';text:string}
 type CC={id:string;name:string;icon:string;color:string;type:string}
-type CCI={id:string;cost_centre_id:string;date:string;description:string;amount:number;category:string}
 
 // ── Helpers ──
 const $=(n:number)=>new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD',minimumFractionDigits:0,maximumFractionDigits:0}).format(n)
@@ -70,7 +69,8 @@ export default function App(){
   const[ebills,setE]=useState<EBill[]>([])
   const[snaps,setS]=useState<Snap[]>([])
   const[ccs,setCC]=useState<CC[]>([])
-  const[ccis,setCCI]=useState<CCI[]>([])
+  const[allTxs,setAllTxs]=useState<Tx[]|null>(null)
+  const[reportsLoading,setReportsLoading]=useState(false)
   const[loading,setL]=useState(true)
   // Chat
   const[chat,setCh]=useState<Msg[]>([{role:'assistant',text:"G'day! I'm Fella — your finance brain. Ask me anything about your money."}])
@@ -111,7 +111,8 @@ export default function App(){
   // ── Data Loading ──
   const load=async()=>{
     try{
-      const[a,t,c,r,d,g,i,al,eb,sn,cc,cci]=await Promise.all([
+      setAllTxs(null)
+      const[a,t,c,r,d,g,i,al,eb,sn,cc]=await Promise.all([
         supabase.from('bank_accounts').select('*').order('bank'),
         supabase.from('transactions').select('*').order('date',{ascending:false}).limit(50),
         supabase.from('budget_categories').select('*').order('name'),
@@ -123,15 +124,36 @@ export default function App(){
         supabase.from('email_bills').select('*').order('due_date'),
         supabase.from('monthly_snapshots').select('*').order('month'),
         supabase.from('cost_centres').select('*').eq('is_active',true).order('name'),
-        supabase.from('cost_centre_items').select('*').order('date',{ascending:false}),
       ])
       setA(a.data||[]);setT(t.data||[]);setC(c.data||[]);setR(r.data||[]);setD(d.data||[])
       setG(g.data||[]);setI(i.data||[]);setAl(al.data||[]);setE(eb.data||[]);setS(sn.data||[])
-      setCC(cc.data||[]);setCCI(cci.data||[])
+      setCC(cc.data||[])
       if((a.data||[]).length===0&&(t.data||[]).length===0)setShowWelcome(true)
     }catch(e){console.error('Load error:',e)}
     setL(false)
   }
+
+  const fetchAllTransactions=useCallback(async(force=false)=>{
+    if(allTxs&&!force)return allTxs
+    setReportsLoading(true)
+    try{
+      const all:Tx[]=[]
+      const pageSize=1000
+      let from=0
+      while(true){
+        const{data,error}=await supabase.from('transactions').select('*').order('date',{ascending:false}).range(from,from+pageSize-1)
+        if(error)throw error
+        const batch=(data||[]) as Tx[]
+        all.push(...batch)
+        if(batch.length<pageSize)break
+        from+=pageSize
+      }
+      setAllTxs(all)
+      return all
+    }finally{
+      setReportsLoading(false)
+    }
+  },[allTxs])
 
   useEffect(()=>{
     if(typeof window!=='undefined'&&window.location.hash)window.history.replaceState(null,'',window.location.pathname)
@@ -140,6 +162,9 @@ export default function App(){
     window.addEventListener('scroll',onScroll,{passive:true})
     return()=>window.removeEventListener('scroll',onScroll)
   },[])
+  useEffect(()=>{
+    if(tab==='reports')fetchAllTransactions().catch(e=>{console.error('Load reports error:',e);setReportsLoading(false);showToast('Could not load all report transactions','error')})
+  },[tab,fetchAllTransactions])
   useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:'smooth'})},[chat])
 
   // ── Computed ──
@@ -181,14 +206,18 @@ export default function App(){
   }
 
   // ── Export CSV ──
-  const exportCSV=()=>{
-    const filtered=dateFrom||dateTo?txs.filter(t=>{const d=t.date;return(!dateFrom||d>=dateFrom)&&(!dateTo||d<=dateTo)}):txs
-    const header='Date,Description,Amount,Category\n'
-    const rows=filtered.map(t=>`${t.date},"${t.description}",${t.amount},"${t.category||''}"`).join('\n')
-    const blob=new Blob([header+rows],{type:'text/csv'})
-    const url=URL.createObjectURL(blob)
-    const a=document.createElement('a');a.href=url;a.download=`caster-transactions-${new Date().toISOString().split('T')[0]}.csv`;a.click()
-    URL.revokeObjectURL(url)
+  const csvEscape=(value:string|number|null|undefined)=>`"${String(value??'').replace(/"/g,'""')}"`
+  const exportCSV=async()=>{
+    try{
+      const source=await fetchAllTransactions()
+      const filtered=dateFrom||dateTo?source.filter(t=>{const d=t.date;return(!dateFrom||d>=dateFrom)&&(!dateTo||d<=dateTo)}):source
+      const header='Date,Description,Amount,Category\n'
+      const rows=filtered.map(t=>[t.date,csvEscape(t.description),t.amount,csvEscape(t.category||'')].join(',')).join('\n')
+      const blob=new Blob([header+rows],{type:'text/csv'})
+      const url=URL.createObjectURL(blob)
+      const a=document.createElement('a');a.href=url;a.download=`caster-transactions-${new Date().toISOString().split('T')[0]}.csv`;a.click()
+      URL.revokeObjectURL(url)
+    }catch(e){console.error('Export error:',e);showToast('CSV export failed','error')}
   }
 
   const handleCSVImport=async(e:React.ChangeEvent<HTMLInputElement>)=>{
@@ -214,17 +243,6 @@ export default function App(){
 
   const assignCostCentre=async(txId:string,ccId:string)=>{
     await supabase.from('transactions').update({cost_centre_id:ccId}).eq('id',txId)
-    // Also add to cost_centre_items for tracking
-    const tx=txs.find(t=>t.id===txId)
-    if(tx){
-      await supabase.from('cost_centre_items').insert({
-        cost_centre_id:ccId,
-        description:tx.description,
-        amount:Math.abs(Number(tx.amount)),
-        date:tx.date,
-        category:tx.category||'Other'
-      })
-    }
     setTxMenu(null)
     await load()
     showToast('Cost centre assigned!','success')
@@ -496,8 +514,8 @@ export default function App(){
 
       {/* Kid profile cards */}
       {ccs.filter(c=>c.type==='child').map((cc,i)=>{
-        const total=ccis.filter(item=>item.cost_centre_id===cc.id).reduce((s,item)=>s+Number(item.amount),0)
-        const items=ccis.filter(item=>item.cost_centre_id===cc.id)
+        const items=txs.filter(t=>t.cost_centre_id===cc.id).map(t=>({id:t.id,cost_centre_id:t.cost_centre_id||'',date:t.date,description:t.description,amount:Math.abs(Number(t.amount)),category:t.category||'Other'}))
+        const total=items.reduce((s,item)=>s+Number(item.amount),0)
         const isOpen=selectedKid===cc.id
         return<div key={cc.id} className={`gc fu s${i+1}`} style={{overflow:'hidden'}}>
           <div style={{padding:'18px 20px',display:'flex',alignItems:'center',gap:16,cursor:'pointer'}} onClick={()=>setSelectedKid(isOpen?null:cc.id)}>
@@ -524,7 +542,7 @@ export default function App(){
               <Input placeholder="Amount" type="number" value={fd.cci_amount??''} onChange={e=>setFd({...fd,cci_amount:e.target.value})}/>
               <Input type="date" value={fd.cci_date||new Date().toISOString().split('T')[0]} onChange={e=>setFd({...fd,cci_date:e.target.value})}/>
               <Select value={fd.cci_category||'Other'} onChange={e=>setFd({...fd,cci_category:e.target.value})}><option value="School Fees">School Fees</option><option value="Sports">Sports</option><option value="Clothing">Clothing</option><option value="Medical">Medical</option><option value="Activities">Activities</option><option value="Food">Food</option><option value="Other">Other</option></Select>
-              <Btn onClick={async()=>{if(!fd.description||!fd.cci_amount)return;setSaving(true);await supabase.from('cost_centre_items').insert({cost_centre_id:cc.id,description:fd.description,amount:parseFloat(fd.cci_amount)||0,date:fd.cci_date||new Date().toISOString().split('T')[0],category:fd.cci_category||'Other'});await load();setFd({});setShowForm(null);setSaving(false);showToast('Expense added!','success')}} disabled={saving} style={{width:'100%'}}>{saving?'Adding...':'Add Expense'}</Btn>
+              <Btn onClick={async()=>{if(!fd.description||!fd.cci_amount)return;setSaving(true);await supabase.from('transactions').insert({cost_centre_id:cc.id,description:fd.description,amount:-Math.abs(parseFloat(fd.cci_amount)||0),date:fd.cci_date||new Date().toISOString().split('T')[0],category:fd.cci_category||'Other',logged_by:'manual'});await load();setFd({});setShowForm(null);setSaving(false);showToast('Expense added!','success')}} disabled={saving} style={{width:'100%'}}>{saving?'Adding...':'Add Expense'}</Btn>
             </div>}
 
             {/* Expense list */}
@@ -545,10 +563,8 @@ export default function App(){
       <div className="sh" style={{marginTop:8}}>Spending Breakdown</div>
 
       {ccs.filter(c=>c.type!=='child').map((cc,i)=>{
-        const ccTotal=ccis.filter(item=>item.cost_centre_id===cc.id).reduce((s,item)=>s+Number(item.amount),0)
-        const txTotal=txs.filter(t=>t.cost_centre_id===cc.id).reduce((s,t)=>s+Math.abs(Number(t.amount)),0)
-        const total=ccTotal+txTotal
-        const allItems=[...ccis.filter(item=>item.cost_centre_id===cc.id),...txs.filter(t=>t.cost_centre_id===cc.id).map(t=>({id:t.id,cost_centre_id:t.cost_centre_id||'',date:t.date,description:t.description,amount:Math.abs(Number(t.amount)),category:t.category||'Other'}))]
+        const allItems=txs.filter(t=>t.cost_centre_id===cc.id).map(t=>({id:t.id,cost_centre_id:t.cost_centre_id||'',date:t.date,description:t.description,amount:Math.abs(Number(t.amount)),category:t.category||'Other'}))
+        const total=allItems.reduce((s,item)=>s+Number(item.amount),0)
         const isOpen=selectedCC===cc.id
         return<div key={cc.id} className={`gc fu s${i+10}`} style={{overflow:'hidden',marginBottom:8}}>
           <div style={{padding:'18px 20px',display:'flex',alignItems:'center',gap:18,cursor:'pointer'}} onClick={()=>setSelectedCC(isOpen?null:cc.id)}>
@@ -611,7 +627,9 @@ export default function App(){
       </div>
 
       {(()=>{
-        const rTx=txs.filter(t=>{const d=t.date;return d>=reportFrom&&d<=reportTo})
+        if(reportsLoading&&!allTxs)return<div className="gc fu s3" style={{padding:20,textAlign:'center',color:'var(--t3)',fontSize:18}}>Loading all transactions...</div>
+        const reportSource=allTxs||[]
+        const rTx=reportSource.filter(t=>{const d=t.date;return d>=reportFrom&&d<=reportTo})
         const rIncome=rTx.filter(t=>Number(t.amount)>0).reduce((s,t)=>s+Number(t.amount),0)
         const rExpense=rTx.filter(t=>Number(t.amount)<0).reduce((s,t)=>s+Math.abs(Number(t.amount)),0)
         const rNet=rIncome-rExpense
@@ -656,7 +674,7 @@ export default function App(){
 
           {/* PRINT / EXPORT */}
           <div className="fu s4" style={{display:'flex',gap:10}}>
-            <button onClick={()=>{const filtered=txs.filter(t=>t.date>=reportFrom&&t.date<=reportTo);const csv='Date,Description,Amount,Category\n'+filtered.map(t=>t.date+',"'+t.description+'",'+t.amount+',"'+(t.category||'')+'"').join('\n');const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='caster-report-'+reportFrom+'-to-'+reportTo+'.csv';a.click();URL.revokeObjectURL(url);showToast('CSV downloaded!','success')}} style={{flex:1,padding:'16px',borderRadius:14,border:'none',background:'var(--card)',color:'var(--t1)',fontSize:18,fontWeight:700,cursor:'pointer'}} className="btn-press">📥 Export CSV</button>
+            <button onClick={async()=>{try{const source=await fetchAllTransactions();const filtered=source.filter(t=>t.date>=reportFrom&&t.date<=reportTo);const csv='Date,Description,Amount,Category\n'+filtered.map(t=>[t.date,csvEscape(t.description),t.amount,csvEscape(t.category||'')].join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='caster-report-'+reportFrom+'-to-'+reportTo+'.csv';a.click();URL.revokeObjectURL(url);showToast('CSV downloaded!','success')}catch(e){console.error('Report export error:',e);showToast('CSV export failed','error')}}} style={{flex:1,padding:'16px',borderRadius:14,border:'none',background:'var(--card)',color:'var(--t1)',fontSize:18,fontWeight:700,cursor:'pointer'}} className="btn-press">📥 Export CSV</button>
             <button onClick={()=>window.print()} style={{flex:1,padding:'16px',borderRadius:14,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:700,cursor:'pointer'}} className="btn-press">🖨️ Print / PDF</button>
           </div>
           <div style={{fontSize:18,color:'var(--t3)',textAlign:'center',lineHeight:1.5}}>CSV exports filtered transactions. Print saves the current view as PDF.</div>
@@ -735,6 +753,15 @@ export default function App(){
         </EditForm>}
         <div className="gc">{recs.map((r,i)=><div key={r.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('recurring_payments',r,{name:r.name,amount:Number(r.amount),frequency:r.frequency,category:r.category,status:r.status,owner:r.owner||'family',tags:r.tags?r.tags.join(', '):''})}><Ico bg={r.status==='active'?'var(--green)':r.status==='flagged'||r.status==='duplicate'?'var(--red)':'var(--t3)'} ch="🔄"/><div className="rb"><div className="rt">{r.name}</div><div className="rs">{r.category} · {r.frequency} · {r.status} · {r.owner==='ben'?'👨':'👩‍👧‍👦'}</div></div><span className="mono rr" style={{fontWeight:600}}>{$$(Number(r.amount))}</span></div>)}</div>
       </div>}
+
+      {/* Cost Centres */}
+      {settingsSection==='costcentres'&&<div className="fu s2">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Spending Cost Centres</div><button onClick={()=>newRow('cost_centres',{name:'',icon:'📁',color:'#ff9f0a',type:'spending'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
+        {showForm==='cost_centres'&&settingsSection==='costcentres'&&<EditForm table="cost_centres" fields={[{key:'name',label:'Name (e.g. Clothes, Sports)'},{key:'icon',label:'Icon emoji'},{key:'type',label:'Type',options:[{v:'spending',l:'💰 Spending'},{v:'household',l:'🏠 Household'},{v:'custom',l:'📁 Custom'},{v:'child',l:'👶 Child'}]}]}/>}
+        <div className="gc">{ccs.filter(c=>c.type!=='child').map((cc,i)=><div key={cc.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('cost_centres',cc,{name:cc.name,icon:cc.icon,color:cc.color,type:cc.type||'spending'})}><Ico bg={cc.color||'var(--purple)'} ch={cc.icon}/><div className="rb"><div className="rt">{cc.name}</div><div className="rs" style={{fontSize:18}}>{cc.type}</div></div></div>)}</div>
+        {ccs.filter(c=>c.type!=='child').length===0&&<div className="gc"><div className="empty-state"><div className="empty-icon">📁</div><div className="empty-title">No cost centres yet</div><div className="empty-desc">Add categories like Clothes, Sports, School to track spending</div></div></div>}
+      </div>}
+
     </div>}
 
 
@@ -779,13 +806,6 @@ export default function App(){
             </div>)
         })()}
   
-      {/* Cost Centres */}
-      {settingsSection==='costcentres'&&<div className="fu s2">
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><div className="sh" style={{margin:0}}>Spending Cost Centres</div><button onClick={()=>newRow('cost_centres',{name:'',icon:'📁',color:'#ff9f0a',type:'spending'})} style={{padding:'8px 16px',borderRadius:10,border:'none',background:'var(--orange)',color:'#000',fontSize:18,fontWeight:600,cursor:'pointer'}}>+ Add</button></div>
-        {showForm==='cost_centres'&&settingsSection==='costcentres'&&<EditForm table="cost_centres" fields={[{key:'name',label:'Name (e.g. Clothes, Sports)'},{key:'icon',label:'Icon emoji'},{key:'type',label:'Type',options:[{v:'spending',l:'💰 Spending'},{v:'household',l:'🏠 Household'},{v:'custom',l:'📁 Custom'},{v:'child',l:'👶 Child'}]}]}/>}
-        <div className="gc">{ccs.filter(c=>c.type!=='child').map((cc,i)=><div key={cc.id} className="row" style={{...(i>0?{borderTop:'0.33px solid var(--sep)'}:{}),cursor:'pointer'}} onClick={()=>editRow('cost_centres',cc,{name:cc.name,icon:cc.icon,color:cc.color,type:cc.type||'spending'})}><Ico bg={cc.color||'var(--purple)'} ch={cc.icon}/><div className="rb"><div className="rt">{cc.name}</div><div className="rs" style={{fontSize:18}}>{cc.type}</div></div></div>)}</div>
-        {ccs.filter(c=>c.type!=='child').length===0&&<div className="gc"><div className="empty-state"><div className="empty-icon">📁</div><div className="empty-title">No cost centres yet</div><div className="empty-desc">Add categories like Clothes, Sports, School to track spending</div></div></div>}
-      </div>}
     </div>}
 
       {/* Quick Jump */}
